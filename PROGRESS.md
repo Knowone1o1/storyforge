@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:32 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:35 PM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -20,7 +20,18 @@ The live site runs on a free Gemini key with a small daily limit (roughly 20 req
 
 Every `git push` to `main` updates the live website by itself within about a minute. The Claude version only changes when Lorenzo republishes it.
 
-## Newest change: one designed look (UI pass)
+## Newest change: tactile kids' app (from Lorenzo's design brief)
+
+- No website header or landing text. The app opens on the bookshelf and stays on one locked screen, like a tablet app.
+- Chunky look: thick plum outlines, hard drop shadows, buttons that press down. Mint wall, wooden shelves, cream paper, Fredoka everywhere.
+- Real cover art: three painted covers made with Figma's AI image generator (files in `covers/`, also embedded in `index.html` so they load inside Claude). Figma file: https://www.figma.com/design/YS8Likaej3mAqOpfeUVJv8
+- Tap any word to hear it. "Read to me" reads the page and lights up each word as it goes; play and pause.
+- Big page buttons in the bottom corners with page dots between them.
+- Finishing a book gives a confetti burst, a star in the top-right badge and a sticker on that book's cover. Stars are remembered on the device.
+- Kept from before: AI-written stories, the three choice points, the 3D pictures, think-back, the map and the parent report. It is still one HTML file, not React or Tailwind.
+- Tested with the fake AI at tablet and phone size. Voice timing is not checked by ear.
+
+## Earlier change: one designed look (UI pass)
 
 - One stylesheet replaces the three layered ones. Two typefaces: Literata (a book face) for titles and story text, Atkinson Hyperlegible for controls.
 - Reading happens in a deep-blue room with the paper book as the only bright thing. Sun yellow is used only for "go on" (Next, Start reading).

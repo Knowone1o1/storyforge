@@ -13,6 +13,7 @@ A parent enters their child's name, interests, a lesson and limits. A team of AI
 | `api/tts.js` | The live site's narrator: turns a page of text into speech with ElevenLabs. Needs `ELEVENLABS_API_KEY` in Vercel; without it the page uses the browser's voice. |
 | `api/health.js` | Tells the page it is on the live site and whether the AI key is set. |
 | `package.json`, `vercel.json` | Settings the host (Vercel) needs. |
+| `covers/` | The three cover paintings (also embedded inside `index.html`). |
 | `tools/mock_server.py` | Local test server with a fake AI. Use this for testing so the free Gemini quota is saved for the demo. |
 | `PROGRESS.md` | What is done, what is tested, what is left. Read this first. |
 | `docs/PROMPT.md` | A ready-made prompt that explains the product to Claude, so anyone on the team can keep building. |
