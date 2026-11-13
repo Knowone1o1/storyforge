@@ -1,6 +1,9 @@
 // Narrator for the live site: turns a page of text into speech with ElevenLabs
 // and sends the audio back to the page. The key lives only in the host's settings.
-const KEY = () => process.env.ELEVENLABS_API_KEY || process.env.ELEVENLABS || process.env.ELEVEN_LABS_API_KEY;
+// Finds the ElevenLabs key whatever the setting was called (ELEVENLABS_API_KEY, ELEVENLABS, elevenlabs_key...).
+const elevenKey = () => process.env.ELEVENLABS_API_KEY || process.env.ELEVENLABS || process.env.ELEVEN_LABS_API_KEY ||
+  Object.entries(process.env).filter(([k, v]) => /eleven|xi_api/i.test(k) && !/voice|model/i.test(k) && v && v.trim().length > 20).map(([, v]) => v.trim())[0];
+const KEY = elevenKey;
 const VOICE = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // a clear, warm premade voice; set ELEVENLABS_VOICE_ID to change it
 const MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2"; // the most natural reading voice; eleven_flash_v2_5 is faster and half the credits
 const MAX_CHARS = 1200;
