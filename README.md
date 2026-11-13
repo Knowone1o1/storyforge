@@ -10,6 +10,7 @@ A parent enters their child's name, interests, a lesson and limits. A team of AI
 | --- | --- |
 | `index.html` | The whole app. One self-contained page (HTML + CSS + JavaScript). |
 | `api/sample.js` | The live site's AI endpoint: receives a prompt from the page and calls Google Gemini. The API key stays here, never in the page. |
+| `api/tts.js` | The live site's narrator: turns a page of text into speech with ElevenLabs. Needs `ELEVENLABS_API_KEY` in Vercel; without it the page uses the browser's voice. |
 | `api/health.js` | Tells the page it is on the live site and whether the AI key is set. |
 | `package.json`, `vercel.json` | Settings the host (Vercel) needs. |
 | `tools/mock_server.py` | Local test server with a fake AI. Use this for testing so the free Gemini quota is saved for the demo. |

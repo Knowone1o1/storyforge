@@ -1,5 +1,6 @@
 {
   "functions": {
-    "api/sample.js": { "maxDuration": 60 }
+    "api/sample.js": { "maxDuration": 60 },
+    "api/tts.js": { "maxDuration": 30 }
   }
 }

@@ -6,7 +6,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>StoryForge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Literata:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* Layout: one storybook page in a single column, phone and tablet first. Bright blue-and-white library look with soft, chunky edges. Story screen is a reader: big text on one half, a moving picture on the other.
    The agent crew works "backstage" in a bottom drawer, and moves to a side column on wide screens. Single bright theme by choice. */
@@ -253,6 +253,71 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .reader .opts{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){.art svg{animation:none}}
+
+/* ---- Book pass: calmer surfaces, a real open book, a bookshelf home ---- */
+:root{--read:"Literata",Georgia,"Times New Roman",serif;--paper:#FFFEFA;--gutter:rgba(19,41,75,.18);--lift:rgba(19,41,75,.3);
+  --drop:0 1px 2px rgba(19,41,75,.06), 0 10px 24px -14px var(--lift);--drop-s:none}
+.top{background:var(--page);color:var(--ink);border-bottom:1px solid var(--line)}
+.brand{color:var(--blue)} .brand span{color:var(--ink)}
+.ghost{color:var(--ink);border-color:var(--line)} .ghost:hover{border-color:var(--blue)}
+.card{border:1px solid var(--line)}
+.banner{box-shadow:none;border-width:1px}
+.btn,.btn.go,.btn.mint{box-shadow:none;border-width:0}
+.btn.secondary{box-shadow:none;border:1.5px solid var(--line)}
+.btn:active{transform:scale(.97);box-shadow:none}
+.mic{box-shadow:none;border:0}
+.opt,.o0,.o1,.o2,.o3{box-shadow:none;border:0}
+.opt:hover{transform:none;box-shadow:none;filter:brightness(.97)}
+.opt:active{transform:scale(.99);box-shadow:none}
+.hero h1{font-size:clamp(28px,4.6vw,44px);max-width:22ch;color:var(--ink);font-weight:700}
+.tier{font-size:13px;font-weight:700;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase}
+
+/* Bookshelf */
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 16px}
+.cover{display:flex;flex-direction:column;text-align:left;padding:0;border:0;background:var(--c,var(--sky-soft));border-radius:5px 12px 12px 5px;overflow:hidden;min-width:0;box-shadow:inset 7px 0 0 var(--gutter), var(--drop);transition:transform .12s}
+.cover:hover{transform:translateY(-4px)}
+.cover:active{transform:translateY(0)}
+.cover-art{display:block;aspect-ratio:3/2;max-width:100%}
+.cover-art svg{display:block;width:100%;height:100%}
+.cover-title{font-family:var(--read);font-weight:700;font-size:19px;line-height:1.15;padding:12px 12px 0 18px}
+.cover-meta{font-size:12.5px;line-height:1.3;color:var(--ink-soft);padding:6px 12px 14px 18px;margin-top:auto}
+.cover.make{background:var(--page);box-shadow:inset 0 0 0 2px var(--line);justify-content:center;gap:4px;min-height:220px}
+.cover.make .cover-meta{margin-top:0}
+.plus{font-family:var(--display);font-size:44px;line-height:1;color:var(--blue);padding:0 18px}
+
+/* Open book */
+.book{display:flex;flex-direction:column;gap:14px;min-width:0}
+.book-bar{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:14px;color:var(--ink-soft)}
+.book-title{font-family:var(--read);font-weight:700;color:var(--ink);font-size:17px;min-width:0}
+.spread{display:grid;grid-template-columns:minmax(0,1fr);background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--line), 0 24px 40px -24px var(--lift)}
+.leaf{min-width:0}
+.leaf-art{order:-1}
+.leaf-art .art{border:0;border-radius:0;aspect-ratio:16/10}
+.leaf-text{display:flex;flex-direction:column;gap:16px;padding:22px 20px 18px}
+.readtext{font-family:var(--read);font-size:clamp(23px,3vw,34px);line-height:1.5;max-width:20em}
+.readtext.first::first-letter{font-size:2.7em;font-weight:700;float:left;line-height:.82;padding:.08em .08em 0 0;color:var(--blue)}
+.next-label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.titlepage{margin:auto 0;display:flex;flex-direction:column;gap:12px}
+.titlepage h1{font-family:var(--read);font-weight:700;font-size:clamp(32px,4.6vw,52px);line-height:1.08}
+.titlepage p{color:var(--ink-soft)}
+.pageno{margin-top:auto;padding-top:8px;font-family:var(--read);font-size:14px;color:var(--ink-soft);text-align:center}
+.speakbtn{align-self:flex-start;display:inline-flex;gap:6px;align-items:center;border:1.5px solid var(--line);background:transparent;border-radius:999px;min-height:40px;padding:4px 14px;font-weight:700;font-size:14px;color:var(--blue-dark)}
+.book-foot{display:flex;align-items:center;gap:14px;min-height:52px}
+.turn{flex:none;min-width:52px;min-height:52px;border-radius:999px;border:0;background:var(--blue);color:var(--page);font-family:var(--display);font-weight:600;font-size:18px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 22px}
+.turn.back{background:var(--page);color:var(--blue-dark);box-shadow:inset 0 0 0 1.5px var(--line);padding:0}
+.turn[disabled]{opacity:.35;cursor:default}
+.turn .arr{width:10px;height:10px;border-right:3px solid currentColor;border-top:3px solid currentColor;transform:rotate(45deg);margin-right:3px}
+.turn.back .arr{transform:rotate(-135deg);margin:0 0 0 4px}
+.progress{flex:1;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--sun);border-radius:999px;transition:width .3s}
+@media (min-width:760px){
+  .spread{grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:min(62vh,560px)}
+  .leaf-art{order:0}
+  .leaf-art .art{aspect-ratio:auto;height:100%}
+  .leaf-text{padding:36px 36px 22px;box-shadow:inset -22px 0 26px -22px var(--gutter)}
+  .book .opts{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.cover,.progress i{transition:none}}
 </style>
 </head>
 <body>
@@ -322,7 +387,7 @@ async function webCaps(){
   }
   if (!health || !health.ok) return null;
   if (!health.ai) { webNoKey = true; return [null, null, null, null]; }
-  return [webSample, webTTS(), webDictation(), null];
+  return [webSample, health.voice ? webEleven() : null, webDictation(), null];
 }
 async function webSample(prompt, opts){
   let r;
@@ -335,23 +400,58 @@ async function webSample(prompt, opts){
   if (!r.ok) throw {code: data.code || "ai_error"};
   return {text: data.text || ""};
 }
+/* Live-site narrator: ElevenLabs through our /api/tts. Pages already heard are kept, so reading again costs nothing. */
+function webEleven(){
+  const heard = new Map();
+  let audio = null, ctl = null;
+  const stop = () => { if (ctl) ctl.abort(); ctl = null; if (audio) { const a = audio; audio = null; a.pause(); } };
+  return {
+    stop,
+    async speak(text){
+      stop();
+      const mine = ctl = new AbortController();
+      let url = heard.get(text);
+      if (!url) {
+        let r;
+        try { r = await fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text}), signal: mine.signal}); }
+        catch(e) { throw {code: mine.signal.aborted ? "stopped" : "unavailable"}; }
+        if (!r.ok) throw {code:"unavailable"};
+        url = URL.createObjectURL(await r.blob());
+        heard.set(text, url);
+      }
+      if (mine.signal.aborted) throw {code:"stopped"};
+      const a = audio = new Audio(url);
+      return new Promise((resolve, reject) => {
+        a.onended = () => resolve();
+        a.onerror = () => reject({code:"unavailable"});
+        a.onpause = () => { if (!a.ended) reject({code:"stopped"}); };
+        a.play().catch(() => reject({code:"unavailable"}));
+      });
+    }
+  };
+}
 function webTTS(){
   const synth = window.speechSynthesis;
   if (!synth || !window.SpeechSynthesisUtterance) return null;
+  let current = null, timer = 0;
   const pick = () => { const v = synth.getVoices(); return v.find(x => /^en/i.test(x.lang) && /natural|google|samantha|aria|jenny/i.test(x.name)) || v.find(x => /^en/i.test(x.lang)) || null; };
+  try { synth.getVoices(); } catch(e){}
   return {
     speak(text, opts){
       return new Promise(resolve => {
-        synth.cancel();
+        clearTimeout(timer);
+        const wasBusy = synth.speaking || synth.pending;
+        if (wasBusy) synth.cancel();
         const u = new SpeechSynthesisUtterance(text);
-        const v = pick(); if (v) u.voice = v;
-        u.lang = v ? v.lang : "en-US";
+        const v = pick(); if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-US";
         u.rate = (opts && opts.rate) || 1;
-        u.onend = u.onerror = () => resolve();
-        synth.speak(u);
+        u.onend = u.onerror = () => { if (current === u) current = null; resolve(); };
+        current = u; // keep a reference, or some browsers drop the speech mid-sentence
+        // speaking right after a cancel is silently dropped by Chrome, so wait a beat
+        timer = setTimeout(() => { try { synth.resume(); synth.speak(u); } catch(e) { resolve(); } }, wasBusy ? 150 : 0);
       });
     },
-    stop(){ synth.cancel(); }
+    stop(){ clearTimeout(timer); current = null; try { synth.cancel(); } catch(e){} }
   };
 }
 function webDictation(){
@@ -415,14 +515,29 @@ function showBanner(msg, isErr){
   else if (capsReady && !cap.sample) { b.textContent ="The AI only runs when this page is opened in Claude (claude.ai or the Claude desktop app). Open the artifact there to play."; b.className = "banner err"; }
   else b.className = "banner hidden";
 }
+/* Narrator: Claude's voice when the page has it, otherwise the browser's own voice. */
+let browserVoice;
+function getBrowserVoice(){ if (browserVoice === undefined) browserVoice = webTTS(); return browserVoice; }
+function canSpeak(){ return !!(cap.tts || getBrowserVoice()); }
 function speak(text){
-  if (!cap.tts || muted || !text) return;
+  if (muted || !text) return;
+  const t = String(text).slice(0, 1990);
   const id = log("Narrator", "reading aloud…");
-  const done = () => logDone(id, "read it aloud");
-  setTimeout(done, 20000);
-  try { Promise.resolve(cap.tts.speak(String(text).slice(0,1990), {voice:"airy", rate:0.95})).then(done, done); } catch(e){ done(); }
+  const ok = () => logDone(id, "read it aloud");
+  const bad = e => logDone(id, "could not read aloud" + (e && e.code ? " (" + e.code + ")" : ""), "fail");
+  setTimeout(() => { const e = logItems.find(x => x.id === id); if (e && e.status === "working") ok(); }, 20000);
+  const viaBrowser = () => { const b = getBrowserVoice(); return b ? b.speak(t, {rate: 0.95}) : Promise.reject({code: "no_voice"}); };
+  if (!cap.tts) { viaBrowser().then(ok, bad); return; }
+  let p;
+  try { p = Promise.resolve(cap.tts.speak(t, {voice: "airy", rate: 0.95})); } catch(e) { p = Promise.reject(e); }
+  p.then(ok, e => {
+    const code = String((e && e.code) || "");
+    if (code === "not_granted" || code === "unavailable" || code === "not_supported") { cap.tts = null; viaBrowser().then(ok, bad); }
+    else if (/stop|replac|cancel|interrupt|supersed|abort/i.test(code)) ok(); // a newer page took over
+    else bad(e);
+  });
 }
-function stopSpeak(){ try { cap.tts && cap.tts.stop(); } catch(e){} }
+function stopSpeak(){ try { cap.tts && cap.tts.stop(); } catch(e){} try { browserVoice && browserVoice.stop(); } catch(e){} }
 function micButton(target){ return cap.dict ? `<button type="button" class="mic" data-mic="${target}">Tap to talk</button>` : ""; }
 function startMic(inputId, onDone){
   if (!cap.dict) return;
@@ -501,7 +616,7 @@ No one-dimensional choices: the tempting_bad option must sound fun, quick or exc
   "lesson": "the specific lesson this story teaches (one short phrase)",
   "title": "short story title",
   "hero_look": "one sentence describing how ${st.child_name} looks as a cartoon hero (for the illustrator)",
-  "warmup": {"question": "one short question that tests the lesson, answerable in a few words, asked before the story", "answer": "the correct answer"}` : "";
+  "warmup": {"question": "one short question that tests the lesson, answerable in a few words, asked after the story", "answer": "the correct answer"}` : "";
   return `You are the Director agent of StoryForge, an educational story game made for one specific child by their parent.
 CHILD: ${st.child_name}, age ${st.child_age}, reading level: ${st.reading_level}.
 THE CHILD'S INTERESTS (from the parent): ${st.interests || "not given: pick things most kids this age love (animals, space, treasure, sports…)"}. Build the story world, characters and details around these so it feels made just for ${st.child_name}. ${st.child_name} is the hero.
@@ -564,7 +679,9 @@ async function startStory(settings){
     } catch(e) { logDone(id, "couldn't reach Keenable, continuing without it", "fail"); }
   }
   await makeScene();
-  render(); // show the warm-up question (or the error) once scene 1 is ready
+  if (S.scenes.length) { screen = "story"; S.page = 0; }
+  render(); // open the book (or show the error)
+  speakPage();
 }
 async function makeScene(){
   const n = S.scenes.length + 1;
@@ -753,30 +870,33 @@ const COVERS = [
 ];
 const NO_ART = `<div class="wait"><small>No picture for this scene</small></div>`;
 function homeView(){
+  const tints = ["var(--leaf-soft)", "var(--sky-soft)", "var(--tomato-soft)"];
   return `<div class="hero">
     <h1>A reading adventure built around your child.</h1>
-    <p>Parents know what makes their child light up. Tell StoryForge who your child is and what they should learn. Our AI agents write a story at their reading level, page by page, with a moving picture beside the words and choices that change what happens next.</p>
+    <p>Pick a book, or make one about your child. Our AI agents write it at their reading level, with a moving picture beside the words and choices that change what happens next.</p>
+  </div>
+  <div class="section-h"><h2>Library</h2><span class="tier">Free</span></div>
+  <div class="shelf">${LIBRARY.map((l,i) => `<button type="button" class="cover" data-lib="${i}" style="--c:${tints[i % 3]}">
+      <span class="cover-art" aria-hidden="true">${COVERS[i] || ""}</span>
+      <span class="cover-title">${esc(l.title)}</span>
+      <span class="cover-meta">${esc(l.lessonLabel)} · Ages ${l.settings.child_age - 1}–${l.settings.child_age + 2}</span>
+    </button>`).join("")}
+    <button type="button" class="cover make" id="goCustom">
+      <span class="plus" aria-hidden="true">+</span>
+      <span class="cover-title">Make a book for your child</span>
+      <span class="cover-meta">Premium · their name, their interests, your lesson</span>
+    </button>
   </div>
   <div class="card quick">
-    <div class="card-h"><h2>Quick play</h2><span class="pill free">Free</span></div>
-    <p class="sub">No time to set up? Pick a subject and an age. The AI picks the lesson and builds the story.</p>
+    <h2 style="font-size:24px">Quick book</h2>
+    <p class="sub">No time to set up? Pick a subject and an age. The AI picks the lesson and writes the book.</p>
     <div class="seg" role="group" aria-label="Subject">${SUBJECTS.map(s => `<button type="button" data-quick="${s[0]}" aria-pressed="${quick.subject === s[0]}">${s[1]}</button>`).join("")}</div>
     <div class="quick-row">
       <label for="q_age">Age</label>
       <select id="q_age">${[4,5,6,7,8,9,10,11,12].map(a => `<option ${quick.age === a ? "selected" : ""}>${a}</option>`).join("")}</select>
       <input id="q_name" placeholder="Child's name (optional)" value="${esc(quick.name)}">
-      <button type="button" class="btn go ico-play" id="quickGo">Play now</button>
+      <button type="button" class="btn go ico-play" id="quickGo">Start reading</button>
     </div>
-  </div>
-  <div class="section-h"><h2>Story Library</h2><span class="pill free">Free</span></div>
-  <div class="lib">${LIBRARY.map((l,i) => `<button type="button" class="libcard" data-lib="${i}">
-      <div class="libart" aria-hidden="true">${COVERS[i] || ""}</div>
-      <div class="libbody"><b>${esc(l.title)}</b><span class="libmeta">${esc(l.lessonLabel)}</span><span class="libmeta">Ages ${l.settings.child_age - 1}–${l.settings.child_age + 2} · Hero: ${esc(l.settings.child_name)}</span></div>
-    </button>`).join("")}</div>
-  <div class="section-h"><h2>Made for your child</h2><span class="pill premium">Premium</span></div>
-  <div class="card custom">
-    <div><h3>Create a story for your child</h3><p class="sub">Their name, their interests, the lesson you choose and the limits you set. A brand-new adventure every time.</p></div>
-    <button type="button" class="btn" id="goCustom">Create a story</button>
   </div>`;
 }
 function setupView(){
@@ -800,21 +920,13 @@ function setupView(){
     </form>
   </div>`;
 }
-function warmupView(){
+function warmupView(){ // the loading screen while the first chapter is written
   if (S.error) return errorCard();
-  const w = S.warmup;
-  if (!w && !S.busy && S.scenes.length) { screen = "story"; setTimeout(speakPage, 0); return storyView(); }
-  if (!w) return `<div class="card stack"><div class="wait" style="padding:28px 0"><span class="blobs"><i></i><i></i><i></i></span><span>Building ${esc(S.settings.child_name)}'s world…</span><small>Watch the agents work backstage.</small></div></div>`;
-  return `<div class="card stack">
-    <span class="pill free">Warm-up</span>
-    <h2 style="font-size:28px">${esc(S.title)}</h2>
-    <p class="question">${esc(w.question)}</p>
-    <p class="sub">Just a quick guess before the adventure starts. It's fine not to know yet!</p>
-    <div class="own"><input id="warmIn" placeholder="Say it or type it…">${micButton("warmIn")}<button type="button" class="btn go" id="warmGo">Start the adventure</button></div>
-  </div>`;
+  if (!S.busy && S.scenes.length) { screen = "story"; return storyView(); }
+  return `<div class="card stack"><div class="wait" style="padding:40px 0"><span class="blobs"><i></i><i></i><i></i></span><span>Writing ${esc(S.settings.child_name)}'s book…</span><small>Watch the agents work backstage.</small></div></div>`;
 }
 function errorCard(){ return `<div class="card stack"><div class="conseq">${esc(S.error)}</div><div class="tools"><button type="button" class="btn" id="retry">Try again</button><button type="button" class="btn secondary" id="backHome">Home</button></div></div>`; }
-/* A scene is read as pages: what happened after the last choice (if any), then the scene text two sentences at a time. */
+/* A chapter is read as pages: a title page (first chapter only), what happened after the last choice (if any), then the text two sentences at a time. */
 function pagesOf(sc){
   if (!sc._pages) {
     const sents = (String(sc.scene_text || "").match(/[^.!?]+[.!?]+["”’']*|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean);
@@ -822,7 +934,11 @@ function pagesOf(sc){
     const pages = [];
     for (let i = 0; i < sents.length; i += per) pages.push({text: sents.slice(i, i + per).join(" ")});
     if (!pages.length) pages.push({text: String(sc.scene_text || "")});
-    sc._pages = (sc.consequence_text ? [{text: sc.consequence_text, cons: true}] : []).concat(pages);
+    pages[0].first = true;
+    const front = [];
+    if (S.scenes[0] === sc) front.push({text: `${S.title}. A book for ${S.settings.child_name}.`, cover: true});
+    if (sc.consequence_text) front.push({text: sc.consequence_text, cons: true});
+    sc._pages = front.concat(pages);
   }
   return sc._pages;
 }
@@ -832,42 +948,51 @@ function speakPage(){
   if (S.page < pages.length) speak(pages[S.page].text);
   else speak([sc.question || "What do you do?"].concat(sc.options.map((o, i) => "ABCD"[i] + ". " + o.label)).join(" "));
 }
-function goEnding(){ stopSpeak(); screen = "ending"; render(); if (S.warmup) speak("You finished! One last time: " + S.warmup.question); }
+function goEnding(){ stopSpeak(); screen = "ending"; render(); if (S.warmup) speak("You finished the book! One question: " + S.warmup.question); }
 function storyView(){
   const sc = currentScene();
   const n = S.scenes.length;
   const pages = pagesOf(sc);
   const atChoice = S.page >= pages.length;
-  const wasGood = S.choices.length && !WEAK(S.choices[S.choices.length-1].hidden_type);
-  const dots = Array.from({length: TOTAL}, (_, i) => `<span class="dot ${i < n-1 ? "done" : i === n-1 ? "on" : ""}">${i+1}</span>`).join("");
-  const hearts = Array.from({length: 5}, (_, i) => `<span class="heart ${i < S.meters.hearts ? "" : "off"}"></span>`).join("");
-  const head = `<div class="storyhead"><h2>${esc(S.title)}</h2><div class="dots" role="img" aria-label="Chapter ${n} of ${TOTAL}">${dots}</div></div>
-    <div class="meters"><span class="hearts" role="img" aria-label="${S.meters.hearts} of 5 friendship hearts">${hearts}</span>${S.meters.items.length ? `<span class="bag"><b>Bag:</b> ${S.meters.items.map(esc).join(", ")}</span>` : ""}</div>`;
+  const idle = !S.error && !S.busy && !S.think;
   const art = `<div class="art" data-art="${n-1}">${sc.svg || (sc.noArt ? NO_ART : `<div class="wait"><span class="blobs"><i></i><i></i><i></i></span><small>The Illustrator is drawing…</small></div>`)}</div>`;
-  const readAgain = cap.tts ? `<button type="button" class="btn secondary ico-speak" id="replay">Read it to me</button>` : "";
+  const speakBtn = canSpeak() ? `<button type="button" class="speakbtn ico-speak" id="replay">Read it to me</button>` : "";
+  const before = S.scenes.slice(0, n - 1).reduce((a, x) => a + pagesOf(x).length, 0);
   let side;
   if (S.error) side = `<div class="conseq">${esc(S.error)}</div><div class="tools"><button type="button" class="btn" id="retry">Try again</button></div>`;
   else if (S.busy) side = `<div class="writing"><div class="spin"></div>The Director is writing what happens next…</div>`;
   else if (S.think) {
     const t = S.think;
-    side = `${sc.consequence_text ? `<div class="conseq">${esc(sc.consequence_text)}</div>` : ""}
+    side = `${sc.consequence_text ? `<p class="readtext" style="font-size:22px">${esc(sc.consequence_text)}</p>` : ""}
       <div class="think"><h3>Think-back moment</h3><p>If you could choose again, what would you do differently?</p>
       ${t.reply ? `<div class="coach"><span class="who">The Coach says</span>${esc(t.reply)}</div><div class="tools"><button type="button" class="btn mint" id="thinkDone">Keep reading</button></div>`
         : t.busy ? `<div class="writing"><div class="spin"></div>The Coach is listening…</div>`
         : `<div class="own"><input id="thinkIn" placeholder="Say it or type it…">${micButton("thinkIn")}<button type="button" class="btn" id="thinkGo">Tell the Coach</button></div>`}</div>`;
   }
   else if (!atChoice) {
-    const pg = pages[S.page], last = S.page === pages.length - 1;
-    side = `${pg.cons ? `<span class="pill ${wasGood ? "free" : "warn"}">What happened next</span>` : ""}
-      <p class="readtext ${pg.cons ? "cons" : ""}">${esc(pg.text)}</p>
-      <div class="tools">${readAgain}</div>
-      <div class="pager"><button type="button" class="btn secondary" id="pageBack" ${S.page === 0 ? "disabled" : ""}>Back</button><span class="pagecount">Page ${S.page + 1} of ${pages.length}</span><button type="button" class="btn go" id="pageNext">${last ? (sc.is_ending ? "The end" : "Your turn") : "Next page"}</button></div>`;
+    const pg = pages[S.page];
+    side = pg.cover
+      ? `<div class="titlepage"><span class="eyebrow">A book for ${esc(S.settings.child_name)}</span><h1>${esc(S.title)}</h1>${S.settings.lesson ? `<p>${esc(S.settings.lesson)}</p>` : ""}</div>${speakBtn}`
+      : `${pg.cons ? `<span class="next-label">What happened next</span>` : ""}<p class="readtext ${pg.first ? "first" : ""}">${esc(pg.text)}</p>${speakBtn}<div class="pageno">${before + S.page + 1}</div>`;
   }
   else side = `<p class="question">${esc(sc.question || "What do you do?")}</p>
     <div class="opts">${sc.options.map((o,i) => `<button type="button" class="opt o${i}" data-opt="${i}"><span class="k" aria-hidden="true">${"ABCD"[i]}</span><span>${esc(o.label)}</span></button>`).join("")}</div>
     <div class="own"><input id="ownIn" placeholder="Or say or type your own idea…">${micButton("ownIn")}<button type="button" class="btn secondary" id="ownGo">Try my idea</button></div>
-    <div class="tools"><button type="button" class="btn secondary" id="pageBack">Read again</button>${readAgain}${!S.rewindUsed && S.choices.length ? `<button type="button" class="btn secondary ico-rewind" id="rewind">Rewind one choice</button>` : ""}</div>`;
-  return `<div class="card reader"><div class="reader-head">${head}</div><div class="reader-art">${art}</div><div class="reader-text">${side}</div></div>`;
+    <div class="tools">${speakBtn}${!S.rewindUsed && S.choices.length ? `<button type="button" class="btn secondary ico-rewind" id="rewind">Rewind one choice</button>` : ""}</div>`;
+  const canTurn = idle && !atChoice;
+  const last = S.page === pages.length - 1;
+  const nextLabel = !canTurn ? "" : pages[S.page].cover ? "Start reading" : last ? (sc.is_ending ? "The end" : "Your turn") : "Next";
+  const steps = pages.length + (sc.is_ending ? 0 : 1);
+  const prog = Math.round(100 * ((n - 1) + Math.min(1, (S.page + 1) / steps)) / TOTAL);
+  return `<div class="book">
+    <div class="book-bar"><span class="book-title">${esc(S.title)}</span><span>Chapter ${n} of ${TOTAL}</span></div>
+    <div class="spread"><div class="leaf leaf-text">${side}</div><div class="leaf leaf-art">${art}</div></div>
+    <div class="book-foot">
+      <button type="button" class="turn back" id="pageBack" aria-label="Previous page" ${!idle || S.page === 0 ? "disabled" : ""}><span class="arr"></span></button>
+      <div class="progress" role="img" aria-label="${prog} percent of the book read"><i style="width:${prog}%"></i></div>
+      ${canTurn ? `<button type="button" class="turn" id="pageNext">${nextLabel}<span class="arr"></span></button>` : ""}
+    </div>
+  </div>`;
 }
 function endingView(){
   const cols = S.choices.map((c, i) => {
@@ -878,7 +1003,7 @@ function endingView(){
     }).join("")}</div>`;
   }).join("");
   let warm = "";
-  if (S.warmup && !S.report && !S.reportBusy) warm = `<div class="card stack"><span class="pill free">After the story</span><p class="question">${esc(S.warmup.question)}</p>
+  if (S.warmup && !S.report && !S.reportBusy) warm = `<div class="card stack"><span class="next-label">One question about the story</span><p class="question">${esc(S.warmup.question)}</p>
     <div class="own"><input id="afterIn" placeholder="Say it or type it…">${micButton("afterIn")}<button type="button" class="btn" id="afterGo">Show the parent report</button></div></div>`;
   else if (!S.warmup && !S.report && !S.reportBusy) warm = `<div class="tools"><button type="button" class="btn" id="afterGo">Show the parent report</button></div>`;
   let rep = "";
@@ -890,7 +1015,7 @@ function endingView(){
     rep = `<div class="card stack"><span class="pill premium">For the parent</span><h2 style="font-size:28px">${esc(S.settings.child_name)}'s learning report</h2>
       <p style="max-width:66ch">${esc(r.summary || "")}</p>
       <div class="report">
-        <div class="stat"><div class="n">${mark(r.before_correct)} → ${mark(r.after_correct)}</div><div class="l">Warm-up question, before → after</div></div>
+        <div class="stat"><div class="n">${mark(r.after_correct)}</div><div class="l">Question after the story</div></div>
         <div class="stat"><div class="n">${esc(r.wise_choices ?? "–")} of ${esc(r.total_choices ?? S.choices.length)}</div><div class="l">Wise choices</div></div>
         <div class="stat"><div class="n">${S.wordsRead}</div><div class="l">Words read</div></div>
       </div>
@@ -932,7 +1057,7 @@ document.addEventListener("click", e => {
     case "replay": speakPage(); break;
     case "pageNext": {
       const sc = currentScene(), pages = pagesOf(sc), pg = pages[S.page];
-      if (pg && !pg.read) { pg.read = true; S.wordsRead += pg.text.split(/\s+/).filter(Boolean).length; }
+      if (pg && !pg.read && !pg.cover) { pg.read = true; S.wordsRead += pg.text.split(/\s+/).filter(Boolean).length; }
       if (sc.is_ending && S.page >= pages.length - 1) { goEnding(); break; }
       S.page++; render(); speakPage(); break;
     }

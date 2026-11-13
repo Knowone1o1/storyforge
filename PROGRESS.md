@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 11:56 AM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:09 PM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -20,7 +20,16 @@ The live site runs on a free Gemini key with a small daily limit (roughly 20 req
 
 Every `git push` to `main` updates the live website by itself within about a minute. The Claude version only changes when Lorenzo republishes it.
 
-## Newest change: reading mode and new look
+## Newest change: it is a book now
+
+- No warm-up. A story opens straight on its title page and reads like a book: an open two-page spread, text on the left page and the moving picture on the right, page number at the bottom, a progress bar under the book.
+- The child reads a few pages, then picks what happens next. Three branch points per book. One question at the very end feeds the parent report.
+- Home is a bookshelf of covers, plus "Make a book for your child".
+- Narrator fix: it now falls back to the browser's own voice when Claude's voice is not available, and no longer goes silent on the website after a page turn. If it fails, the Backstage panel says why.
+- ElevenLabs narrator for the website: add `ELEVENLABS_API_KEY` in Vercel (Settings, Environment Variables) and redeploy. Without the key the site uses the browser voice. The Claude version keeps Claude's voice.
+- Tested with the fake AI only. Voice itself still needs a person to listen.
+
+## Earlier change: reading mode and new look
 
 - StoryForge is now reading software first. In a story, half the screen is big reading text and the other half is a moving picture of the scene. The child reads 3 short pages, then picks what happens next.
 - The scene's result ("What happened next") is its own page. The narrator can read any page aloud ("Read it to me") and reads the four choices aloud too.
