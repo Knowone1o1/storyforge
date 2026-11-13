@@ -1,6 +1,15 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:40 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:54 PM. Deck locks at 4:00 PM.
+
+## Newest: longer books, no loading mid-book, grown-ups area
+
+- Books are twice as long: 6 pages per chapter (24 pages for the ready-made dino book).
+- AI books (Surprise book, Make a book, the two other shelf books) are now written whole before they open: every page, all 12 outcomes and both endings in one go (`writeWholeBook` in `index.html`). Nothing is written while the child reads. Chapter 1's pictures are ready at opening; the rest are built in the background during chapter 1. If writing the whole book fails, it falls back to the old chapter-by-chapter way.
+- Grown-ups area, behind a small multiplication question: "Make a book" and the reading reports. The child no longer sees the report at the end; it is saved for the grown-up (kept in the browser, last 20).
+- Pictures now follow the page being read in AI books too: one picture per two pages and one per outcome.
+- Not done: painted 2D pictures in the cover style. They need Figma's image generator, which spends Lorenzo's Figma AI credits (Starter plan). Waiting for his go-ahead and a number of pictures.
+- Tested with the fake AI only.
 
 ## Use this for the demo: the ready-made book
 

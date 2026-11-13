@@ -15,7 +15,15 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         p = body["prompt"]
-        if "3D scene" in p: text = json.dumps({"sky":"#8CCBFF","ground":"#7FCF86","time":"day",
+        if "WHOLE short picture book" in p:
+            opts = lambda q: [{"label":q+" the wise way","hidden_type":"wise","leads_to":"It works.","result":"It works well. Everyone cheers.","coach":""},{"label":q+" the slow way","hidden_type":"okay","leads_to":"Slow but fine.","result":"It takes a while, but it works.","coach":""},{"label":q+" the wild way","hidden_type":"tempting_bad","leads_to":"A mess.","result":"What a mess! They tidy up and try again.","coach":"Wild is fun, but counting first works better."},{"label":q+" not at all","hidden_type":"clearly_bad","leads_to":"Nothing happens.","result":"Nothing gets done. They go back and help.","coach":"Helping is the kind thing to do."}]
+            ch = lambda k: {"pages":["Kai walks to the hill, part %d." % k,"He sees 3 red balls.","A fox says hello.","The fox takes 1 ball.","Kai counts the balls again.","Now there are 2 balls."],"question":"What should Kai do in part %d?" % k,"options":opts("Do it")}
+            text = json.dumps({"title":"Kai and the Fox","lesson":"taking away","hero_look":"Kai, a kid in a green shirt","check":{"question":"What is 3 take away 1?","answer":"2"},"chapters":[ch(1),ch(2),ch(3)],"ending_good":["Kai and the fox are friends.","They share the balls. The end."],"ending_mixed":["It took a few tries.","Kai and the fox share. The end."]})
+        elif "Guardian agent" in p and "LINES:" in p: text = json.dumps({"approved":True,"note":"all pages are safe","replace":[]})
+        elif "for chapter" in p and "moments" in p:
+            sc = lambda n, mv: {"sky":"#8CCBFF","ground":"#7FCF86","time":"day","characters":[{"kind":"kid","color":"#22B573","skin":"#F2C29B","hair":"#2B2B3A","hairstyle":"short","move":mv},{"kind":"fox","move":"idle"}],"props":[{"type":"ball","count":n,"color":"#E8413C"}],"scenery":[{"type":"hill","x":-3,"z":-3},{"type":"tree","x":4,"z":-2},{"type":"cloud","x":0,"z":-2},{"type":"sun","x":4,"z":-2},{"type":"bush","x":-4,"z":-1.5}]}
+            text = json.dumps({"moments":[sc(3,"wave"),sc(3,"idle"),sc(2,"hop")],"outcomes":[sc(2,"wave"),sc(2,"idle"),sc(1,"hop"),sc(3,"idle")]})
+        elif "3D scene" in p: text = json.dumps({"sky":"#8CCBFF","ground":"#7FCF86","time":"day",
           "characters":[{"kind":"kid","color":"#7B5CFF","skin":"#F2C29B","hair":"#5A3A22","hairstyle":"pigtails","move":"wave"},{"kind":"dog","color":"#C98B4F","move":"hop"},{"kind":"dino","size":1.3,"color":"#4DBB6D"},{"kind":"bird","color":"#39A0FF"}],
           "props":[{"type":"egg","count":8}],
           "scenery":[{"type":"mountain","x":-3.5,"z":-2.5,"size":1.4},{"type":"tree","x":-4,"z":0,"size":1.2},{"type":"pine","x":3.8,"z":-1.5,"size":1.3},{"type":"cloud","x":-2,"z":-1},{"type":"cloud","x":-1.6,"z":-2,"size":1.3},{"type":"sun","x":4,"z":-2},
