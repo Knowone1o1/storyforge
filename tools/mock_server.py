@@ -15,11 +15,11 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         p = body["prompt"]
-        if "3D scene" in p: text = json.dumps({"sky":"#BFE3FF","ground":"#8FD694","time":"day","objects":[
-            {"type":"mountain","x":-3.5,"z":-2.5,"size":1.4},{"type":"tree","x":-4,"z":0,"size":1.2},{"type":"pine","x":3.8,"z":-1.5,"size":1.3},{"type":"cloud","x":-2,"z":-1},{"type":"cloud","x":3,"z":-2,"size":1.3},{"type":"sun","x":4,"z":-2},
-            {"type":"pond","x":2.5,"z":1.5},{"type":"house","x":0.5,"z":-2.2,"size":1.2,"color":"#FFD27A","color2":"#FF6B5E"},{"type":"bush","x":-2.2,"z":-1.2},{"type":"flower","x":-0.5,"z":2.4},{"type":"rock","x":4.2,"z":1},{"type":"mushroom","x":-4.6,"z":2.6},{"type":"butterfly","x":1,"z":2},{"type":"campfire","x":3.6,"z":2.6},{"type":"castle","x":-1.6,"z":-2.8},
-            {"type":"egg","x":-1.2,"z":1.2},{"type":"egg","x":-0.6,"z":1.5},{"type":"egg","x":0,"z":1.2,"move":"hop"},{"type":"egg","x":0.6,"z":1.6}],
-          "characters":[{"kind":"kid","x":-2.6,"z":1.6,"color":"#7B5CFF","skin":"#F2C29B","hair":"#5A3A22","hairstyle":"pigtails","move":"wave"},{"kind":"dog","x":-3.6,"z":2.2,"color":"#C98B4F","move":"hop"},{"kind":"dino","x":2,"z":-.3,"size":1.3,"color":"#4DBB6D"},{"kind":"bird","x":0,"z":0,"color":"#39A0FF"},{"kind":"fox","x":4.4,"z":2.2,"move":"walk"}]})
+        if "3D scene" in p: text = json.dumps({"sky":"#8CCBFF","ground":"#7FCF86","time":"day",
+          "characters":[{"kind":"kid","color":"#7B5CFF","skin":"#F2C29B","hair":"#5A3A22","hairstyle":"pigtails","move":"wave"},{"kind":"dog","color":"#C98B4F","move":"hop"},{"kind":"dino","size":1.3,"color":"#4DBB6D"},{"kind":"bird","color":"#39A0FF"}],
+          "props":[{"type":"egg","count":8}],
+          "scenery":[{"type":"mountain","x":-3.5,"z":-2.5,"size":1.4},{"type":"tree","x":-4,"z":0,"size":1.2},{"type":"pine","x":3.8,"z":-1.5,"size":1.3},{"type":"cloud","x":-2,"z":-1},{"type":"cloud","x":-1.6,"z":-2,"size":1.3},{"type":"sun","x":4,"z":-2},
+            {"type":"pond","x":2.5,"z":1.5},{"type":"house","x":0.5,"z":-2.2,"size":1.2,"color":"#FFD27A","color2":"#FF6B5E"},{"type":"bush","x":0.6,"z":-2.1},{"type":"flower","x":-0.5,"z":2.4},{"type":"rock","x":4.2,"z":1},{"type":"mushroom","x":-4.6,"z":2.6},{"type":"tree","x":0,"z":1.5}]})
         elif "Illustrator agent" in p: text = '<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="450" fill="#bde"/><circle cx="400" cy="225" r="80" fill="#fc3"><animate attributeName="r" values="80;95;80" dur="3s" repeatCount="indefinite"/></circle></svg>'
         elif "Director agent" in p:
             s = dict(SCENE)

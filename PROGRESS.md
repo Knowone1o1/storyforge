@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:23 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:32 PM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -36,6 +36,7 @@ Every `git push` to `main` updates the live website by itself within about a min
 - The hero keeps the same look through the whole book.
 - Second pass on the models: characters now have faces, hair styles, hands and shoes, and they blink, look around, wave and walk. Animals have ears, muzzles and wagging tails. Scenery has detail (house with windows and chimney smoke, castle, pond with lily pads and ripples, campfire with flickering flames). The island has grass, pebbles and flowers, a gradient sky and floating specks. Everything pops in one by one when a page opens.
 - 37 object types and 12 character kinds are available to the Illustrator; the list is in `scene3dPrompt` in `index.html`.
+- Layout is now done by the app, not the AI (`arrange` in `index.html`). The AI names the cast, the props the text is about (with a count, for example 8 eggs) and the scenery. The app lines the props up in the middle where they can be counted, stands the cast beside them, keeps scenery in the back, and nudges everything apart so nothing overlaps.
 - If 3D is not available on a device, or the AI's description is unusable, the page falls back to the old flat drawing.
 - Tested with the fake AI only. How good real scenes look depends on how well the real AI places things.
 
