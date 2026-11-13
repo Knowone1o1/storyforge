@@ -12,6 +12,8 @@ A parent enters their child's name, interests, a lesson and limits. A team of AI
 | `api/sample.js` | The live site's AI endpoint: receives a prompt from the page and calls Google Gemini. The API key stays here, never in the page. |
 | `api/health.js` | Tells the page it is on the live site and whether the AI key is set. |
 | `package.json`, `vercel.json` | Settings the host (Vercel) needs. |
+| `tools/mock_server.py` | Local test server with a fake AI. Use this for testing so the free Gemini quota is saved for the demo. |
+| `PROGRESS.md` | What is done, what is tested, what is left. Read this first. |
 | `docs/PROMPT.md` | A ready-made prompt that explains the product to Claude, so anyone on the team can keep building. |
 
 ## Two ways the same page runs
@@ -29,6 +31,10 @@ The same `index.html` works in two places and picks the right mode by itself.
 4. Press Deploy. Vercel gives a link like `storyforge-xxxx.vercel.app`. Every later `git push` updates the site by itself.
 
 Limits of the free key: roughly 20 requests a day on the better model and 500 a day on the lighter one (the site switches by itself). One story uses about 15 to 18 requests, so expect around 30 stories a day, and the first one or two each day look best. On the free tier Google may use what is sent to improve its products, so keep to made-up children.
+
+### Testing without using the AI quota
+
+Run `python tools/mock_server.py` in this folder and open http://localhost:8765. The page works as on the live site, but the AI answers are canned, so it is free and instant. Use this for every change; keep the real site for the demo.
 
 ## How we work side by side
 
