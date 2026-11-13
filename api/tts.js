@@ -6,6 +6,7 @@ const elevenKey = () => process.env.ELEVENLABS_API_KEY || process.env.ELEVENLABS
 const KEY = elevenKey;
 const VOICE = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // a clear, warm premade voice; set ELEVENLABS_VOICE_ID to change it
 const MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2"; // the most natural reading voice; eleven_flash_v2_5 is faster and half the credits
+const SPEED = Math.min(1.2, Math.max(0.7, Number(process.env.ELEVENLABS_SPEED) || 0.85)); // 1 is normal; slower suits young readers
 const MAX_CHARS = 1200;
 // Warm storyteller-style voices, best first, used when they are among this account's own voices.
 const PREFERRED = ["Rachel", "Sarah", "Matilda", "Alice", "Lily", "Charlotte", "Jessica", "Laura", "Aria", "Grace", "Dorothy"];
@@ -15,7 +16,7 @@ function speakWith(voice, text){
   return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_64`, {
     method: "POST",
     headers: { "xi-api-key": KEY(), "Content-Type": "application/json", Accept: "audio/mpeg" },
-    body: JSON.stringify({ text, model_id: MODEL, voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } }),
+    body: JSON.stringify({ text, model_id: MODEL, voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true, speed: SPEED } }),
     signal: AbortSignal.timeout(20000),
   });
 }
