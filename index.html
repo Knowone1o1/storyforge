@@ -2041,7 +2041,7 @@ function matches(b){
 }
 function soonCover(b){
   return `<button type="button" class="cover soon" data-soon="${b.k}" aria-label="${esc(b.title)}, coming soon">
-      <span class="art-ph" style="--c:${b.tint}" aria-hidden="true"><svg viewBox="0 0 100 100">${MOTIF[b.motif] || MOTIF.book}</svg></span>
+      ${b.k < 26 ? `<img src="art/covers/s${b.k}.jpg" alt="" loading="lazy">` : `<span class="art-ph" style="--c:${b.tint}" aria-hidden="true"><svg viewBox="0 0 100 100">${MOTIF[b.motif] || MOTIF.book}</svg></span>`}
       <span class="cover-title">${esc(b.title)}<small>${esc(topicName(b.topic))}: ${esc(b.lesson)}</small><span class="tag">${esc(levelName(b.level))}</span></span>
     </button>`;
 }
