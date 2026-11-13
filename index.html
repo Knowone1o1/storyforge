@@ -215,6 +215,14 @@ textarea{min-height:84px;resize:vertical}
 .quote .hint{font-weight:500}
 .card ul{margin:0;padding-left:22px}
 
+/* Grown-ups: the child's saved profile */
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 18px;margin:0}
+.facts dt{font-weight:600;color:var(--ink-soft)}
+.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.forwho{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:3px solid var(--ink);border-radius:16px;background:var(--sun-soft);padding:12px 16px}
+.forwho b{font-size:22px}
+.saved{font-weight:600;color:var(--leaf)}
+
 /* Backstage: the agents' log, opened from the chip in the top row */
 .crew{position:absolute;z-index:30;top:72px;right:max(16px, env(safe-area-inset-right, 0px));width:min(380px, calc(100% - 32px));max-height:min(62%,520px);overflow:auto;display:none;background:var(--ink);color:var(--on-ink);border:3px solid var(--ink);border-radius:20px;padding:18px;box-shadow:0 8px 0 var(--wall-deep)}
 .crew.open{display:block}
@@ -1583,6 +1591,7 @@ function render(){
   else if (screen === "ending") st.innerHTML = endingView();
   else if (screen === "gate") st.innerHTML = gateView();
   else if (screen === "parents") st.innerHTML = parentsView();
+  else if (screen === "profile") st.innerHTML = profileView();
   if (screen !== shownScreen) { shownScreen = screen; st.scrollTop = 0; if (st.firstElementChild) st.firstElementChild.classList.add("enter"); }
   turnDir = 0;
   mountArt();
@@ -1629,9 +1638,61 @@ function reportCard(e){
     ${Array.isArray(r.highlights) && r.highlights.length ? `<ul>${r.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}
     ${r.conversation_starter ? `<div class="think"><h3>Ask tonight</h3><p style="margin:0">${esc(r.conversation_starter)}</p></div>` : ""}</div>`;
 }
+/* The child's profile: a grown-up fills it in once, it is remembered on this device, and every new book uses it. */
+const READING_LEVELS = ["pre-reader (listens only)", "early reader", "confident reader"];
+const PROFILE_KEYS = ["child_name", "child_age", "reading_level", "interests", "limits", "consequence_level"];
+let child = null, pdraft = null, profileSaved = false;
+try { const c = JSON.parse(localStorage.getItem("storyforge_child") || "null"); if (c && c.child_name) child = c; } catch(e) {}
+function saveChild(src){
+  child = {};
+  PROFILE_KEYS.forEach(k => { child[k] = src[k]; });
+  child.child_name = String(child.child_name || "").trim();
+  child.child_age = Math.min(12, Math.max(3, +child.child_age || 7));
+  child.reading_level = READING_LEVELS.includes(child.reading_level) ? child.reading_level : "early reader";
+  child.consequence_level = child.consequence_level || "medium";
+  try { localStorage.setItem("storyforge_child", JSON.stringify(child)); } catch(e) {}
+}
+function forgetChild(){ child = null; try { localStorage.removeItem("storyforge_child"); } catch(e) {} }
+function readProfile(){
+  if (!$("profileForm")) return;
+  pdraft = {...pdraft, child_name: $("p_name").value.trim(), child_age: +$("p_age").value || 7, reading_level: $("p_read").value,
+    interests: $("p_int").value.trim(), limits: $("p_lim").value.trim()};
+}
+function profileView(){
+  const d = pdraft;
+  return `<div class="view">${bar("Your child", true)}<div class="card">
+    <h2 style="font-size:30px">${child ? "Edit " + esc(child.child_name) + "'s profile" : "Tell us about your child"}</h2>
+    <p class="sub" style="margin:6px 0 20px">Fill this in once. It is saved on this device and used for every new book, so you never type it again.</p>
+    <form id="profileForm" class="form">
+      <div class="field"><label for="p_name">Child's first name</label><input id="p_name" value="${esc(d.child_name)}" required autocomplete="off"></div>
+      <div class="field"><label for="p_age">Age</label><input id="p_age" type="number" min="3" max="12" value="${esc(d.child_age)}"></div>
+      <div class="field full"><label for="p_read">Reading level</label><select id="p_read">${READING_LEVELS.map(o => `<option ${d.reading_level === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+      <div class="field full"><label for="p_int">Interests and favorite things</label><span class="hint">Pets, hobbies, favorite foods, people they love. The more specific, the better.</span><textarea id="p_int">${esc(d.interests)}</textarea></div>
+      <div class="field full"><label for="p_lim">Limits: what should stories avoid?</label><input id="p_lim" value="${esc(d.limits)}" placeholder="e.g. no scary monsters, no fighting"></div>
+      <div class="field full"><label>How strong should consequences be?</label><span class="hint">Weaker choices lead to setbacks in the story, so kids learn from them.</span>
+        <div class="seg" role="group">${[["gentle","Gentle"],["medium","Medium"],["real","Real"]].map(v => `<button type="button" data-pseg="${v[0]}" aria-pressed="${d.consequence_level === v[0]}">${v[1]}</button>`).join("")}</div></div>
+      <div class="field full row"><button type="submit" class="btn go">Save profile</button><button type="button" class="btn secondary" id="profileBack">Cancel</button>
+        ${child ? `<button type="button" class="btn secondary" id="forgetChild">${d._confirm ? "Tap again to forget" : "Forget this profile"}</button>` : ""}</div>
+    </form>
+  </div></div>`;
+}
+function childCard(){
+  if (!child) return `<div class="card stack"><h2>Your child</h2><p class="sub">Tell us their name, age, reading level and what they love. You do it once and every new book uses it.</p>
+    <div class="tools"><button type="button" class="btn go" id="goProfile">Set up the profile</button></div></div>`;
+  return `<div class="card stack"><h2>${esc(child.child_name)}'s profile</h2>
+    <dl class="facts">
+      <dt>Age</dt><dd>${esc(child.child_age)}</dd>
+      <dt>Reading level</dt><dd>${esc(child.reading_level)}</dd>
+      <dt>Loves</dt><dd>${esc(child.interests || "Not filled in yet")}</dd>
+      <dt>Stories avoid</dt><dd>${esc(child.limits || "Nothing set")}</dd>
+      <dt>Consequences</dt><dd>${esc(child.consequence_level)}</dd>
+    </dl>
+    <div class="tools"><button type="button" class="btn secondary" id="goProfile">Edit profile</button>${profileSaved ? `<span class="saved" role="status">Saved</span>` : ""}</div></div>`;
+}
 function parentsView(){
   return `<div class="view">${bar("Grown-ups", true)}
-  <div class="card stack"><h2>Make a book about your child</h2><p class="sub">Their name, what they love, the lesson you choose and the limits you set. The book is written before it opens, so there is no waiting while they read.</p>
+  ${childCard()}
+  <div class="card stack"><h2>Make a book about ${child ? esc(child.child_name) : "your child"}</h2><p class="sub">Their name, what they love, the lesson you choose and the limits you set. The book is written before it opens, so there is no waiting while they read.</p>
     <div class="tools"><button type="button" class="btn" id="goCustom">Make a book</button></div></div>
   <h2 style="margin:6px 0 0">Reading reports</h2>
   ${reports.length ? reports.map(reportCard).join("") : `<div class="card"><p class="sub">No reports yet. One appears here each time your child finishes a book.</p></div>`}
@@ -1639,7 +1700,7 @@ function parentsView(){
 }
 
 function homeView(){
-  return `<div class="view">${bar("My bookshelf")}
+  return `<div class="view">${bar(child ? child.child_name + "'s bookshelf" : "My bookshelf")}
   <div class="shelf">${LIBRARY.map((l,i) => `<button type="button" class="cover" data-lib="${i}" aria-label="${esc(l.title)}">
       <img src="${COVER_IMG[i] || ""}" alt="">
       <span class="cover-title">${esc(l.title)}<small>${esc(l.lessonLabel.replace(" · ", ": "))}</small></span>
@@ -1651,12 +1712,13 @@ function homeView(){
     <div class="quick">
       <h2>Surprise book</h2>
       <div class="seg" role="group" aria-label="Subject">${SUBJECTS.map(s => `<button type="button" data-quick="${s[0]}" aria-pressed="${quick.subject === s[0]}">${s[1]}</button>`).join("")}</div>
-      <div class="quick-row">
+      ${child ? `<p class="sub">A brand-new book for ${esc(child.child_name)}.</p><div class="quick-row"><button type="button" class="btn go ico-play" id="quickGo">Start reading</button></div>`
+        : `<div class="quick-row">
         <label for="q_age">Age</label>
         <select id="q_age">${[4,5,6,7,8,9,10,11,12].map(a => `<option ${quick.age === a ? "selected" : ""}>${a}</option>`).join("")}</select>
         <input id="q_name" placeholder="Your name" value="${esc(quick.name)}">
         <button type="button" class="btn go ico-play" id="quickGo">Start reading</button>
-      </div>
+      </div>`}
     </div>
   </div>
   <div class="plank"></div>
@@ -1665,20 +1727,24 @@ function homeView(){
 function setupView(){
   const d = draft;
   const seg = (name, vals) => `<div class="seg" role="group">${vals.map(v => `<button type="button" data-seg="${name}" data-val="${v[0]}" aria-pressed="${d[name] === v[0]}">${v[1]}</button>`).join("")}</div>`;
-  return `<div class="view">${bar("Make a book", true)}<div class="card">
-    <h2 style="font-size:30px">Tell us about your child</h2>
-    <p class="sub" style="margin:6px 0 20px">You know what keeps them hooked. We'll turn it into a story that teaches.</p>
-    <form id="setupForm" class="form">
-      <div class="field"><label for="f_name">Child's first name</label><input id="f_name" value="${esc(d.child_name)}" required></div>
+  const who = child
+    ? `<div class="field full"><div class="forwho"><span>This book is for</span><b>${esc(child.child_name)}, ${esc(child.child_age)}</b><span class="hint">${esc(child.reading_level)}</span><span class="grow"></span><button type="button" class="btn secondary" id="goProfile">Edit profile</button></div></div>`
+    : `<div class="field"><label for="f_name">Child's first name</label><input id="f_name" value="${esc(d.child_name)}" required></div>
       <div class="field"><label for="f_age">Age</label><input id="f_age" type="number" min="3" max="12" value="${esc(d.child_age)}"></div>
-      <div class="field full"><label for="f_int">Interests and favorite things</label><span class="hint">Pets, hobbies, favorite foods, people they love… The more specific, the better.</span><textarea id="f_int">${esc(d.interests)}</textarea></div>
-      <div class="field"><label for="f_type">What kind of lesson?</label><select id="f_type">${[["math","Math"],["geography","Geography"],["science","Science"],["moral","Values and kindness"],["reading","Reading and words"]].map(o => `<option value="${o[0]}" ${d.lesson_type === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select></div>
-      <div class="field"><label for="f_read">Reading level</label><select id="f_read">${["pre-reader (listens only)","early reader","confident reader"].map(o => `<option ${d.reading_level === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+      <div class="field full"><label for="f_int">Interests and favorite things</label><span class="hint">Pets, hobbies, favorite foods, people they love. The more specific, the better.</span><textarea id="f_int">${esc(d.interests)}</textarea></div>
+      <div class="field full"><label for="f_read">Reading level</label><select id="f_read">${READING_LEVELS.map(o => `<option ${d.reading_level === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>`;
+  const rules = child ? "" : `<div class="field full"><label for="f_lim">Limits: what should the story avoid?</label><input id="f_lim" value="${esc(d.limits)}" placeholder="e.g. no scary monsters, no fighting"></div>
+      <div class="field full"><label>How strong should consequences be?</label><span class="hint">Weaker choices lead to setbacks in the story, so kids learn from them.</span>${seg("consequence_level", [["gentle","Gentle"],["medium","Medium"],["real","Real"]])}</div>`;
+  return `<div class="view">${bar("Make a book", true)}<div class="card">
+    <h2 style="font-size:30px">${child ? "A new book for " + esc(child.child_name) : "Tell us about your child"}</h2>
+    <p class="sub" style="margin:6px 0 20px">${child ? "Pick what this book should teach. Everything else comes from the saved profile." : "You know what keeps them hooked. We'll turn it into a story that teaches, and remember these details for next time."}</p>
+    <form id="setupForm" class="form">
+      ${who}
+      <div class="field full"><label for="f_type">What kind of lesson?</label><select id="f_type">${[["math","Math"],["geography","Geography"],["science","Science"],["moral","Values and kindness"],["reading","Reading and words"]].map(o => `<option value="${o[0]}" ${d.lesson_type === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select></div>
       <div class="field full"><label for="f_lesson">What should they learn?</label><span class="hint">Not sure? Press "Suggest a lesson" and the AI picks one for the subject and age.</span>
         <div class="row"><input id="f_lesson" value="${esc(d.lesson)}" placeholder="e.g. adding numbers up to 20, sharing with friends" style="flex:1;min-width:220px"><button type="button" class="btn secondary ico-spark" id="suggestLesson" ${d._suggesting ? "disabled" : ""}>${d._suggesting ? "Thinking…" : "Suggest a lesson"}</button></div></div>
       <div class="field full"><label for="f_theme">Story idea (optional)</label><input id="f_theme" value="${esc(d.theme)}" placeholder="Leave empty and we'll build one from the interests"></div>
-      <div class="field full"><label for="f_lim">Limits: what should the story avoid?</label><input id="f_lim" value="${esc(d.limits)}" placeholder="e.g. no scary monsters, no fighting"></div>
-      <div class="field full"><label>How strong should consequences be?</label><span class="hint">Weaker choices lead to setbacks in the story, so kids learn from them.</span>${seg("consequence_level", [["gentle","Gentle"],["medium","Medium"],["real","Real"]])}</div>
+      ${rules}
       <div class="field full row"><button type="submit" class="btn go">Write the book</button><button type="button" class="btn secondary" id="backHome">Back</button></div>
     </form>
   </div></div>`;
@@ -1820,6 +1886,7 @@ document.addEventListener("click", e => {
   const w = e.target.closest(".w"); if (w) { tapWord(w); return; }
   const t = e.target.closest("button"); if (!t) { $("crew").classList.remove("open"); return; }
   if (t.dataset.lib !== undefined) { const l = LIBRARY[+t.dataset.lib]; if (l.demo) startDemo(l.demo, {...l.settings, _lib: +t.dataset.lib}); else startStory({...l.settings, _lib: +t.dataset.lib}); return; }
+  if (t.dataset.pseg) { readProfile(); pdraft.consequence_level = t.dataset.pseg; render(); return; }
   if (t.dataset.seg) { readForm(); draft[t.dataset.seg] = t.dataset.val; render(); return; }
   if (t.dataset.quick) { readQuick(); quick.subject = t.dataset.quick; render(); return; }
   if (t.dataset.opt !== undefined) { choose(currentScene().options[+t.dataset.opt]); return; }
@@ -1833,12 +1900,16 @@ document.addEventListener("click", e => {
     case "gateGo": { const v = parseInt(($("gateIn").value || "").trim(), 10); if (gate && v === gate.a * gate.b) { gate = null; screen = "parents"; } else if (gate) gate.wrong = true; render(); break; }
     case "quickGo": {
       readQuick();
-      startStory({child_name: quick.name || "Kai", child_age: quick.age, reading_level: quick.age <= 6 ? "early reader" : "confident reader",
-        interests: "", theme: "", lesson_type: quick.subject, lesson: "", limits: "nothing scary, no fighting", consequence_level: "medium"});
+      const c = child || {}, age = c.child_age || quick.age;
+      startStory({child_name: c.child_name || quick.name || "Kai", child_age: age, reading_level: c.reading_level || (age <= 6 ? "early reader" : "confident reader"),
+        interests: c.interests || "", theme: "", lesson_type: quick.subject, lesson: "", limits: c.limits || "nothing scary, no fighting", consequence_level: c.consequence_level || "medium"});
       break;
     }
     case "suggestLesson": suggestLesson(); break;
-    case "goCustom": draft = draft || {...LIBRARY[0].settings, child_name:"", interests:"", lesson:"", limits:"", theme:""}; screen = "setup"; render(); break;
+    case "goCustom": draft = {...LIBRARY[0].settings, child_name:"", interests:"", limits:"", ...(draft || {}), ...(child || {}), lesson: draft ? draft.lesson : "", theme: draft ? draft.theme : ""}; screen = "setup"; render(); break;
+    case "goProfile": profileSaved = false; pdraft = {child_name:"", child_age:7, reading_level:"early reader", interests:"", limits:"", consequence_level:"medium", ...(child || {})}; screen = "profile"; render(); break;
+    case "profileBack": screen = "parents"; render(); break;
+    case "forgetChild": readProfile(); if (pdraft._confirm) { forgetChild(); draft = null; screen = "parents"; } else pdraft._confirm = true; render(); break;
     case "backHome": case "homeBtn": stopSpeak(); $("crew").classList.remove("open"); screen = "home"; render(); break;
     case "muteBtn": muted = !muted; if (muted) pauseRead(); t.textContent = muted ? "Sound off" : "Sound on"; t.setAttribute("aria-pressed", !muted); break;
     case "warmGo": S.warmBefore = ($("warmIn").value || "").trim(); screen = "story"; S.page = 0; render(); speakPage(); break;
@@ -1865,11 +1936,12 @@ document.addEventListener("click", e => {
   }
 });
 function readForm(){
-  if (!$("f_name")) return;
+  if (!$("setupForm")) return;
+  const v = (id, was) => $(id) ? $(id).value.trim() : was; // fields the profile already covers are not on the form
   draft = {...draft,
-    child_name: $("f_name").value.trim(), child_age: +$("f_age").value || 7, interests: $("f_int").value.trim(),
-    lesson_type: $("f_type").value, reading_level: $("f_read").value, lesson: $("f_lesson").value.trim(),
-    theme: $("f_theme").value.trim(), limits: $("f_lim").value.trim()};
+    child_name: v("f_name", draft.child_name), child_age: +v("f_age", draft.child_age) || 7, interests: v("f_int", draft.interests),
+    lesson_type: v("f_type", draft.lesson_type), reading_level: v("f_read", draft.reading_level), lesson: v("f_lesson", draft.lesson),
+    theme: v("f_theme", draft.theme), limits: v("f_lim", draft.limits)};
 }
 function readQuick(){
   if ($("q_age")) quick.age = +$("q_age").value || 7;
@@ -1889,12 +1961,18 @@ Return ONLY JSON: {"lesson": "short specific lesson, max 12 words", "theme": "on
   draft._suggesting = false; render();
 }
 document.addEventListener("submit", e => {
+  if (e.target.id === "profileForm") { // save the child's profile
+    e.preventDefault(); readProfile();
+    if (!pdraft.child_name) { $("p_name").focus(); return; }
+    saveChild(pdraft); profileSaved = true; draft = null; screen = "parents"; render(); return;
+  }
   if (e.target.id !== "setupForm") return;
   e.preventDefault();
   readForm();
-  const s = {...draft};
+  const s = {...draft, ...(child || {})};
   delete s._suggesting;
   s.child_name = s.child_name || "Alex";
+  if (!child && draft.child_name) saveChild(s); // first book: remember the child for next time
   startStory(s);
 });
 document.addEventListener("keydown", e => {
