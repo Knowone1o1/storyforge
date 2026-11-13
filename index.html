@@ -1974,7 +1974,7 @@ function homeView(){
       <span class="cover-title">${esc(b.book.title)}<small>Made for ${esc(b.settings.child_name)}, ${esc(b.when)}</small></span>
       ${stars.books["s" + b.id] ? `<span class="sticker" role="img" aria-label="Finished"><i class="star"></i></span>` : ""}
     </button>`).join("");
-  const read = LIBRARY.map((l, i) => stars.books[i] ? libCover(l, i) : "").join("");
+  const read = LIBRARY.map((l, i) => libCover(l, i)).join(""); // the ready books are always on the shelf, so it is never empty
   const title = child ? child.child_name + "'s bookshelf" : "My bookshelf";
   if (!made && !read) return `<div class="view">${bar(title)}
     <div class="card stack"><h2>This shelf is waiting for its first book</h2>
