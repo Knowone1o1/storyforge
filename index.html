@@ -305,7 +305,7 @@ async function loadCaps(){
 function showBanner(msg, isErr){
   const b = $("banner");
   if (msg) { b.textContent = msg; b.className = "banner" + (isErr ? " err" : ""); return; }
-  if (capsReady && webNoKey) { b.textContent = "The site is live, but the AI key has not been set yet. Add ANTHROPIC_API_KEY in the hosting settings and redeploy."; b.className = "banner err"; }
+  if (capsReady && webNoKey) { b.textContent = "The site is live, but the AI key has not been set yet. Add GEMINI_API_KEY in the hosting settings and redeploy."; b.className = "banner err"; }
   else if (capsReady && !cap.sample) { b.textContent ="The AI only runs when this page is opened in Claude (claude.ai or the Claude desktop app). Open the artifact there to play."; b.className = "banner err"; }
   else b.className = "banner hidden";
 }
@@ -349,10 +349,10 @@ async function ai(prompt, tier){
   throw last;
 }
 function aiError(e){
-  if (e && e.code === "rate_limited") return "The AI is busy for a moment. Wait a few seconds and press Try again.";
+  if (e && e.code === "rate_limited") return webNoKey !== undefined && !(window.claude && window.claude.use) ? "The free AI limit was reached for now. Wait a minute and press Try again." : "The AI is busy for a moment. Wait a few seconds and press Try again.";
   if (e && e.code === "not_granted") return "The AI wasn't allowed to run. Allow it when Claude asks, then press Try again.";
   if (e && e.code === "no_ai") return webNoKey ? "The AI key has not been set on the site yet." : "The AI only runs when this page is opened in Claude.";
-  if (e && e.code === "no_key") return "The AI key on the site is missing or wrong. Check ANTHROPIC_API_KEY in the hosting settings.";
+  if (e && e.code === "no_key") return "The AI key on the site is missing or wrong. Check GEMINI_API_KEY in the hosting settings.";
   if (e && e.code === "network") return "The internet connection dropped for a moment. Press Try again.";
   return "Something went wrong while writing the story. Press Try again.";
 }

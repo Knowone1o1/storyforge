@@ -1,15 +1,43 @@
 // The one AI endpoint of the live site. The page sends a prompt and a tier
-// ("default" or "quick"); this function calls Claude and returns the text.
-// The API key lives only here, in the host's environment variables.
-import Anthropic from "@anthropic-ai/sdk";
+// ("default" or "quick"); this function calls Google Gemini (free tier) and
+// returns the text. The API key lives only here, in the host's environment variables.
 
-const MODELS = { default: "claude-opus-5-5", quick: "claude-haiku-5-5" };
+// Free-tier limits are small, so each tier has a list: if one model is out of
+// free requests (or unavailable) the next one is tried.
+// Flash = better stories and pictures, but only about 20 free requests a day.
+// Flash-Lite = about 500 free requests a day.
+const MODELS = {
+  default: ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+  quick: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+};
+const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const MAX_PROMPT_CHARS = 20000;
 
-const client = new Anthropic(); // reads ANTHROPIC_API_KEY
+async function callGemini(model, prompt, withConfig) {
+  const body = { model, input: prompt };
+  if (withConfig) body.generation_config = { thinking_level: "low" }; // keeps answers fast
+  const r = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(50000),
+  });
+  const data = await r.json().catch(() => ({}));
+  return { status: r.status, data };
+}
+
+function textOf(data) {
+  return (data.steps || [])
+    .filter((step) => step.type === "model_output")
+    .flatMap((step) => step.content || [])
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ code: "bad_request" });
+  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ code: "no_key" });
 
   // Only our own page may call this (stops other sites from using the key).
   const origin = req.headers.origin;
@@ -21,40 +49,31 @@ export default async function handler(req, res) {
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > MAX_PROMPT_CHARS) {
     return res.status(400).json({ code: "bad_request" });
   }
-  const quick = tier === "quick";
 
-  try {
-    const message = quick
-      ? await client.messages.create({
-          model: MODELS.quick,
-          max_tokens: 2000,
-          output_config: { effort: "low" },
-          messages: [{ role: "user", content: prompt }],
-        })
-      : await client.beta.messages.create({
-          model: MODELS.default,
-          max_tokens: 8000,
-          output_config: { effort: "low" }, // keeps scenes and pictures fast
-          // If a safety check declines a request, the API retries on a fallback model.
-          betas: ["server-side-fallback-2026-07-01"],
-          fallbacks: "default",
-          messages: [{ role: "user", content: prompt }],
-        });
+  let sawRateLimit = false;
+  for (const model of MODELS[tier === "quick" ? "quick" : "default"]) {
+    try {
+      let { status, data } = await callGemini(model, prompt, true);
+      // Some models may not accept the speed setting: try once without it.
+      if (status === 400) ({ status, data } = await callGemini(model, prompt, false));
 
-    if (message.stop_reason === "refusal") return res.status(422).json({ code: "refused" });
-    const text = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("");
-    return res.status(200).json({ text });
-  } catch (err) {
-    if (err instanceof Anthropic.RateLimitError) return res.status(429).json({ code: "rate_limited" });
-    if (err instanceof Anthropic.AuthenticationError) return res.status(500).json({ code: "no_key" });
-    if (err instanceof Anthropic.APIError) {
-      console.error("Claude API error", err.status, err.message);
-      return res.status(502).json({ code: "ai_error" });
+      if (status === 200) {
+        const text = textOf(data);
+        if (text) return res.status(200).json({ text });
+        console.error("Gemini returned no text", model, data.status);
+        continue;
+      }
+      if (status === 401 || status === 403) {
+        console.error("Gemini key rejected", status, data.error && data.error.message);
+        return res.status(500).json({ code: "no_key" });
+      }
+      if (status === 429) sawRateLimit = true;
+      console.error("Gemini error", model, status, data.error && data.error.message);
+    } catch (err) {
+      console.error("Gemini call failed", model, err && err.message);
     }
-    console.error(err);
-    return res.status(500).json({ code: "server_error" });
   }
+  return sawRateLimit
+    ? res.status(429).json({ code: "rate_limited" })
+    : res.status(502).json({ code: "ai_error" });
 }

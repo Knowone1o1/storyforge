@@ -9,7 +9,7 @@ A parent enters their child's name, interests, a lesson and limits. A team of AI
 | File | What it is |
 | --- | --- |
 | `index.html` | The whole app. One self-contained page (HTML + CSS + JavaScript). |
-| `api/sample.js` | The live site's AI endpoint: receives a prompt from the page and calls Claude. The API key stays here, never in the page. |
+| `api/sample.js` | The live site's AI endpoint: receives a prompt from the page and calls Google Gemini. The API key stays here, never in the page. |
 | `api/health.js` | Tells the page it is on the live site and whether the AI key is set. |
 | `package.json`, `vercel.json` | Settings the host (Vercel) needs. |
 | `docs/PROMPT.md` | A ready-made prompt that explains the product to Claude, so anyone on the team can keep building. |
@@ -19,16 +19,16 @@ A parent enters their child's name, interests, a lesson and limits. A team of AI
 The same `index.html` works in two places and picks the right mode by itself.
 
 1. **Inside Claude (the "StoryForge" artifact).** Claude provides the AI, the narration voice, the microphone input and the Keenable web search. No keys. Owned by Lorenzo, so a change goes live there only when Lorenzo's Claude republishes `index.html`.
-2. **As a live website (this repo on Vercel).** Anyone with the link can play, no Claude account needed. The AI goes through `api/sample.js` with our own Anthropic API key, the voice uses the browser's built-in speech (best in Chrome), and the Fact Checker web search is skipped.
+2. **As a live website (this repo on Vercel).** Anyone with the link can play, no Claude account needed. The AI goes through `api/sample.js` to Google Gemini on a free API key, the voice uses the browser's built-in speech (best in Chrome), and the Fact Checker web search is skipped.
 
-### Putting the website live (one time, about 5 minutes)
+### Putting the website live (one time, about 5 minutes, free)
 
-1. Get an Anthropic API key at https://console.anthropic.com (Settings, API keys). Set a low monthly spend limit there.
+1. Get a free Gemini key: go to https://aistudio.google.com/apikey, sign in with a Google account and press "Create API key". Do not add billing, so it can never cost money.
 2. Go to https://vercel.com, sign in with GitHub, choose "Add New, Project" and import this `storyforge` repo.
-3. Before pressing Deploy, open "Environment Variables" and add `ANTHROPIC_API_KEY` with the key as value.
+3. Before pressing Deploy, open "Environment Variables" and add `GEMINI_API_KEY` with the key as value.
 4. Press Deploy. Vercel gives a link like `storyforge-xxxx.vercel.app`. Every later `git push` updates the site by itself.
 
-The site is public and every story costs a little API money, so remove the key (or the project) after the hackathon.
+Limits of the free key: roughly 20 requests a day on the better model and 500 a day on the lighter one (the site switches by itself). One story uses about 15 to 18 requests, so expect around 30 stories a day, and the first one or two each day look best. On the free tier Google may use what is sent to improve its products, so keep to made-up children.
 
 ## How we work side by side
 
