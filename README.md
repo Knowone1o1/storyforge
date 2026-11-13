@@ -9,15 +9,26 @@ A parent enters their child's name, interests, a lesson and limits. A team of AI
 | File | What it is |
 | --- | --- |
 | `index.html` | The whole app. One self-contained page (HTML + CSS + JavaScript). |
+| `api/sample.js` | The live site's AI endpoint: receives a prompt from the page and calls Claude. The API key stays here, never in the page. |
+| `api/health.js` | Tells the page it is on the live site and whether the AI key is set. |
+| `package.json`, `vercel.json` | Settings the host (Vercel) needs. |
 | `docs/PROMPT.md` | A ready-made prompt that explains the product to Claude, so anyone on the team can keep building. |
 
-## Important: where the app actually runs
+## Two ways the same page runs
 
-The app is published as a Claude artifact called "StoryForge". It only works when opened inside Claude (claude.ai or the Claude desktop app), because it uses Claude for the AI, the narration voice, the microphone input and the Keenable web search. There are no API keys anywhere.
+The same `index.html` works in two places and picks the right mode by itself.
 
-Opening `index.html` straight from this folder shows the screens, but the AI will not run.
+1. **Inside Claude (the "StoryForge" artifact).** Claude provides the AI, the narration voice, the microphone input and the Keenable web search. No keys. Owned by Lorenzo, so a change goes live there only when Lorenzo's Claude republishes `index.html`.
+2. **As a live website (this repo on Vercel).** Anyone with the link can play, no Claude account needed. The AI goes through `api/sample.js` with our own Anthropic API key, the voice uses the browser's built-in speech (best in Chrome), and the Fact Checker web search is skipped.
 
-This repo is the shared copy of the code. The live artifact is owned by Lorenzo, so a change only goes live when Lorenzo's Claude republishes `index.html` to that artifact.
+### Putting the website live (one time, about 5 minutes)
+
+1. Get an Anthropic API key at https://console.anthropic.com (Settings, API keys). Set a low monthly spend limit there.
+2. Go to https://vercel.com, sign in with GitHub, choose "Add New, Project" and import this `storyforge` repo.
+3. Before pressing Deploy, open "Environment Variables" and add `ANTHROPIC_API_KEY` with the key as value.
+4. Press Deploy. Vercel gives a link like `storyforge-xxxx.vercel.app`. Every later `git push` updates the site by itself.
+
+The site is public and every story costs a little API money, so remove the key (or the project) after the hackathon.
 
 ## How we work side by side
 
@@ -25,7 +36,7 @@ This repo is the shared copy of the code. The live artifact is owned by Lorenzo,
 2. Make one small change at a time and say what you changed in the commit message.
 3. Push right away (`git push`), and tell the other person. Both of us edit the same file, so short, frequent pushes avoid clashes.
 4. If two changes clash, ask Claude to "merge the conflict in index.html and keep both changes".
-5. Lorenzo republishes the artifact after pulling, then we test in Claude.
+5. The website updates by itself after each push. Lorenzo republishes the Claude artifact after pulling.
 
 Tip: split the work by area so we rarely touch the same lines.
 - Story logic and prompts: the `PROMPTS` and `STORY ENGINE` sections of `index.html`.

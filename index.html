@@ -202,11 +202,92 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 /* ============ CAPABILITIES ============ */
+/* Live-site mode: when the page is NOT inside Claude but on our own website, the same four
+   capabilities are provided by our /api endpoint (AI) and the browser (voice out, voice in). */
+let webNoKey = false;
+async function webCaps(){
+  if (!/^https?:$/.test(location.protocol)) return null;
+  let health;
+  for (let attempt = 0; attempt < 3 && !health; attempt++) {
+    try {
+      const r = await fetch("/api/health", {cache: "no-store"});
+      if (!r.ok) return null; // no /api here: not our live site
+      health = await r.json();
+    } catch(e) { if (window.claude && window.claude.use) return null; await new Promise(r => setTimeout(r, 500)); }
+  }
+  if (!health || !health.ok) return null;
+  if (!health.ai) { webNoKey = true; return [null, null, null, null]; }
+  return [webSample, webTTS(), webDictation(), null];
+}
+async function webSample(prompt, opts){
+  let r;
+  try {
+    r = await fetch("/api/sample", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({prompt, tier: opts && opts.modelTier === "quick" ? "quick" : "default"})});
+  } catch(e) { throw {code:"network"}; }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw {code: data.code || "ai_error"};
+  return {text: data.text || ""};
+}
+function webTTS(){
+  const synth = window.speechSynthesis;
+  if (!synth || !window.SpeechSynthesisUtterance) return null;
+  const pick = () => { const v = synth.getVoices(); return v.find(x => /^en/i.test(x.lang) && /natural|google|samantha|aria|jenny/i.test(x.name)) || v.find(x => /^en/i.test(x.lang)) || null; };
+  return {
+    speak(text, opts){
+      return new Promise(resolve => {
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        const v = pick(); if (v) u.voice = v;
+        u.lang = v ? v.lang : "en-US";
+        u.rate = (opts && opts.rate) || 1;
+        u.onend = u.onerror = () => resolve();
+        synth.speak(u);
+      });
+    },
+    stop(){ synth.cancel(); }
+  };
+}
+function webDictation(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const on = {partial(){}, final(){}, state(){}};
+  let rec = null;
+  return {
+    onPartial(f){ on.partial = f; }, onFinal(f){ on.final = f; }, onState(f){ on.state = f; },
+    start(){
+      return new Promise((resolve, reject) => {
+        rec = new SR();
+        rec.lang = "en-US"; rec.continuous = true; rec.interimResults = true;
+        rec.onstart = () => { on.state({state:"listening"}); resolve(); };
+        rec.onresult = ev => {
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            const text = ev.results[i][0].transcript.trim();
+            if (!text) continue;
+            if (ev.results[i].isFinal) on.final({text}); else on.partial({text});
+          }
+        };
+        rec.onerror = ev => { if (ev.error === "not-allowed" || ev.error === "service-not-allowed") reject({code:"not_granted"}); };
+        rec.onend = () => { rec = null; on.state({state:"idle"}); };
+        try { rec.start(); } catch(e) { reject(e); }
+      });
+    },
+    stop(){ try { rec && rec.stop(); } catch(e){} return Promise.resolve(); }
+  };
+}
 async function loadCaps(){
-  for (let i=0; i<30 && !(window.claude && window.claude.use); i++) await new Promise(r=>setTimeout(r,100));
-  if (!(window.claude && window.claude.use)) { capsReady = true; showBanner(); render(); return; }
-  const names = ["sample","tts","dictation","mcp"];
-  const got = await Promise.all(names.map(n => window.claude.use(n).catch(()=>null)));
+  let webGot = null;
+  const webP = webCaps().then(c => { webGot = c; });
+  for (let i=0; i<30 && !(window.claude && window.claude.use) && !webGot; i++) await new Promise(r=>setTimeout(r,100));
+  let got;
+  if (window.claude && window.claude.use) {
+    const names = ["sample","tts","dictation","mcp"];
+    got = await Promise.all(names.map(n => window.claude.use(n).catch(()=>null)));
+  } else {
+    await webP;
+    if (!webGot) { capsReady = true; showBanner(); render(); return; }
+    got = webGot;
+  }
   cap.sample = got[0]; cap.tts = got[1]; cap.dict = got[2]; cap.mcp = got[3];
   if (cap.dict) {
     try {
@@ -224,7 +305,8 @@ async function loadCaps(){
 function showBanner(msg, isErr){
   const b = $("banner");
   if (msg) { b.textContent = msg; b.className = "banner" + (isErr ? " err" : ""); return; }
-  if (capsReady && !cap.sample) { b.textContent = "The AI only runs when this page is opened in Claude (claude.ai or the Claude desktop app). Open the artifact there to play."; b.className = "banner err"; }
+  if (capsReady && webNoKey) { b.textContent = "The site is live, but the AI key has not been set yet. Add ANTHROPIC_API_KEY in the hosting settings and redeploy."; b.className = "banner err"; }
+  else if (capsReady && !cap.sample) { b.textContent ="The AI only runs when this page is opened in Claude (claude.ai or the Claude desktop app). Open the artifact there to play."; b.className = "banner err"; }
   else b.className = "banner hidden";
 }
 function speak(text){
@@ -269,7 +351,9 @@ async function ai(prompt, tier){
 function aiError(e){
   if (e && e.code === "rate_limited") return "The AI is busy for a moment. Wait a few seconds and press Try again.";
   if (e && e.code === "not_granted") return "The AI wasn't allowed to run. Allow it when Claude asks, then press Try again.";
-  if (e && e.code === "no_ai") return "The AI only runs when this page is opened in Claude.";
+  if (e && e.code === "no_ai") return webNoKey ? "The AI key has not been set on the site yet." : "The AI only runs when this page is opened in Claude.";
+  if (e && e.code === "no_key") return "The AI key on the site is missing or wrong. Check ANTHROPIC_API_KEY in the hosting settings.";
+  if (e && e.code === "network") return "The internet connection dropped for a moment. Press Try again.";
   return "Something went wrong while writing the story. Press Try again.";
 }
 
@@ -363,6 +447,7 @@ async function startStory(settings){
     } catch(e) { logDone(id, "couldn't reach Keenable, continuing without it", "fail"); }
   }
   await makeScene();
+  render(); // show the warm-up question (or the error) once scene 1 is ready
 }
 async function makeScene(){
   const n = S.scenes.length + 1;

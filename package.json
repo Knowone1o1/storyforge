@@ -1,0 +1,10 @@
+{
+  "name": "storyforge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "StoryForge: AI story game that teaches the lesson a parent chooses",
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}
