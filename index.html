@@ -281,6 +281,25 @@ textarea{min-height:84px;resize:vertical}
   .btn,.turn,.cover,.opt,.w,.round,.chip{transition:none}
   #confetti{display:none}
 }
+
+/* ---- Library: filters and a wrapping grid of books ---- */
+.filters{display:flex;flex-direction:column;gap:12px;background:var(--paper);border:4px solid var(--ink);border-radius:18px;box-shadow:var(--hard);padding:14px 16px}
+.frow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0}
+.flabel{flex:none;width:7.5em;font-weight:700;font-size:15px;color:var(--ink-soft)}
+@media (max-width:620px){.flabel{width:100%}}
+.filters .seg button{min-height:40px;padding:2px 14px;font-size:15px}
+.fsearch{flex:1;min-width:0;max-width:420px;min-height:44px;border:3px solid var(--ink);border-radius:999px;padding:4px 16px;font:inherit;font-size:16px;background:var(--paper);color:var(--ink)}
+.fcount{font-weight:600;color:var(--ink-soft);margin:0}
+.fclear{border:0;background:none;font:inherit;font-weight:700;color:var(--grape);text-decoration:underline;padding:4px;min-height:40px}
+.libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 18px;align-items:start;padding:4px 2px}
+.libgrid .cover{width:auto}
+.cover .ready{position:absolute;top:10px;left:-6px;z-index:2;background:var(--sun);border:3px solid var(--ink);border-radius:6px;padding:0 8px;font-weight:700;font-size:13px;box-shadow:0 3px 0 var(--ink)}
+.cover .art-ph{display:grid;place-items:center;aspect-ratio:3/4;border-bottom:4px solid var(--ink);background:var(--c,var(--sky-soft));overflow:hidden}
+.cover .art-ph svg{width:78%;height:auto;display:block}
+.cover.soon{cursor:pointer}
+.cover.soon .cover-title small:last-child{color:var(--ink-soft)}
+.tag{display:inline-block;margin-top:5px;font-size:12.5px;font-weight:600;border:2px solid var(--ink);border-radius:999px;padding:0 8px;background:var(--paper-deep)}
+.empty-lib{padding:24px;text-align:center}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -1947,13 +1966,115 @@ function libCover(l, i){
       ${stars.books[i] ? `<span class="sticker" role="img" aria-label="Finished"><i class="star"></i></span>` : ""}
     </button>`;
 }
+/* ============ LIBRARY CATALOGUE ============ */
+/* The three ready books plus placeholder titles that show what a full library would look like.
+   Placeholders have a drawn cover and tags, but no story yet. */
+const LEVELS = [["listen","Listen along"],["early","Early reader"],["confident","Confident reader"]];
+const TOPICS = [["math","Math"],["science","Science"],["geography","Geography"],["values","Values"],["reading","Words"],["nature","Nature"]];
+const AGES = [["3-5","Ages 3–5"],["6-7","Ages 6–7"],["8-10","Ages 8–10"]];
+const READY_TAGS = [ // the ready books, in LIBRARY order
+  {topic:"math", level:"early", age:"6-7"},
+  {topic:"geography", level:"confident", age:"8-10"},
+  {topic:"values", level:"early", age:"6-7"}];
+const SOON = [
+  ["The Great Pizza Share", "math", "early", "6-7", "Halves and quarters", "pizza", "#FFD9CF"],
+  ["Counting Stars with Luna", "math", "listen", "3-5", "Counting to 10", "stars", "#E1D9FF"],
+  ["Robot Rex Adds It Up", "math", "early", "6-7", "Adding to 20", "robot", "#D3E9FF"],
+  ["The Shape Parade", "math", "listen", "3-5", "Circles, squares, triangles", "shapes", "#FFEEBA"],
+  ["Pocket Money Puzzle", "math", "confident", "8-10", "Adding money", "coins", "#CFF0D8"],
+  ["Time Travel Tuesday", "math", "confident", "8-10", "Telling the time", "clock", "#E1D9FF"],
+  ["Why Is the Sky Blue?", "science", "early", "6-7", "Light and colour", "sun", "#D3E9FF"],
+  ["Rocket to the Moon", "science", "confident", "8-10", "The Moon and space", "rocket", "#E1D9FF"],
+  ["Little Seed, Big Tree", "science", "listen", "3-5", "How plants grow", "tree", "#CFF0D8"],
+  ["Splash! The Water Cycle", "science", "early", "6-7", "Rain, rivers, clouds", "drop", "#D3E9FF"],
+  ["Magnet Mystery", "science", "confident", "8-10", "Magnets", "magnet", "#FFD9CF"],
+  ["Penguins at the Pole", "geography", "early", "6-7", "Antarctica", "penguin", "#D3E9FF"],
+  ["Desert Camel Trek", "geography", "confident", "8-10", "Deserts", "sun", "#FFEEBA"],
+  ["Rainforest Rescue", "geography", "early", "6-7", "Rainforests", "leaf", "#CFF0D8"],
+  ["Map Maker Max", "geography", "confident", "8-10", "Reading a map", "map", "#FFEEBA"],
+  ["Kind Words Club", "values", "listen", "3-5", "Being kind", "heart", "#FFD9CF"],
+  ["Sharing the Swing", "values", "early", "6-7", "Taking turns", "swing", "#CFF0D8"],
+  ["Brave Little Owl", "values", "listen", "3-5", "Being brave", "owl", "#E1D9FF"],
+  ["The Sorry Note", "values", "confident", "8-10", "Saying sorry", "heart", "#FFEEBA"],
+  ["Rhyme Time Jungle", "reading", "listen", "3-5", "Rhyming words", "leaf", "#CFF0D8"],
+  ["The Missing Letter B", "reading", "early", "6-7", "Letter sounds", "book", "#FFEEBA"],
+  ["Big Words, Small Mouse", "reading", "confident", "8-10", "New words", "book", "#E1D9FF"],
+  ["Busy Bees", "nature", "listen", "3-5", "Bees and flowers", "flower", "#FFEEBA"],
+  ["Night Owls and Fireflies", "nature", "early", "6-7", "Night animals", "owl", "#E1D9FF"],
+  ["Ocean Friends", "nature", "early", "6-7", "Sea animals", "fish", "#D3E9FF"],
+  ["The Four Seasons Tree", "nature", "confident", "8-10", "Seasons", "tree", "#FFD9CF"]
+].map(r => ({title:r[0], topic:r[1], level:r[2], age:r[3], lesson:r[4], motif:r[5], tint:r[6]}));
+const INK3 = `fill="none" stroke="#2A1F3D" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"`;
+const MOTIF = {
+  pizza: `<path d="M50 14 L88 82 Q50 96 12 82 Z" fill="#FFC533" ${INK3}/><path d="M50 14 L50 88 M24 60 L76 60" ${INK3}/><circle cx="44" cy="46" r="6" fill="#FF6B4A"/><circle cx="58" cy="70" r="6" fill="#FF6B4A"/><circle cx="36" cy="72" r="5" fill="#FF6B4A"/>`,
+  stars: `<path d="M50 12 L58 36 L84 36 L63 51 L71 76 L50 61 L29 76 L37 51 L16 36 L42 36 Z" fill="#FFC533" ${INK3}/><circle cx="20" cy="84" r="5" fill="#FFC533"/><circle cx="82" cy="86" r="4" fill="#FFC533"/>`,
+  robot: `<rect x="24" y="30" width="52" height="44" rx="10" fill="#4AA8FF" ${INK3}/><circle cx="40" cy="50" r="7" fill="#FFF8E7" ${INK3}/><circle cx="60" cy="50" r="7" fill="#FFF8E7" ${INK3}/><path d="M50 30 V16 M40 66 H60" ${INK3}/><circle cx="50" cy="13" r="5" fill="#FF6B4A"/>`,
+  shapes: `<circle cx="32" cy="34" r="17" fill="#FF6B4A" ${INK3}/><rect x="54" y="18" width="30" height="30" rx="4" fill="#4AA8FF" ${INK3}/><path d="M50 56 L74 90 L26 90 Z" fill="#3FB96B" ${INK3}/>`,
+  coins: `<circle cx="38" cy="58" r="22" fill="#FFC533" ${INK3}/><circle cx="62" cy="40" r="22" fill="#FFC533" ${INK3}/><path d="M62 30 V50 M56 34 H66" ${INK3}/>`,
+  clock: `<circle cx="50" cy="52" r="34" fill="#FFF8E7" ${INK3}/><path d="M50 52 V30 M50 52 L66 60" ${INK3}/><path d="M28 14 L20 22 M72 14 L80 22" ${INK3}/>`,
+  sun: `<circle cx="50" cy="50" r="20" fill="#FFC533" ${INK3}/><path d="M50 12 V22 M50 78 V88 M12 50 H22 M78 50 H88 M23 23 L30 30 M70 70 L77 77 M77 23 L70 30 M30 70 L23 77" ${INK3}/>`,
+  rocket: `<path d="M50 10 Q70 30 66 66 H34 Q30 30 50 10 Z" fill="#FFF8E7" ${INK3}/><circle cx="50" cy="40" r="8" fill="#4AA8FF" ${INK3}/><path d="M34 54 L22 74 L34 70 M66 54 L78 74 L66 70" fill="#FF6B4A" ${INK3}/><path d="M42 72 L50 92 L58 72" fill="#FFC533" ${INK3}/>`,
+  tree: `<path d="M50 90 V56" ${INK3}/><circle cx="50" cy="40" r="26" fill="#3FB96B" ${INK3}/><circle cx="40" cy="36" r="4" fill="#FF6B4A"/><circle cx="60" cy="46" r="4" fill="#FF6B4A"/>`,
+  drop: `<path d="M50 12 Q76 46 76 62 A26 26 0 0 1 24 62 Q24 46 50 12 Z" fill="#4AA8FF" ${INK3}/><path d="M38 62 Q40 74 50 76" stroke="#FFF8E7" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+  magnet: `<path d="M24 20 V54 A26 26 0 0 0 76 54 V20 H60 V54 A10 10 0 0 1 40 54 V20 Z" fill="#FF6B4A" ${INK3}/><path d="M24 20 H40 V32 H24 Z M60 20 H76 V32 H60 Z" fill="#FFF8E7" ${INK3}/>`,
+  penguin: `<ellipse cx="50" cy="56" rx="24" ry="32" fill="#2A1F3D"/><ellipse cx="50" cy="62" rx="15" ry="22" fill="#FFF8E7"/><circle cx="43" cy="40" r="3" fill="#FFF8E7"/><circle cx="57" cy="40" r="3" fill="#FFF8E7"/><path d="M45 48 L50 54 L55 48 Z" fill="#FFC533"/>`,
+  leaf: `<path d="M20 80 Q20 24 80 20 Q80 76 20 80 Z" fill="#3FB96B" ${INK3}/><path d="M22 78 L64 36" ${INK3}/>`,
+  map: `<path d="M14 24 L38 16 L62 24 L86 16 V76 L62 84 L38 76 L14 84 Z" fill="#FFF8E7" ${INK3}/><path d="M38 16 V76 M62 24 V84" ${INK3}/><path d="M24 58 Q44 40 72 48" stroke="#FF6B4A" stroke-width="5" stroke-dasharray="2 9" fill="none" stroke-linecap="round"/>`,
+  heart: `<path d="M50 84 Q14 58 18 36 A16 16 0 0 1 50 30 A16 16 0 0 1 82 36 Q86 58 50 84 Z" fill="#FF6B4A" ${INK3}/>`,
+  swing: `<path d="M18 14 H82 M34 14 V62 M66 14 V62" ${INK3}/><rect x="28" y="62" width="44" height="10" rx="4" fill="#E9A45B" ${INK3}/>`,
+  owl: `<ellipse cx="50" cy="56" rx="28" ry="32" fill="#E9A45B" ${INK3}/><circle cx="39" cy="46" r="10" fill="#FFF8E7" ${INK3}/><circle cx="61" cy="46" r="10" fill="#FFF8E7" ${INK3}/><circle cx="39" cy="46" r="4" fill="#2A1F3D"/><circle cx="61" cy="46" r="4" fill="#2A1F3D"/><path d="M46 58 L50 64 L54 58 Z" fill="#FFC533"/>`,
+  book: `<path d="M50 26 Q32 16 14 22 V80 Q32 74 50 84 Q68 74 86 80 V22 Q68 16 50 26 Z" fill="#FFF8E7" ${INK3}/><path d="M50 26 V84" ${INK3}/>`,
+  flower: `<circle cx="50" cy="30" r="12" fill="#FF8FB4" ${INK3}/><circle cx="31" cy="44" r="12" fill="#FF8FB4" ${INK3}/><circle cx="69" cy="44" r="12" fill="#FF8FB4" ${INK3}/><circle cx="38" cy="64" r="12" fill="#FF8FB4" ${INK3}/><circle cx="62" cy="64" r="12" fill="#FF8FB4" ${INK3}/><circle cx="50" cy="48" r="10" fill="#FFC533" ${INK3}/>`,
+  fish: `<path d="M18 50 Q42 22 70 50 Q42 78 18 50 Z" fill="#4AA8FF" ${INK3}/><path d="M68 50 L88 34 V66 Z" fill="#4AA8FF" ${INK3}/><circle cx="34" cy="46" r="4" fill="#2A1F3D"/>`
+};
+const levelName = k => (LEVELS.find(l => l[0] === k) || ["", ""])[1];
+const topicName = k => (TOPICS.find(t => t[0] === k) || ["", ""])[1];
+let libFilter = {topic: "all", level: "all", age: "all", q: ""};
+function catalogue(){
+  return LIBRARY.map((l, i) => Object.assign({ready: true, i, title: l.title, lesson: l.lessonLabel.split(" · ").pop()}, READY_TAGS[i] || {}))
+    .concat(SOON.map((b, k) => Object.assign({ready: false, k}, b)));
+}
+function matches(b){
+  const f = libFilter, q = f.q.trim().toLowerCase();
+  return (f.topic === "all" || b.topic === f.topic) && (f.level === "all" || b.level === f.level) && (f.age === "all" || b.age === f.age)
+    && (!q || (b.title + " " + b.lesson + " " + topicName(b.topic)).toLowerCase().includes(q));
+}
+function soonCover(b){
+  return `<button type="button" class="cover soon" data-soon="${b.k}" aria-label="${esc(b.title)}, coming soon">
+      <span class="art-ph" style="--c:${b.tint}" aria-hidden="true"><svg viewBox="0 0 100 100">${MOTIF[b.motif] || MOTIF.book}</svg></span>
+      <span class="cover-title">${esc(b.title)}<small>${esc(topicName(b.topic))}: ${esc(b.lesson)}</small><span class="tag">${esc(levelName(b.level))}</span></span>
+    </button>`;
+}
+function libResults(){
+  const list = catalogue().filter(matches);
+  const items = list.map(b => b.ready ? libCover(LIBRARY[b.i], b.i).replace('class="cover"', 'class="cover is-ready"').replace("<img", `<span class="ready">Ready</span><img`) : soonCover(b)).join("");
+  const count = `${list.length} book${list.length === 1 ? "" : "s"}`;
+  return {count, html: list.length ? `<div class="libgrid">${items}</div>` : `<div class="card empty-lib"><p class="sub" style="margin:0 auto">No books match these filters.</p><button type="button" class="fclear" id="libClear">Show all books</button></div>`};
+}
+function segRow(label, key, items){
+  return `<div class="frow"><span class="flabel">${label}</span><div class="seg" role="group" aria-label="${label}">
+    ${[["all","All"]].concat(items).map(o => `<button type="button" data-filter="${key}" data-val="${o[0]}" aria-pressed="${libFilter[key] === o[0]}">${esc(o[1])}</button>`).join("")}</div></div>`;
+}
 function libraryView(){
+  const r = libResults(), on = libFilter.topic !== "all" || libFilter.level !== "all" || libFilter.age !== "all" || libFilter.q;
   return `<div class="view">${bar("Library")}
-  <div class="shelf">${LIBRARY.map(libCover).join("")}</div>
-  <div class="plank"></div>
-  <p class="sub">Books anyone can read. Finished ones move to the bookshelf.</p>
+  <div class="filters">
+    <div class="frow"><label class="flabel" for="libSearch">Search</label><input id="libSearch" class="fsearch" type="search" placeholder="Title or topic, like space" value="${esc(libFilter.q)}" autocomplete="off"></div>
+    ${segRow("Topic", "topic", TOPICS)}
+    ${segRow("Reading level", "level", LEVELS)}
+    ${segRow("Age", "age", AGES)}
+    <div class="frow"><p class="fcount" id="libCount" aria-live="polite">${r.count}</p>${on ? `<button type="button" class="fclear" id="libClear">Clear filters</button>` : ""}</div>
+  </div>
+  <div id="libList">${r.html}</div>
+  <p class="sub">Books marked Ready can be read now. The others are coming soon.</p>
   </div>`;
 }
+document.addEventListener("input", e => {
+  if (!e.target || e.target.id !== "libSearch") return;
+  libFilter.q = e.target.value;
+  const r = libResults(); $("libList").innerHTML = r.html; $("libCount").textContent = r.count; // update the list only, so the search box keeps focus
+});
+
 function quickCard(){
   return `<div class="quick" style="margin:0">
       <h2>Surprise book</h2>
@@ -2167,6 +2288,9 @@ document.addEventListener("click", e => {
     if (k === "reports") { reports = []; try { localStorage.removeItem("storyforge_reports"); } catch(e) {} }
     render(); return;
   }
+  if (t.dataset.filter) { libFilter[t.dataset.filter] = t.dataset.val; render(); return; }
+  if (t.id === "libClear") { libFilter = {topic: "all", level: "all", age: "all", q: ""}; render(); return; }
+  if (t.dataset.soon !== undefined) { const b = SOON[+t.dataset.soon]; showBanner(`"${b.title}" is coming soon. Try a book marked Ready.`); clearTimeout(window.__soonT); window.__soonT = setTimeout(() => showBanner(), 3500); return; }
   if (t.dataset.lib !== undefined) { const l = LIBRARY[+t.dataset.lib]; if (l.demo) startDemo(l.demo, {...l.settings, _lib: +t.dataset.lib}); else startStory({...l.settings, _lib: +t.dataset.lib}); return; }
   if (t.dataset.pseg) { readProfile(); pdraft.consequence_level = t.dataset.pseg; render(); return; }
   if (t.dataset.seg) { readForm(); draft[t.dataset.seg] = t.dataset.val; render(); return; }
