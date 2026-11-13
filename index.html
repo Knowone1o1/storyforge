@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StoryForge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: storybook stage on the left, live "agents at work" rail on the right. One committed bright world (single theme). */
+:root{
+  --sky:#E6F0FF;
+  --paper:#FFFFFF;
+  --ink:#1B2559;
+  --ink-soft:#4A5689;
+  --sun:#FFC93C;
+  --coral:#FF6B6B;
+  --mint:#2CC99A;
+  --lilac:#8E7CFF;
+  --line:#CCDAF5;
+  --display:"Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --body:"Nunito", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--sky);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
+.hidden{display:none !important}
+h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+
+.top{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--ink);color:#fff;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:.3px}
+.brand span{color:var(--sun)}
+.tag{opacity:.85;font-size:15px}
+.top .spacer{flex:1}
+.ghost{background:transparent;border:2px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:6px 16px;font-weight:700}
+.ghost:hover{border-color:#fff}
+
+.banner{margin:16px 24px 0;padding:12px 16px;border-radius:14px;background:#FFF4D6;border:2px solid var(--sun);font-weight:600}
+.banner.err{background:#FFE8E8;border-color:var(--coral)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;padding:24px;max-width:1280px;margin:0 auto}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+
+.card{background:var(--paper);border-radius:22px;padding:24px;box-shadow:0 6px 0 var(--line)}
+.btn{border:none;border-radius:16px;padding:12px 22px;font-weight:800;background:var(--sun);color:var(--ink);box-shadow:0 4px 0 #D9A51F;transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #D9A51F}
+.btn.secondary{background:#fff;border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn.mint{background:var(--mint);color:#fff;box-shadow:0 4px 0 #1E9C76}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* Home */
+.hero h1{font-size:40px}
+.hero p{max-width:62ch;color:var(--ink-soft);margin:8px 0 0}
+.section-h{display:flex;align-items:center;gap:10px;margin:28px 0 12px}
+.pill{display:inline-block;border-radius:999px;padding:2px 12px;font-size:13px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.pill.free{background:#DDF7EE;color:#137857}
+.pill.premium{background:#EAE5FF;color:#5A47D6}
+.lib{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.libcard{text-align:left;border:none;background:var(--paper);border-radius:22px;padding:0;overflow:hidden;box-shadow:0 6px 0 var(--line);display:flex;flex-direction:column}
+.libcard:hover{transform:translateY(-2px)}
+.libart{height:110px;display:flex;align-items:center;justify-content:center;font-size:54px}
+.libbody{padding:14px 16px 18px;display:flex;flex-direction:column;gap:6px}
+.libbody b{font-family:var(--display);font-size:21px;line-height:1.15}
+.libmeta{font-size:14px;color:var(--ink-soft)}
+.quick{display:flex;flex-direction:column;gap:14px;border:3px solid var(--sun)}
+.quick select{min-width:70px}
+.custom{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(120deg,#fff 60%,#F1EDFF);border:2px dashed var(--lilac)}
+
+/* Setup */
+.form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:640px){.form{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+label{font-weight:800;font-size:15px}
+.hint{font-weight:600;color:var(--ink-soft);font-size:13px}
+input,select,textarea{font-family:inherit;font-size:16px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;color:var(--ink)}
+textarea{min-height:64px;resize:vertical}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 16px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* Story */
+.storyhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.storyhead h2{font-size:26px;flex:1;min-width:200px}
+.dots{display:flex;gap:6px}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--line)}
+.dot.on{background:var(--sun)}
+.dot.done{background:var(--mint)}
+.meters{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-weight:800}
+.hearts{letter-spacing:2px;font-size:20px}
+.bag{font-size:14px;background:#F3F7FF;border-radius:999px;padding:4px 12px}
+.art{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:16/9;background:linear-gradient(135deg,#CFE2FF,#FDE7B0);display:flex;align-items:center;justify-content:center}
+.art svg{width:100%;height:100%;display:block}
+.art .wait{font-size:64px;animation:bob 1.6s ease-in-out infinite}
+.art .wait small{display:block;font-size:14px;font-weight:700;text-align:center;color:var(--ink-soft)}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@media (prefers-reduced-motion:reduce){.art .wait,.spin{animation:none}}
+.conseq{margin-top:16px;border-radius:16px;padding:14px 16px;font-weight:700;border-left:8px solid var(--coral);background:#FFF0F0}
+.conseq.good{border-color:var(--mint);background:#E9FBF4}
+.scenetext{font-size:21px;line-height:1.55;margin:16px 0 6px;max-width:66ch}
+.question{font-family:var(--display);font-weight:800;font-size:24px;margin:10px 0 12px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;border:none;background:#fff;border-radius:18px;padding:14px 16px;font-weight:800;font-size:18px;box-shadow:0 0 0 3px var(--line) inset,0 5px 0 var(--line)}
+.opt:hover{box-shadow:0 0 0 3px var(--lilac) inset,0 5px 0 var(--lilac)}
+.opt .k{flex:none;width:36px;height:36px;border-radius:12px;background:var(--sun);display:flex;align-items:center;justify-content:center;font-family:var(--display)}
+.own{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+.own input{flex:1;min-width:200px}
+.mic{border:none;border-radius:999px;padding:10px 18px;font-weight:800;background:var(--lilac);color:#fff}
+.mic.on{background:var(--coral);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(255,107,107,.25)}}
+.tools{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.writing{display:flex;align-items:center;gap:12px;padding:18px;border-radius:16px;background:#F3F7FF;font-weight:800}
+.spin{width:22px;height:22px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--lilac);animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.think{margin-top:16px;border-radius:18px;padding:18px;background:#F1EDFF;border:2px solid var(--lilac)}
+.think h3{font-size:22px;margin-bottom:8px}
+.coach{margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff;font-weight:700}
+
+/* Ending */
+.map{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:14px;overflow-x:auto;padding-bottom:8px}
+.col h3{font-size:18px;margin-bottom:8px}
+.node{border-radius:14px;padding:10px 12px;margin-bottom:8px;background:#F6F8FD;color:var(--ink-soft);font-size:14px;border:2px solid transparent;opacity:.75}
+.node b{display:block;color:var(--ink);font-size:15px}
+.node.chosen{opacity:1;background:#fff;border-color:var(--ink);box-shadow:0 4px 0 var(--line)}
+.badge{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:1px 9px;margin-top:4px}
+.b-wise{background:#DDF7EE;color:#137857}
+.b-okay{background:#E1EEFF;color:#2C5BB8}
+.b-tempting_bad{background:#FFF1C9;color:#8A6200}
+.b-clearly_bad{background:#FFE1E1;color:#B33232}
+.report{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px}
+.stat{background:#F3F7FF;border-radius:16px;padding:14px}
+.stat .n{font-family:var(--display);font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .l{font-size:14px;font-weight:700;color:var(--ink-soft)}
+.quote{font-size:19px;font-weight:700;border-left:6px solid var(--sun);padding-left:12px;margin:14px 0}
+
+/* Agent rail */
+.rail{position:sticky;top:16px;align-self:start;background:var(--ink);color:#fff;border-radius:22px;padding:18px;max-height:calc(100vh - 32px);overflow:auto}
+.rail h3{font-size:20px;margin-bottom:4px}
+.rail p{margin:0 0 12px;font-size:13px;opacity:.75}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.log li{background:rgba(255,255,255,.07);border-radius:12px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:flex-start}
+.log .who{font-weight:800;color:var(--sun);white-space:nowrap}
+.log .st{flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--lilac)}
+.log li.working .st{animation:pulse 1s infinite;background:var(--sun)}
+.log li.done .st{background:var(--mint)}
+.log li.fail .st{background:var(--coral)}
+.roster{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.roster span{font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px;background:rgba(255,255,255,.12)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Story<span>Forge</span></div>
+  <div class="tag">Stories shaped by parents, played by kids</div>
+  <div class="spacer"></div>
+  <button class="ghost" id="muteBtn" type="button">Voice: on</button>
+  <button class="ghost" id="homeBtn" type="button">Home</button>
+</header>
+<div id="banner" class="banner hidden"></div>
+<main class="layout">
+  <section id="stage" aria-live="polite"></section>
+  <aside class="rail" aria-label="Agents at work">
+    <h3>Agents at work</h3>
+    <p>Each step of the story is handled by a separate AI agent.</p>
+    <div class="roster"><span>Fact Checker</span><span>Director</span><span>Guardian</span><span>Illustrator</span><span>Narrator</span><span>Interpreter</span><span>Coach</span><span>Reflector</span></div>
+    <ol class="log" id="log"></ol>
+  </aside>
+</main>
+
+<script>
+/* ============ CONFIG ============ */
+const TOTAL = 4; // scenes 1-3 have a decision, scene 4 is the ending
+const LIBRARY = [
+  {emoji:"🦕", color:"linear-gradient(135deg,#C9F2E3,#FFE6A8)", title:"Dino Rescue at Fraction Falls", lessonLabel:"Math · fractions",
+   settings:{child_name:"Mia", child_age:7, reading_level:"early reader", interests:"dinosaurs, soccer, her dog Bobo, the color purple", theme:"", lesson_type:"math", lesson:"understanding simple fractions (halves, thirds, quarters) of a group of things", limits:"no scary monsters, no fighting", consequence_level:"medium"}},
+  {emoji:"✈️", color:"linear-gradient(135deg,#CFE2FF,#FFD9D9)", title:"Around the World with Captain Kiwi", lessonLabel:"Geography · continents",
+   settings:{child_name:"Leo", child_age:8, reading_level:"confident reader", interests:"airplanes, birds, pancakes, building with LEGO", theme:"", lesson_type:"geography", lesson:"the seven continents and one famous place on each", limits:"no dangerous animals attacking", consequence_level:"medium"}},
+  {emoji:"🍪", color:"linear-gradient(135deg,#FFE3C2,#E6DDFF)", title:"The Cookie Jar Mystery", lessonLabel:"Values · honesty",
+   settings:{child_name:"Sam", child_age:6, reading_level:"early reader", interests:"baking, cats, detectives, his big sister Ana", theme:"", lesson_type:"moral", lesson:"telling the truth even when it's hard", limits:"nothing scary, no yelling adults", consequence_level:"gentle"}}
+];
+const SUBJECTS = [["math","➗ Math"],["geography","🌍 Geography"],["science","🔬 Science"],["moral","💛 Values"],["reading","📖 Reading"]];
+let quick = {subject:"math", age:7, name:""};
+const TYPE_LABEL ={wise:"Wise choice", okay:"Okay choice", tempting_bad:"Tempting trap", clearly_bad:"Risky choice"};
+const WEAK = t => t==="tempting_bad" || t==="clearly_bad";
+
+/* ============ STATE ============ */
+let cap = {sample:null, tts:null, dict:null, mcp:null};
+let capsReady = false;
+let S = null;          // current story state
+let screen = "home";   // home | setup | warmup | story | ending
+let draft = null;      // parent setup draft
+let logItems = [], logId = 0;
+let muted = false;
+let listening = false, dictBuf = "", dictUI = {};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ============ CAPABILITIES ============ */
+async function loadCaps(){
+  for (let i=0; i<30 && !(window.claude && window.claude.use); i++) await new Promise(r=>setTimeout(r,100));
+  if (!(window.claude && window.claude.use)) { capsReady = true; showBanner(); render(); return; }
+  const names = ["sample","tts","dictation","mcp"];
+  const got = await Promise.all(names.map(n => window.claude.use(n).catch(()=>null)));
+  cap.sample = got[0]; cap.tts = got[1]; cap.dict = got[2]; cap.mcp = got[3];
+  if (cap.dict) {
+    try {
+      cap.dict.onPartial(({text}) => { if (dictUI.partial) dictUI.partial((dictBuf ? dictBuf + " " : "") + text); });
+      cap.dict.onFinal(({text}) => { dictBuf += (dictBuf ? " " : "") + text; if (dictUI.partial) dictUI.partial(dictBuf); });
+      cap.dict.onState(({state}) => {
+        listening = state === "listening";
+        document.querySelectorAll(".mic").forEach(b => { b.classList.toggle("on", listening); b.textContent = listening ? "Tap when done" : "🎤 Tap to talk"; });
+        if (state === "idle" && dictUI.done) { const t = dictBuf.trim(); dictBuf = ""; const cb = dictUI.done; dictUI = {}; if (t) cb(t); }
+      });
+    } catch(e) { cap.dict = null; }
+  }
+  capsReady = true; showBanner(); render();
+}
+function showBanner(msg, isErr){
+  const b = $("banner");
+  if (msg) { b.textContent = msg; b.className = "banner" + (isErr ? " err" : ""); return; }
+  if (capsReady && !cap.sample) { b.textContent = "The AI only runs when this page is opened in Claude (claude.ai or the Claude desktop app). Open the artifact there to play."; b.className = "banner err"; }
+  else b.className = "banner hidden";
+}
+function speak(text){
+  if (!cap.tts || muted || !text) return;
+  try { cap.tts.speak(String(text).slice(0,1990), {voice:"airy", rate:0.95}).catch(()=>{}); } catch(e){}
+}
+function stopSpeak(){ try { cap.tts && cap.tts.stop(); } catch(e){} }
+function micButton(target){ return cap.dict ? `<button type="button" class="mic" data-mic="${target}">🎤 Tap to talk</button>` : ""; }
+function startMic(inputId, onDone){
+  if (!cap.dict) return;
+  if (listening) { cap.dict.stop().catch(()=>{}); return; }
+  dictBuf = "";
+  dictUI = { partial: t => { const el = $(inputId); if (el) el.value = t; }, done: onDone };
+  stopSpeak();
+  cap.dict.start().catch(e => {
+    if (e && e.code === "not_granted") { cap.dict = null; render(); }
+  });
+}
+
+/* ============ AI HELPERS ============ */
+function parseJSON(t){ const s = t.indexOf("{"), e = t.lastIndexOf("}"); if (s < 0 || e < 0) throw new Error("no json"); return JSON.parse(t.slice(s, e+1)); }
+async function ai(prompt, tier){
+  if (!cap.sample) throw {code:"no_ai"};
+  let last;
+  for (let i = 0; i < 2; i++) {
+    try {
+      if (typeof cap.sample.json === "function") {
+        const v = await cap.sample.json(prompt, {modelTier: tier || "default"});
+        if (v && typeof v === "object") return v;
+        if (typeof v === "string") return parseJSON(v);
+      }
+      const r = await cap.sample(prompt, {modelTier: tier || "default"});
+      return parseJSON(r.text);
+    } catch (e) {
+      last = e;
+      if (e && (e.code === "not_granted" || e.code === "rate_limited" || e.code === "no_ai")) throw e;
+      prompt += "\n\nIMPORTANT: Reply with ONLY one valid JSON object and nothing else.";
+    }
+  }
+  throw last;
+}
+function aiError(e){
+  if (e && e.code === "rate_limited") return "The AI is busy for a moment. Wait a few seconds and press Try again.";
+  if (e && e.code === "not_granted") return "The AI wasn't allowed to run. Allow it when Claude asks, then press Try again.";
+  if (e && e.code === "no_ai") return "The AI only runs when this page is opened in Claude.";
+  return "Something went wrong while writing the story. Press Try again.";
+}
+
+/* ============ AGENT LOG ============ */
+function log(who, text){ const id = ++logId; logItems.push({id, who, text, status:"working"}); renderLog(); return id; }
+function logDone(id, text, status){ const e = logItems.find(x => x.id === id); if (e) { if (text) e.text = text; e.status = status || "done"; } renderLog(); }
+function renderLog(){
+  $("log").innerHTML = logItems.slice(-14).map(e => `<li class="${e.status}"><span class="st"></span><div><span class="who">${esc(e.who)}</span> ${esc(e.text)}</div></li>`).join("") || `<li class="done"><span class="st"></span><div>Pick a story to see the agents work.</div></li>`;
+  const r = $("log").parentElement; r.scrollTop = r.scrollHeight;
+}
+
+/* ============ PROMPTS ============ */
+function historyText(){
+  return S.scenes.map((sc, i) => {
+    const c = S.choices[i];
+    return `Scene ${i+1}: ${sc.consequence_text ? "[Result of last choice: " + sc.consequence_text + "] " : ""}${sc.scene_text}` + (c ? `\n  -> ${S.settings.child_name} chose: "${c.label}" (hidden type: ${c.hidden_type})` : "");
+  }).join("\n");
+}
+function directorPrompt(n){
+  const st = S.settings;
+  const decision = `End the scene at a decision where the lesson matters to the outcome. Write exactly 4 options: one "wise", one "okay", one "tempting_bad", one "clearly_bad", in random order.
+No one-dimensional choices: the tempting_bad option must sound fun, quick or exciting, and the wise option must not be obviously "the good one".
+- math: the options are different answers or approaches to a small puzzle stated clearly in scene_text (include the numbers).
+- geography: the options depend on real facts about places.
+- moral: the options are actions the hero could take.`;
+  const ending = `This is the ENDING scene. Wrap up the adventure warmly in a way that reflects the choices made (both wise and weaker ones) and gently restates the lesson. "options" must be [] and "is_ending" must be true. "question" must be "".`;
+  const first = n === 1 ? `,
+  "lesson": "the specific lesson this story teaches (one short phrase)",
+  "title": "short story title",
+  "hero_look": "one sentence describing how ${st.child_name} looks as a cartoon hero (for the illustrator)",
+  "warmup": {"question": "one short question that tests the lesson, answerable in a few words, asked before the story", "answer": "the correct answer"}` : "";
+  return `You are the Director agent of StoryForge, an educational story game made for one specific child by their parent.
+CHILD: ${st.child_name}, age ${st.child_age}, reading level: ${st.reading_level}.
+THE CHILD'S INTERESTS (from the parent): ${st.interests || "not given: pick things most kids this age love (animals, space, treasure, sports…)"}. Build the story world, characters and details around these so it feels made just for ${st.child_name}. ${st.child_name} is the hero.
+THEME: ${st.theme || "invent one from the interests"}
+LESSON TO TEACH: ${st.lesson ? st.lesson + " (type: " + st.lesson_type + ")" : `not chosen yet: pick ONE specific, age-appropriate ${st.lesson_type} lesson for a ${st.child_age}-year-old and return it in "lesson"`}
+PARENT LIMITS (never break these): ${st.limits || "none given"}
+CONSEQUENCE STRENGTH: ${st.consequence_level}
+VERIFIED FACTS (only use these for factual claims): ${S.facts || "none"}
+
+STORY SO FAR:
+${S.scenes.length ? historyText() : "(nothing yet: this is the first scene)"}
+
+TASK: Write scene ${n} of ${TOTAL}.
+${n > 1 ? `Start with "consequence_text": 1-2 sentences showing what ${st.child_name}'s last choice caused. Wise -> a real payoff. Okay -> works out with a small cost. tempting_bad / clearly_bad -> a natural story setback (something lost, a delay, a friend let down) at the consequence strength above. Never shame the child, never go beyond the parent's limits, and the story always continues.` : `"consequence_text" must be "".`}
+${n < TOTAL ? decision : ending}
+Use short, vivid sentences for a ${st.child_age}-year-old. "scene_text": 3-4 sentences, max 70 words. Option labels: max 8 words, phrased as actions.
+"meter_change.hearts": -1 after a weak choice, +1 after a wise one, otherwise 0. Use item_gained / item_lost for story items (or "").
+
+Return ONLY this JSON:
+{
+  "consequence_text": "",
+  "scene_text": "",
+  "question": "What do you do?",
+  "options": [{"label": "", "hidden_type": "wise|okay|tempting_bad|clearly_bad", "leads_to": "one sentence: what this choice would lead to"}],
+  "meter_change": {"hearts": 0, "item_gained": "", "item_lost": ""},
+  "image_description": "what the picture for this scene shows (no text in the picture)",
+  "is_ending": ${n === TOTAL}${first}
+}`;
+}
+function guardianPrompt(scene){
+  const st = S.settings;
+  return `You are the Guardian agent, a child-safety and quality reviewer for a children's story game.
+Child age: ${st.child_age}. Parent limits: ${st.limits || "none"}. Consequence strength: ${st.consequence_level}.
+Check this scene: 1) nothing breaks the parent's limits, 2) consequences are natural, not cruel, scary or shaming, 3) language fits a ${st.child_age}-year-old, 4) ${scene.is_ending ? "it is an ending with no options" : "exactly 4 options covering wise, okay, tempting_bad and clearly_bad, and the tempting_bad one really sounds tempting"}.
+SCENE JSON: ${JSON.stringify({consequence_text:scene.consequence_text, scene_text:scene.scene_text, options:scene.options})}
+Return ONLY JSON: {"approved": true or false, "note": "one short sentence about your check", "fixed": null or {"consequence_text": "", "scene_text": "", "options": [same shape]}}. Only fill "fixed" if something must change.`;
+}
+
+/* ============ STORY ENGINE ============ */
+function newStory(settings){
+  stopSpeak();
+  logItems = []; logId = 0;
+  S = {settings, scenes:[], choices:[], snapshots:[], meters:{hearts:3, items:[]}, facts:"", busy:false, error:null,
+       rewindUsed:false, think:null, title:"", heroLook:"", warmup:null, warmBefore:"", warmAfter:"", report:null, reportBusy:false};
+}
+async function startStory(settings){
+  newStory(settings);
+  screen = "warmup"; S.busy = true; render();
+  if ((settings.lesson_type === "geography" || settings.lesson_type === "science") && cap.mcp) {
+    const topic = settings.lesson || `${settings.lesson_type} for ${settings.child_age}-year-olds`;
+    const id = log("Fact Checker", `searching Keenable for facts about "${topic}"…`);
+    try {
+      const res = await Promise.race([
+        cap.mcp.callTool("Keenable Web Search", "search_web_pages", {query: `${topic} facts for kids`, max_results: 3}),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 9000))
+      ]);
+      const p = res && res.payload !== undefined ? res.payload : res;
+      S.facts = (typeof p === "string" ? p : JSON.stringify(p)).slice(0, 1800);
+      logDone(id, "found real facts for the Director to use");
+    } catch(e) { logDone(id, "couldn't reach Keenable, continuing without it", "fail"); }
+  }
+  await makeScene();
+}
+async function makeScene(){
+  const n = S.scenes.length + 1;
+  S.busy = true; S.error = null; render();
+  let scene;
+  const d = log("Director", `writing scene ${n} of ${TOTAL}${n > 1 ? " around the last choice" : ""}…`);
+  try {
+    scene = await ai(directorPrompt(n), "default");
+    if (!scene || !scene.scene_text) throw new Error("bad scene");
+    scene.options = Array.isArray(scene.options) ? scene.options.slice(0,4) : [];
+    if (n === TOTAL) { scene.is_ending = true; scene.options = []; }
+    logDone(d, `wrote scene ${n}${scene.options.length ? " with 4 choices (1 wise, 1 okay, 2 traps)" : " (the ending)"}`);
+  } catch(e) {
+    logDone(d, "hit a problem", "fail"); S.busy = false; S.error = aiError(e); render(); return null;
+  }
+  const g = log("Guardian", "checking against the parent's limits…");
+  try {
+    const gr = await ai(guardianPrompt(scene), "quick");
+    if (gr && gr.fixed && gr.fixed.scene_text) {
+      scene.scene_text = gr.fixed.scene_text;
+      if (typeof gr.fixed.consequence_text === "string") scene.consequence_text = gr.fixed.consequence_text;
+      if (Array.isArray(gr.fixed.options) && (gr.fixed.options.length === 4 || scene.is_ending)) scene.options = gr.fixed.options;
+      logDone(g, "made a fix: " + (gr.note || "adjusted the scene"));
+    } else logDone(g, "approved: " + ((gr && gr.note) || "safe and age-appropriate"));
+  } catch(e) { logDone(g, "skipped this check", "fail"); }
+  // shuffle options so position never gives the answer away
+  for (let i = scene.options.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i+1)); [scene.options[i], scene.options[j]] = [scene.options[j], scene.options[i]]; }
+  if (n === 1) {
+    if (!S.settings.lesson && scene.lesson) { S.settings.lesson = scene.lesson; const lid = log("Director", `picked the lesson: ${scene.lesson}`); logDone(lid); }
+    S.title = scene.title || "Your story";
+    S.heroLook = scene.hero_look || `${S.settings.child_name}, a cheerful ${S.settings.child_age}-year-old kid`;
+    if (scene.warmup && scene.warmup.question) S.warmup = scene.warmup;
+  }
+  const mc = scene.meter_change || {};
+  if (n > 1) {
+    S.meters.hearts = Math.max(0, Math.min(5, S.meters.hearts + (Number(mc.hearts) || 0)));
+    if (mc.item_lost) S.meters.items = S.meters.items.filter(x => x.toLowerCase() !== String(mc.item_lost).toLowerCase());
+  }
+  if (mc.item_gained) S.meters.items.push(mc.item_gained);
+  S.scenes.push(scene);
+  S.busy = false;
+  illustrate(scene);
+  return scene;
+}
+async function illustrate(scene){
+  if (!cap.sample) return;
+  const id = log("Illustrator", "drawing the picture…");
+  const prompt = `You are the Illustrator agent for a children's picture book. Draw ONE illustration as an SVG.
+Rules: viewBox="0 0 800 450", flat friendly shapes, soft bright colors, a full background (sky or room), simple cute characters with round eyes, NO text or letters, no <script>, no <image>, no external links, under 7000 characters.
+The hero: ${S.heroLook}. Keep the hero looking the same in every picture.
+Scene: ${scene.image_description || scene.scene_text}
+Reply with only the SVG code, starting with <svg and ending with </svg>.`;
+  try {
+    const r = await cap.sample(prompt, {modelTier:"default"});
+    const t = r.text || ""; const s = t.indexOf("<svg"), e = t.lastIndexOf("</svg>");
+    if (s < 0 || e < 0) throw new Error("no svg");
+    scene.svg = cleanSVG(t.slice(s, e+6));
+    logDone(id, "finished the picture");
+    const el = document.querySelector(`[data-art="${S.scenes.indexOf(scene)}"]`);
+    if (el) el.innerHTML = scene.svg;
+  } catch(err) { logDone(id, "couldn't finish this picture", "fail"); }
+}
+function cleanSVG(str){
+  const doc = new DOMParser().parseFromString(str, "image/svg+xml");
+  const root = doc.documentElement;
+  if (!root || root.nodeName.toLowerCase() !== "svg" || doc.getElementsByTagName("parsererror").length) throw new Error("bad svg");
+  root.querySelectorAll("script,foreignObject,image,iframe,a").forEach(n => n.remove());
+  [root, ...root.querySelectorAll("*")].forEach(n => [...n.attributes].forEach(a => {
+    if (/^on/i.test(a.name) || (/href$/i.test(a.name) && !a.value.trim().startsWith("#"))) n.removeAttribute(a.name);
+  }));
+  root.removeAttribute("width"); root.removeAttribute("height");
+  root.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  if (!root.getAttribute("viewBox")) root.setAttribute("viewBox", "0 0 800 450");
+  return new XMLSerializer().serializeToString(root);
+}
+function currentScene(){ return S.scenes[S.scenes.length - 1]; }
+function sceneSpeech(sc){ return [sc.scene_text, sc.question].filter(Boolean).join(" "); }
+
+async function choose(opt){
+  if (S.busy) return;
+  stopSpeak();
+  const sc = currentScene();
+  S.choices.push({label: opt.label, hidden_type: opt.hidden_type, options: sc.options, custom: !!opt.custom});
+  S.snapshots.push(JSON.parse(JSON.stringify(S.meters)));
+  const next = await makeScene();
+  if (!next) { S.choices.pop(); S.snapshots.pop(); render(); return; }
+  if (WEAK(opt.hidden_type) && !next.is_ending) {
+    S.think = {choice: opt.label, consequence: next.consequence_text, reply: "", busy: false};
+    render();
+    speak(`${next.consequence_text} Let's think for a second. If you could choose again, what would you do differently?`);
+  } else {
+    render();
+    speak([next.consequence_text, next.scene_text, next.question].filter(Boolean).join(" "));
+  }
+}
+async function interpret(text){
+  const sc = currentScene();
+  const idx = localMatch(text, sc.options);
+  if (idx >= 0) { const id = log("Interpreter", `heard "${text}" → choice ${idx+1}`); logDone(id); return choose(sc.options[idx]); }
+  const id = log("Interpreter", `understanding "${text}"…`);
+  try {
+    const r = await ai(`You are the Interpreter agent in a children's story game. The child was offered these options: ${JSON.stringify(sc.options.map((o,i) => ({index:i, label:o.label, hidden_type:o.hidden_type})))}.
+Scene: ${sc.scene_text}
+The child said: "${text}"
+If it clearly means one of the options, return {"option_index": N}. If it's a new idea, judge it the same way as the options and return {"option_index": -1, "label": "short version of their idea, max 8 words", "hidden_type": "wise|okay|tempting_bad|clearly_bad"}. Return ONLY JSON.`, "quick");
+    if (r.option_index >= 0 && sc.options[r.option_index]) { logDone(id, `matched choice ${r.option_index+1}`); return choose(sc.options[r.option_index]); }
+    const ht = TYPE_LABEL[r.hidden_type] ? r.hidden_type : "okay";
+    logDone(id, `their own idea: "${r.label || text}" (${TYPE_LABEL[ht].toLowerCase()})`);
+    return choose({label: r.label || text, hidden_type: ht, custom: true, leads_to: "the child's own idea"});
+  } catch(e) { logDone(id, "didn't catch that", "fail"); showBanner("I didn't catch that. Try tapping one of the 4 choices.", true); }
+}
+function localMatch(text, options){
+  const toks = text.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+  const words = [["one","first","1","a"],["two","second","2","b"],["three","third","3","c"],["four","fourth","4","d","last"]];
+  if (toks.length <= 4) for (let i = 0; i < 4; i++) if (options[i] && words[i].some(w => toks.includes(w))) return i;
+  let best = -1, score = 0;
+  options.forEach((o, i) => {
+    const lw = o.label.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length > 3);
+    const s = lw.filter(w => toks.includes(w)).length / Math.max(1, lw.length);
+    if (s > score) { score = s; best = i; }
+  });
+  return score >= 0.6 ? best : -1;
+}
+async function coach(answer){
+  const t = S.think; t.busy = true; t.answer = answer; render();
+  const id = log("Coach", "listening to the think-back answer…");
+  try {
+    const r = await ai(`You are the Coach agent in a children's learning story. ${S.settings.child_name} (age ${S.settings.child_age}) chose "${t.choice}" and this happened: "${t.consequence}". The lesson is: ${S.settings.lesson}.
+We asked "If you could choose again, what would you do differently?" and ${S.settings.child_name} said: "${answer}".
+Reply in 1-2 warm, simple sentences. Praise good thinking; if they missed the point, give a gentle hint. No lecturing. Return ONLY JSON: {"coach_reply": ""}`, "quick");
+    t.reply = r.coach_reply || "Great thinking! Let's keep going.";
+    logDone(id, "gave feedback");
+  } catch(e) { t.reply = "Good thinking! Let's see what happens next."; logDone(id, "used a simple reply", "fail"); }
+  const sc = currentScene();
+  sc.thinkback = answer;
+  S.choices[S.choices.length - 1].thinkback = answer;
+  t.busy = false; render(); speak(t.reply);
+}
+function finishThink(){ S.think = null; render(); speak(sceneSpeech(currentScene())); }
+function rewind(){
+  if (S.rewindUsed || !S.choices.length || S.busy) return;
+  stopSpeak();
+  S.rewindUsed = true; S.think = null;
+  S.scenes.pop(); S.choices.pop(); S.meters = S.snapshots.pop();
+  const id = log("Director", "rewound one choice, so you can try again"); logDone(id);
+  render(); speak("Let's rewind! " + sceneSpeech(currentScene()));
+}
+async function makeReport(){
+  S.reportBusy = true; render();
+  const id = log("Reflector", "writing the parent report…");
+  const hist = S.choices.map((c,i) => ({scene:i+1, chose:c.label, type:c.hidden_type, own_idea:c.custom, thinkback_answer:c.thinkback || null}));
+  try {
+    S.report = await ai(`You are the Reflector agent. Write a short report for a parent about their child's story session.
+Child: ${S.settings.child_name}, age ${S.settings.child_age}. Interests: ${S.settings.interests}. Lesson: ${S.settings.lesson} (${S.settings.lesson_type}).
+Choices (hidden types: wise / okay / tempting_bad / clearly_bad): ${JSON.stringify(hist)}
+Warm-up question: "${S.warmup ? S.warmup.question : ""}" (correct answer: "${S.warmup ? S.warmup.answer : ""}")
+Answer BEFORE the story: "${S.warmBefore || "(skipped)"}". Answer AFTER the story: "${S.warmAfter || "(skipped)"}".
+Judge each warm-up answer kindly (close enough counts). Return ONLY JSON:
+{"before_correct": true/false/null, "after_correct": true/false/null, "wise_choices": number, "total_choices": number, "summary": "2 sentences for the parent", "highlights": ["2-3 short points about what the child showed"], "child_quote": "the child's best think-back answer, or \\"\\"", "conversation_starter": "one question the parent can ask tonight, linked to the child's interests"}`, "default");
+    logDone(id, "report ready");
+  } catch(e) { S.report = {error: aiError(e)}; logDone(id, "couldn't finish the report", "fail"); }
+  S.reportBusy = false; render();
+}
+
+/* ============ RENDER ============ */
+function render(){
+  const st = $("stage");
+  if (screen === "home") st.innerHTML = homeView();
+  else if (screen === "setup") st.innerHTML = setupView();
+  else if (screen === "warmup") st.innerHTML = warmupView();
+  else if (screen === "story") st.innerHTML = storyView();
+  else if (screen === "ending") st.innerHTML = endingView();
+  renderLog();
+}
+function homeView(){
+  return `<div class="card hero">
+    <h1>Every kid learns best through the things they love.</h1>
+    <p>Parents know what makes their child light up. Tell StoryForge who your child is and what they should learn, and our AI agents build a story game around them, live, with real choices and real consequences.</p>
+  </div>
+  <div class="card quick" style="margin-top:20px">
+    <div><h2 style="font-size:26px">Quick play</h2><p style="margin:4px 0 0;color:var(--ink-soft)">No time to set up? Pick a subject and an age. The AI picks the lesson and builds the story.</p></div>
+    <div class="seg" role="group" aria-label="Subject">${SUBJECTS.map(s => `<button type="button" data-quick="${s[0]}" aria-pressed="${quick.subject === s[0]}">${s[1]}</button>`).join("")}</div>
+    <div class="row">
+      <label for="q_age" style="margin:0">Age</label>
+      <select id="q_age">${[4,5,6,7,8,9,10,11,12].map(a => `<option ${quick.age === a ? "selected" : ""}>${a}</option>`).join("")}</select>
+      <input id="q_name" placeholder="Child's name (optional)" value="${esc(quick.name)}" style="flex:1;min-width:160px">
+      <button type="button" class="btn" id="quickGo">▶ Play now</button>
+    </div>
+  </div>
+  <div class="section-h"><h2>Story Library</h2><span class="pill free">Free</span></div>
+  <div class="lib">${LIBRARY.map((l,i) => `<button type="button" class="libcard" data-lib="${i}">
+      <div class="libart" style="background:${l.color}" aria-hidden="true">${l.emoji}</div>
+      <div class="libbody"><b>${esc(l.title)}</b><span class="libmeta">${esc(l.lessonLabel)} · ages ${l.settings.child_age - 1}–${l.settings.child_age + 2}</span><span class="libmeta">Hero: ${esc(l.settings.child_name)}</span></div>
+    </button>`).join("")}</div>
+  <div class="section-h"><h2>Made for your child</h2><span class="pill premium">Premium</span></div>
+  <div class="card custom">
+    <div><h3 style="font-size:24px">Create a story for your child</h3><p style="margin:6px 0 0;color:var(--ink-soft);max-width:52ch">Their name, their interests, the lesson you choose and the limits you set. A brand-new adventure every time.</p></div>
+    <button type="button" class="btn" id="goCustom">Create a story</button>
+  </div>`;
+}
+function setupView(){
+  const d = draft;
+  const seg = (name, vals) => `<div class="seg" role="group">${vals.map(v => `<button type="button" data-seg="${name}" data-val="${v[0]}" aria-pressed="${d[name] === v[0]}">${v[1]}</button>`).join("")}</div>`;
+  return `<div class="card">
+    <h2 style="font-size:30px">Tell us about your child</h2>
+    <p style="color:var(--ink-soft);margin:6px 0 20px">You know what keeps them hooked. We'll turn it into a story that teaches.</p>
+    <form id="setupForm" class="form">
+      <div class="field"><label for="f_name">Child's first name</label><input id="f_name" value="${esc(d.child_name)}" required></div>
+      <div class="field"><label for="f_age">Age</label><input id="f_age" type="number" min="3" max="12" value="${esc(d.child_age)}"></div>
+      <div class="field full"><label for="f_int">Interests and favorite things</label><span class="hint">Pets, hobbies, favorite foods, people they love… The more specific, the better.</span><textarea id="f_int">${esc(d.interests)}</textarea></div>
+      <div class="field"><label for="f_type">What kind of lesson?</label><select id="f_type">${[["math","Math"],["geography","Geography"],["science","Science"],["moral","Values and kindness"],["reading","Reading and words"]].map(o => `<option value="${o[0]}" ${d.lesson_type === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select></div>
+      <div class="field"><label for="f_read">Reading level</label><select id="f_read">${["pre-reader (listens only)","early reader","confident reader"].map(o => `<option ${d.reading_level === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>
+      <div class="field full"><label for="f_lesson">What should they learn?</label><span class="hint">Not sure? Press "Suggest a lesson" and the AI picks one for the subject and age.</span>
+        <div class="row"><input id="f_lesson" value="${esc(d.lesson)}" placeholder="e.g. adding numbers up to 20, sharing with friends" style="flex:1;min-width:220px"><button type="button" class="btn secondary" id="suggestLesson" ${d._suggesting ? "disabled" : ""}>${d._suggesting ? "Thinking…" : "✨ Suggest a lesson"}</button></div></div>
+      <div class="field full"><label for="f_theme">Story idea (optional)</label><input id="f_theme" value="${esc(d.theme)}" placeholder="Leave empty and we'll build one from the interests"></div>
+      <div class="field full"><label for="f_lim">Limits: what should the story avoid?</label><input id="f_lim" value="${esc(d.limits)}" placeholder="e.g. no scary monsters, no fighting"></div>
+      <div class="field full"><label>How strong should consequences be?</label><span class="hint">Weaker choices lead to setbacks in the story, so kids learn from them.</span>${seg("consequence_level", [["gentle","Gentle"],["medium","Medium"],["real","Real"]])}</div>
+      <div class="field full row"><button type="submit" class="btn">Start the story</button><button type="button" class="btn secondary" id="backHome">Back</button></div>
+    </form>
+  </div>`;
+}
+function warmupView(){
+  if (S.error) return errorCard();
+  const w = S.warmup;
+  if (!w && !S.busy && S.scenes.length) { screen = "story"; setTimeout(() => speak(sceneSpeech(currentScene())), 0); return storyView(); }
+  if (!w) return `<div class="card"><div class="writing"><div class="spin"></div>Building ${esc(S.settings.child_name)}'s world… the agents are working on the right.</div></div>`;
+  return `<div class="card">
+    <span class="pill free">Warm-up</span>
+    <h2 style="font-size:28px;margin:10px 0">${esc(S.title)}</h2>
+    <p class="question">${esc(w.question)}</p>
+    <p style="color:var(--ink-soft);margin-top:0">Just a quick guess before the adventure starts. It's fine not to know yet!</p>
+    <div class="own"><input id="warmIn" placeholder="Say it or type it…">${micButton("warmIn")}<button type="button" class="btn" id="warmGo">Start the adventure</button></div>
+  </div>`;
+}
+function errorCard(){ return `<div class="card"><div class="conseq">${esc(S.error)}</div><div class="tools"><button type="button" class="btn" id="retry">Try again</button><button type="button" class="btn secondary" id="backHome">Home</button></div></div>`; }
+function storyView(){
+  const sc = currentScene();
+  const n = S.scenes.length;
+  const dots = Array.from({length: TOTAL}, (_, i) => `<span class="dot ${i < n-1 ? "done" : i === n-1 ? "on" : ""}"></span>`).join("");
+  const hearts = "❤️".repeat(S.meters.hearts) + "🤍".repeat(Math.max(0, 5 - S.meters.hearts));
+  const head = `<div class="storyhead"><h2>${esc(S.title)}</h2><div class="dots" aria-label="Scene ${n} of ${TOTAL}">${dots}</div></div>
+    <div class="meters" style="margin-bottom:12px"><span class="hearts" title="Friendship hearts">${hearts}</span>${S.meters.items.length ? `<span class="bag">🎒 ${S.meters.items.map(esc).join(", ")}</span>` : ""}</div>`;
+  const art = `<div class="art" data-art="${n-1}">${sc.svg || `<div class="wait">🎨<small>Illustrator is drawing…</small></div>`}</div>`;
+  const cons = sc.consequence_text ? `<div class="conseq ${S.choices.length && !WEAK(S.choices[S.choices.length-1].hidden_type) ? "good" : ""}">${esc(sc.consequence_text)}</div>` : "";
+  let body;
+  if (S.error) body = `<div class="conseq">${esc(S.error)}</div><div class="tools"><button type="button" class="btn" id="retry">Try again</button></div>`;
+  else if (S.busy) body = `<div class="writing" style="margin-top:16px"><div class="spin"></div>The Director is writing what happens next…</div>`;
+  else if (S.think) {
+    const t = S.think;
+    body = `<div class="think"><h3>Think-back moment</h3><p style="margin:0 0 10px">If you could choose again, what would you do differently?</p>
+      ${t.reply ? `<div class="coach">🦉 ${esc(t.reply)}</div><div class="tools"><button type="button" class="btn mint" id="thinkDone">Keep going</button></div>`
+        : t.busy ? `<div class="writing"><div class="spin"></div>The Coach is listening…</div>`
+        : `<div class="own"><input id="thinkIn" placeholder="Say it or type it…">${micButton("thinkIn")}<button type="button" class="btn" id="thinkGo">Tell the Coach</button></div>`}</div>`;
+  }
+  else if (sc.is_ending) body = `<p class="scenetext">${esc(sc.scene_text)}</p><div class="tools"><button type="button" class="btn mint" id="toEnding">See your story map</button></div>`;
+  else body = `<p class="scenetext">${esc(sc.scene_text)}</p><p class="question">${esc(sc.question || "What do you do?")}</p>
+    <div class="opts">${sc.options.map((o,i) => `<button type="button" class="opt" data-opt="${i}"><span class="k">${"ABCD"[i]}</span><span>${esc(o.label)}</span></button>`).join("")}</div>
+    <div class="own"><input id="ownIn" placeholder="Or say or type your own idea…">${micButton("ownIn")}<button type="button" class="btn secondary" id="ownGo">Try my idea</button></div>`;
+  const tools = (!S.busy && !S.think) ? `<div class="tools">${cap.tts ? `<button type="button" class="btn secondary" id="replay">🔊 Read it again</button>` : ""}${!S.rewindUsed && S.choices.length ? `<button type="button" class="btn secondary" id="rewind">⏪ Rewind one choice (1 left)</button>` : ""}</div>` : "";
+  return `<div class="card">${head}${art}${S.think ? "" : cons}${S.think ? cons : ""}${body}${tools}</div>`;
+}
+function endingView(){
+  const cols = S.choices.map((c, i) => {
+    const opts = c.custom ? [...c.options, {label: c.label, hidden_type: c.hidden_type, leads_to: "The hero's own idea!", _own: true}] : c.options;
+    return `<div class="col"><h3>Choice ${i+1}</h3>${opts.map(o => {
+      const chosen = o._own || (!c.custom && o.label === c.label);
+      return `<div class="node ${chosen ? "chosen" : ""}"><b>${chosen ? "✔ " : ""}${esc(o.label)}</b>${esc(o.leads_to || "")}<br><span class="badge b-${esc(o.hidden_type)}">${esc(TYPE_LABEL[o.hidden_type] || "")}</span></div>`;
+    }).join("")}</div>`;
+  }).join("");
+  let warm = "";
+  if (S.warmup && !S.report && !S.reportBusy) warm = `<div class="card" style="margin-top:20px"><span class="pill free">After the story</span><p class="question">${esc(S.warmup.question)}</p>
+    <div class="own"><input id="afterIn" placeholder="Say it or type it…">${micButton("afterIn")}<button type="button" class="btn" id="afterGo">Show the parent report</button></div></div>`;
+  else if (!S.warmup && !S.report && !S.reportBusy) warm = `<div class="tools"><button type="button" class="btn" id="afterGo">Show the parent report</button></div>`;
+  let rep = "";
+  if (S.reportBusy) rep = `<div class="card" style="margin-top:20px"><div class="writing"><div class="spin"></div>The Reflector is writing the parent report…</div></div>`;
+  else if (S.report && S.report.error) rep = `<div class="card" style="margin-top:20px"><div class="conseq">${esc(S.report.error)}</div><div class="tools"><button type="button" class="btn" id="afterGo">Try again</button></div></div>`;
+  else if (S.report) {
+    const r = S.report;
+    const mark = v => v === true ? "✔ Right" : v === false ? "Not yet" : "Skipped";
+    rep = `<div class="card" style="margin-top:20px"><span class="pill premium">For the parent</span><h2 style="font-size:28px;margin-top:8px">${esc(S.settings.child_name)}'s learning report</h2>
+      <p style="max-width:66ch">${esc(r.summary || "")}</p>
+      <div class="report">
+        <div class="stat"><div class="n">${mark(r.before_correct)} → ${mark(r.after_correct)}</div><div class="l">Warm-up question, before → after</div></div>
+        <div class="stat"><div class="n">${esc(r.wise_choices ?? "–")} of ${esc(r.total_choices ?? S.choices.length)}</div><div class="l">Wise choices</div></div>
+        <div class="stat"><div class="n">${S.rewindUsed ? "Used" : "Not used"}</div><div class="l">Rewind (tried again)</div></div>
+      </div>
+      ${r.child_quote ? `<p class="quote">"${esc(r.child_quote)}"<br><span class="hint">${esc(S.settings.child_name)}, in a think-back moment</span></p>` : ""}
+      ${Array.isArray(r.highlights) && r.highlights.length ? `<ul>${r.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}
+      ${r.conversation_starter ? `<div class="think"><h3>Ask tonight</h3><p style="margin:0">${esc(r.conversation_starter)}</p></div>` : ""}
+      <div class="tools"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn secondary" id="backHome">Home</button></div></div>`;
+  }
+  return `<div class="card"><h2 style="font-size:30px">The roads not taken</h2><p style="color:var(--ink-soft);margin:6px 0 16px">Your path is outlined. The faded cards show where the other choices would have led.</p><div class="map">${cols}</div></div>${warm}${rep}`;
+}
+
+/* ============ EVENTS ============ */
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.lib !== undefined) { const l = LIBRARY[+t.dataset.lib]; startStory({...l.settings}); return; }
+  if (t.dataset.seg) { readForm(); draft[t.dataset.seg] = t.dataset.val; render(); return; }
+  if (t.dataset.quick) { readQuick(); quick.subject = t.dataset.quick; render(); return; }
+  if (t.dataset.opt !== undefined) { choose(currentScene().options[+t.dataset.opt]); return; }
+  if (t.dataset.mic) {
+    const target = t.dataset.mic;
+    const after = { warmIn: v => { $("warmIn").value = v; }, ownIn: v => { interpret(v); }, thinkIn: v => { coach(v); }, afterIn: v => { $("afterIn").value = v; } }[target];
+    startMic(target, after); return;
+  }
+  switch (t.id) {
+    case "quickGo": {
+      readQuick();
+      startStory({child_name: quick.name || "Kai", child_age: quick.age, reading_level: quick.age <= 6 ? "early reader" : "confident reader",
+        interests: "", theme: "", lesson_type: quick.subject, lesson: "", limits: "nothing scary, no fighting", consequence_level: "medium"});
+      break;
+    }
+    case "suggestLesson": suggestLesson(); break;
+    case "goCustom": draft = draft || {...LIBRARY[0].settings, child_name:"", interests:"", lesson:"", limits:"", theme:""}; screen = "setup"; render(); break;
+    case "backHome": case "homeBtn": stopSpeak(); screen = "home"; render(); break;
+    case "muteBtn": muted = !muted; t.textContent = "Voice: " + (muted ? "off" : "on"); if (muted) stopSpeak(); break;
+    case "warmGo": S.warmBefore = ($("warmIn").value || "").trim(); screen = "story"; render(); speak(sceneSpeech(currentScene())); break;
+    case "ownGo": { const v = ($("ownIn").value || "").trim(); if (v) interpret(v); break; }
+    case "thinkGo": { const v = ($("thinkIn").value || "").trim(); if (v) coach(v); break; }
+    case "thinkDone": finishThink(); break;
+    case "replay": { const sc = currentScene(); speak([sc.consequence_text, sc.scene_text, sc.question].filter(Boolean).join(" ")); break; }
+    case "rewind": rewind(); break;
+    case "toEnding": stopSpeak(); screen = "ending"; render(); if (S.warmup) speak("You finished! One last time: " + S.warmup.question); break;
+    case "afterGo": { const el = $("afterIn"); if (el) S.warmAfter = (el.value || "").trim(); makeReport(); break; }
+    case "again": startStory({...S.settings}); break;
+    case "retry":
+      if (!S.scenes.length) { const st = S.settings; startStory(st); }
+      else { S.error = null; const last = S.choices[S.choices.length - 1]; if (S.scenes.length === S.choices.length) { S.choices.pop(); S.snapshots.pop(); render(); choose(last); } else render(); }
+      break;
+  }
+});
+function readForm(){
+  if (!$("f_name")) return;
+  draft = {...draft,
+    child_name: $("f_name").value.trim(), child_age: +$("f_age").value || 7, interests: $("f_int").value.trim(),
+    lesson_type: $("f_type").value, reading_level: $("f_read").value, lesson: $("f_lesson").value.trim(),
+    theme: $("f_theme").value.trim(), limits: $("f_lim").value.trim()};
+}
+function readQuick(){
+  if ($("q_age")) quick.age = +$("q_age").value || 7;
+  if ($("q_name")) quick.name = $("q_name").value.trim();
+}
+async function suggestLesson(){
+  readForm();
+  draft._suggesting = true; render();
+  const subj = (SUBJECTS.find(s => s[0] === draft.lesson_type) || ["", draft.lesson_type])[1].replace(/^\S+\s/, "");
+  try {
+    const r = await ai(`You help a parent set up an educational story game. Subject: ${subj}. Child age: ${draft.child_age}. Child's interests: ${draft.interests || "not given"}.
+Suggest ONE specific, age-appropriate lesson that works well inside a story with choices, and a fun story idea that uses the child's interests.
+Return ONLY JSON: {"lesson": "short specific lesson, max 12 words", "theme": "one-sentence story idea"}`, "quick");
+    if (r.lesson) draft.lesson = r.lesson;
+    if (r.theme && !draft.theme) draft.theme = r.theme;
+  } catch(e) { showBanner(aiError(e), true); }
+  draft._suggesting = false; render();
+}
+document.addEventListener("submit", e => {
+  if (e.target.id !== "setupForm") return;
+  e.preventDefault();
+  readForm();
+  const s = {...draft};
+  delete s._suggesting;
+  s.child_name = s.child_name || "Alex";
+  startStory(s);
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || !e.target.id) return;
+  const map = {warmIn:"warmGo", ownIn:"ownGo", thinkIn:"thinkGo", afterIn:"afterGo"};
+  if (map[e.target.id]) { e.preventDefault(); $(map[e.target.id]).click(); }
+});
+
+/* the warm-up screen waits for scene 1; show the story button state when it arrives */
+render();
+loadCaps();
+</script>
+</body>
+</html>
