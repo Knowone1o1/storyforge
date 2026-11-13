@@ -138,6 +138,9 @@ textarea{min-height:84px;resize:vertical}
 .art{overflow:hidden;aspect-ratio:16/9;max-width:100%;background:var(--sky-soft);display:flex;align-items:center;justify-content:center}
 .art svg{width:100%;height:100%;display:block}
 .art canvas{display:block;width:100%;height:100%}
+.art img.paint{display:block;width:100%;height:100%;object-fit:cover;animation:paintdrift 18s ease-in-out infinite alternate}
+@keyframes paintdrift{from{transform:scale(1.02)}to{transform:scale(1.1) translate(-1.5%,-1%)}}
+@media (prefers-reduced-motion:reduce){.art img.paint{animation:none}}
 .leaf-text{display:flex;flex-direction:column;gap:16px;padding:18px 18px 16px;overflow-y:auto}
 .leaf-text.turn-next{animation:turnNext .28s ease-out}
 .leaf-text.turn-back{animation:turnBack .28s ease-out}
@@ -1057,6 +1060,15 @@ const Stage3D = (() => {
   }
   return {ok, show};
 })();
+function pagePaint(sc){ // a painted picture for the page being read, if the book has one
+  const pages = sc._pages || [], pg = pages[Math.min(S.page, pages.length - 1)], src = pg && pg.src;
+  return src && src.img && !src.imgFailed ? src.img : "";
+}
+document.addEventListener("error", e => { // a painting that will not load gives way to the 3D picture
+  const t = e.target; if (!t || !t.classList || !t.classList.contains("paint") || !S) return;
+  S.scenes.forEach(sc => (sc._pages || []).forEach(pg => { if (pg.src && pg.src.img && t.getAttribute("src") === pg.src.img) pg.src.imgFailed = true; }));
+  if (screen === "story") render();
+}, true);
 function pageSpec(sc){ // the picture for the page being read
   const pages = sc._pages || [], pg = pages[Math.min(S.page, pages.length - 1)];
   return (pg && (pg.scene3d || (pg.src && pg.src.scene))) || sc.scene3d || null;
@@ -1065,6 +1077,7 @@ function mountArt(){
   if (screen !== "story" || !S) return;
   const el = document.querySelector(".art[data-art]"); if (!el) return;
   const sc = S.scenes[+el.dataset.art]; if (!sc) return;
+  if (pagePaint(sc)) return; // a painting is showing
   const spec = pageSpec(sc);
   if (spec && !Stage3D.show(el, spec) && !S.demo) { sc.scene3d = null; illustrate(sc); } // 3D failed here: fall back to a drawing
 }
@@ -1119,7 +1132,7 @@ const DEMO_BOOKS = (() => {
     chapters: [
       { pages: [
           {text: "Mia and Bobo walk to Fraction Falls. The water goes splash, splash, splash.", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})]})},
-          {text: "In the tall grass they find something round. It is 8 dino eggs!", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})], props:[eggs(8)]})},
+          {text: "In the tall grass they find something round. It is 8 dino eggs!", img: "art/dino/c1b.jpg", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})], props:[eggs(8)]})},
           {text: "The eggs are warm and wobbly. Bobo sniffs them. Sniff, sniff.", scene: day({characters:[MIA, BOBO], props:[eggs(8, {move:"shiver"})]})},
           {text: "Oh no! One egg rolls away. It rolls down the hill.", scene: day({characters:[as(MIA,{move:"hop"}), as(BOBO,{move:"hop"})], props:[eggs(7)], fixed:[eggAt(.4, 3, "rollaway")]})},
           {text: "Bobo runs fast. He brings the egg back, safe and sound.", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})], props:[eggs(8)]})},
@@ -1735,7 +1748,7 @@ function storyView(){
   const pages = pagesOf(sc);
   const atChoice = S.page >= pages.length;
   const idle = !S.error && !S.busy && !S.think;
-  const art = `<div class="art" data-art="${n-1}">${pageSpec(sc) ? "" : sc.svg || (sc.noArt ? NO_ART : `<div class="wait"><span class="blobs"><i></i><i></i><i></i></span><small>The Illustrator is drawing…</small></div>`)}</div>`;
+  const art = `<div class="art" data-art="${n-1}">${pagePaint(sc) ? `<img class="paint" src="${esc(pagePaint(sc))}" alt="">` : pageSpec(sc) ? "" : sc.svg || (sc.noArt ? NO_ART : `<div class="wait"><span class="blobs"><i></i><i></i><i></i></span><small>The Illustrator is drawing…</small></div>`)}</div>`;
   let side;
   if (S.error) side = `<div class="conseq">${esc(S.error)}</div><div class="tools"><button type="button" class="btn" id="retry">Try again</button></div>`;
   else if (S.busy) side = `<div class="wait" style="margin:auto"><span class="blobs"><i></i><i></i><i></i></span><span>Writing what happens next</span></div>`;
