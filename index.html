@@ -1158,7 +1158,7 @@ const Stage3D = (() => {
 function paintUrl(book, text){
   // describe only the characters this page is about, so the picture shows what the text says
   const parts = String(book.cast || "").split(/(?<=[.;])\s+/).filter(Boolean);
-  const named = parts.filter(c => { const name = (c.match(/[A-Z][a-z]+/) || [""])[0]; return name && new RegExp("\b" + name + "\b").test(text); });
+  const named = parts.filter(c => { const name = (c.match(/[A-Z][a-z]+/) || [""])[0]; return name && new RegExp("\\b" + name + "\\b").test(text); });
   const who = (named.length ? named : parts.slice(0, 1)).join(" ");
   const scene = `Picture-book scene: ${text} ${who ? "(" + who + ")" : ""}`.trim();
   return `/api/image?s=${book.seed}&p=${encodeURIComponent(scene.slice(0, 900))}`;
@@ -1374,7 +1374,7 @@ function makeDemoScene(){
     ? book.graph[chapterId] // a tree: the option picked names the next chapter
     : n <= book.chapters.length ? book.chapters[n - 1] : (wise >= 2 ? book.endings.good : book.endings.mixed);
   const pages = [];
-  if (n === 1) pages.push({text: `${book.title}. A book for ${S.settings.child_name}.`, cover: true, src: ch.pages[0]});
+  if (n === 1) pages.push({text: `${book.title}. A book for ${S.settings.child_name}.`, cover: true, src: book.coverImg ? {img: book.coverImg, scene: ch.pages[0].scene} : ch.pages[0]});
   if (picked && picked.result) pages.push({text: picked.result.text, cons: true, src: picked.result});
   ch.pages.forEach((pg, i) => pages.push({text: pg.text, src: pg, first: i === 0}));
   const options = (ch.options || []).map(o => Object.assign({}, o));
@@ -1506,7 +1506,10 @@ async function writeFirstChapter(){
     check: raw.check && str(raw.check.question) ? {question: str(raw.check.question), answer, accept: [answer.toLowerCase()]} : null};
   book.seed = 1 + Math.floor(Math.random() * 99999); book.cast = str(raw.cast) || S.heroLook;
   await guardChapters([ch], "chapter 1");
-  if (paintChapters(book, [ch])) { const id = log("Illustrator", "painting the pages of chapter 1"); logDone(id); }
+  if (paintChapters(book, [ch])) {
+    book.coverImg = `/api/image?s=${book.seed}&p=${encodeURIComponent(`Picture-book cover for "${book.title}", the main characters together, joyful and inviting. (${book.cast})`.slice(0, 900))}`;
+    const id = log("Illustrator", "painting the cover and the pages of chapter 1"); logDone(id);
+  }
   else { book.heroReady = drawChapters(book, ["c1"], "chapter 1"); await book.heroReady; } // no painter here (Claude page): 3D pictures
   return book;
 }
@@ -2145,7 +2148,7 @@ function quickCard(){
 function homeView(){
   const tints = ["var(--sky)", "var(--leaf)", "var(--tomato)", "var(--grape)", "var(--sun)"];
   const made = books.map((b, i) => `<button type="button" class="cover made" data-book="${esc(b.id)}" aria-label="${esc(b.book.title)}" style="--c:${tints[i % tints.length]}">
-      <span class="face"><b aria-hidden="true">${esc(String(b.settings.child_name || "?").charAt(0).toUpperCase())}</b></span>
+      ${b.book.coverImg && onSite ? `<img src="${esc(b.book.coverImg)}" alt="" loading="lazy">` : `<span class="face"><b aria-hidden="true">${esc(String(b.settings.child_name || "?").charAt(0).toUpperCase())}</b></span>`}
       <span class="cover-title">${esc(b.book.title)}<small>Made for ${esc(b.settings.child_name)}, ${esc(b.when)}</small></span>
       ${stars.books["s" + b.id] ? `<span class="sticker" role="img" aria-label="Finished"><i class="star"></i></span>` : ""}
     </button>`).join("");
