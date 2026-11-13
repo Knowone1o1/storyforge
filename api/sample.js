@@ -50,7 +50,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ code: "bad_request" });
   }
 
-  let sawRateLimit = false;
+  // Try each model in turn; remember why the ones before it failed.
+  const tried = [];
   for (const model of MODELS[tier === "quick" ? "quick" : "default"]) {
     try {
       let { status, data } = await callGemini(model, prompt, true);
@@ -59,21 +60,18 @@ export default async function handler(req, res) {
 
       if (status === 200) {
         const text = textOf(data);
-        if (text) return res.status(200).json({ text });
-        console.error("Gemini returned no text", model, data.status);
+        if (text) return res.status(200).json({ text, model });
+        tried.push({ model, status, message: "no text (" + data.status + ")" });
         continue;
       }
-      if (status === 401 || status === 403) {
-        console.error("Gemini key rejected", status, data.error && data.error.message);
-        return res.status(500).json({ code: "no_key" });
-      }
-      if (status === 429) sawRateLimit = true;
-      console.error("Gemini error", model, status, data.error && data.error.message);
+      tried.push({ model, status, message: String((data.error && data.error.message) || "").slice(0, 200) });
     } catch (err) {
-      console.error("Gemini call failed", model, err && err.message);
+      tried.push({ model, status: 0, message: String(err && err.message).slice(0, 200) });
     }
   }
-  return sawRateLimit
-    ? res.status(429).json({ code: "rate_limited" })
-    : res.status(502).json({ code: "ai_error" });
+  console.error("All Gemini models failed", JSON.stringify(tried));
+  const statuses = tried.map((t) => t.status);
+  if (statuses.includes(429)) return res.status(429).json({ code: "rate_limited", tried });
+  if (statuses.every((s) => s === 401 || s === 403)) return res.status(500).json({ code: "no_key", tried });
+  return res.status(502).json({ code: "ai_error", tried });
 }
