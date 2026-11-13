@@ -300,6 +300,21 @@ textarea{min-height:84px;resize:vertical}
 .cover.soon .cover-title small:last-child{color:var(--ink-soft)}
 .tag{display:inline-block;margin-top:5px;font-size:12.5px;font-weight:600;border:2px solid var(--ink);border-radius:999px;padding:0 8px;background:var(--paper-deep)}
 .empty-lib{padding:24px;text-align:center}
+
+/* ---- Make a book: choices about the book only ---- */
+.mk{display:flex;flex-direction:column;gap:22px}
+.mk-q{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mk-q > b{font-size:19px}
+.mk-q .hint{margin-top:-6px}
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pick{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:64px;padding:10px 14px;border:3px solid var(--ink);border-radius:16px;background:var(--paper);box-shadow:0 4px 0 var(--ink);font:inherit;color:var(--ink)}
+.pick b{font-size:17px;line-height:1.15}
+.pick small{font-size:13px;color:var(--ink-soft);line-height:1.25}
+.pick[aria-pressed="true"]{background:var(--sun);transform:translateY(4px);box-shadow:none}
+.pick[aria-pressed="true"] small{color:var(--ink)}
+.mk-go{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.mk-go .btn{min-height:56px;font-size:19px}
+.mk-sum{margin:0;color:var(--ink-soft);font-weight:600}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -1901,7 +1916,7 @@ function goTab(tab){
   openGrown(tab);
 }
 function openGrown(tab){
-  if (tab === "setup") draft = {...LIBRARY[0].settings, child_name:"", interests:"", limits:"", ...(draft || {}), ...(child || {}), lesson: draft ? draft.lesson : "", theme: draft ? draft.theme : ""};
+  if (tab === "setup" && (!draft || draft.child_name !== undefined)) draft = newDraft(); // keep the choices made so far
   profileSaved = false; screen = tab; render();
 }
 
@@ -2109,30 +2124,49 @@ function homeView(){
   <div class="plank"></div>
   </div>`;
 }
+/* The child's details live in the Child tab; this screen only asks what kind of book to make. */
+const BOOK_SUBJECTS = [["math","Math","Numbers, shapes, sharing"],["science","Science","How the world works"],["geography","Geography","Places and people"],["moral","Values","Kindness, honesty, bravery"],["reading","Words","Letters, rhymes, new words"]];
+const BOOK_WORLDS = [["any","Any world","Built from what they love"],["adventure","Adventure","Maps, quests, treasure"],["animals","Animals","Pets and wild friends"],["space","Space","Rockets and planets"],["magic","Magic","Wizards and wishes"],["sea","Under the sea","Fish, shells, submarines"],["dinos","Dinosaurs","Eggs, fossils, roars"],["home","Everyday life","Home, school, friends"]];
+const BOOK_MOODS = [["any","Any mood"],["funny","Funny"],["exciting","Exciting"],["calm","Calm, for bedtime"]];
+let profileReturn = "";
+function newDraft(){ return {lesson_type: "math", lesson: "", theme: "", world: "any", mood: "any"}; }
+function bookTheme(d){
+  const w = BOOK_WORLDS.find(x => x[0] === d.world), m = BOOK_MOODS.find(x => x[0] === d.mood);
+  return [w && d.world !== "any" ? `Set the story in this kind of world: ${w[1]} (${w[2].toLowerCase()}).` : "",
+    m && d.mood !== "any" ? `Make the mood ${m[1].toLowerCase()}.` : "", d.theme ? `The parent's idea: ${d.theme}` : ""].filter(Boolean).join(" ");
+}
 function setupView(){
+  if (!child) return `<div class="view">${bar("Make a book")}<div class="card stack">
+    <h2 style="font-size:28px">First, tell us about your child</h2>
+    <p class="sub">Their name, age, reading level and what they love go in the Child profile. You fill it in once, and every book uses it.</p>
+    <div class="tools"><button type="button" class="btn go" id="setupProfile">Set up the Child profile</button></div></div></div>`;
+  if (!draft || draft.child_name !== undefined || !draft.world) draft = newDraft();
   const d = draft;
-  const seg = (name, vals) => `<div class="seg" role="group">${vals.map(v => `<button type="button" data-seg="${name}" data-val="${v[0]}" aria-pressed="${d[name] === v[0]}">${v[1]}</button>`).join("")}</div>`;
-  const who = child
-    ? `<div class="field full"><div class="forwho"><span>This book is for</span><b>${esc(child.child_name)}, ${esc(child.child_age)}</b><span class="hint">${esc(child.reading_level)}</span><span class="grow"></span><button type="button" class="btn secondary" id="goProfile">Edit profile</button></div></div>`
-    : `<div class="field"><label for="f_name">Child's first name</label><input id="f_name" value="${esc(d.child_name)}" required></div>
-      <div class="field"><label for="f_age">Age</label><input id="f_age" type="number" min="3" max="12" value="${esc(d.child_age)}"></div>
-      <div class="field full"><label for="f_int">Interests and favorite things</label><span class="hint">Pets, hobbies, favorite foods, people they love. The more specific, the better.</span><textarea id="f_int">${esc(d.interests)}</textarea></div>
-      <div class="field full"><label for="f_read">Reading level</label><select id="f_read">${READING_LEVELS.map(o => `<option ${d.reading_level === o ? "selected" : ""}>${o}</option>`).join("")}</select></div>`;
-  const rules = child ? "" : `<div class="field full"><label for="f_lim">Limits: what should the story avoid?</label><input id="f_lim" value="${esc(d.limits)}" placeholder="e.g. no scary monsters, no fighting"></div>
-      <div class="field full"><label>How strong should consequences be?</label><span class="hint">Weaker choices lead to setbacks in the story, so kids learn from them.</span>${seg("consequence_level", [["gentle","Gentle"],["medium","Medium"],["real","Real"]])}</div>`;
-  return `<div class="view">${bar("Make a book")}${quickCard()}<div class="card">
-    <h2 style="font-size:30px">${child ? "A new book for " + esc(child.child_name) : "Tell us about your child"}</h2>
-    <p class="sub" style="margin:6px 0 20px">${child ? "Pick what this book should teach. Everything else comes from the saved profile." : "You know what keeps them hooked. We'll turn it into a story that teaches, and remember these details for next time."}</p>
-    <form id="setupForm" class="form">
-      ${who}
-      <div class="field full"><label for="f_type">What kind of lesson?</label><select id="f_type">${[["math","Math"],["geography","Geography"],["science","Science"],["moral","Values and kindness"],["reading","Reading and words"]].map(o => `<option value="${o[0]}" ${d.lesson_type === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select></div>
-      <div class="field full"><label for="f_lesson">What should they learn?</label><span class="hint">Not sure? Press "Suggest a lesson" and the AI picks one for the subject and age.</span>
-        <div class="row"><input id="f_lesson" value="${esc(d.lesson)}" placeholder="e.g. adding numbers up to 20, sharing with friends" style="flex:1;min-width:220px"><button type="button" class="btn secondary ico-spark" id="suggestLesson" ${d._suggesting ? "disabled" : ""}>${d._suggesting ? "Thinking…" : "Suggest a lesson"}</button></div></div>
-      <div class="field full"><label for="f_theme">Story idea (optional)</label><input id="f_theme" value="${esc(d.theme)}" placeholder="Leave empty and we'll build one from the interests"></div>
-      ${rules}
-      <div class="field full row"><button type="submit" class="btn go">Write the book</button></div>
-    </form>
-  </div></div>`;
+  const picks = (field, items) => `<div class="picks" role="group">${items.map(o => `<button type="button" class="pick" data-bk="${field}" data-val="${o[0]}" aria-pressed="${d[field] === o[0]}"><b>${esc(o[1])}</b>${o[2] ? `<small>${esc(o[2])}</small>` : ""}</button>`).join("")}</div>`;
+  const subj = (BOOK_SUBJECTS.find(x => x[0] === d.lesson_type) || ["", ""])[1];
+  return `<div class="view">${bar("Make a book")}
+  <div class="forwho"><span>This book is for</span><b>${esc(child.child_name)}, ${esc(child.child_age)}</b><span class="hint">${esc(child.reading_level)}</span><span class="grow"></span><button type="button" class="btn secondary" id="goProfile">Edit profile</button></div>
+  <form id="setupForm" class="card mk">
+    <div class="mk-q"><b>What should the book teach?</b>${picks("lesson_type", BOOK_SUBJECTS)}</div>
+    <div class="mk-q"><label for="f_lesson"><b>Anything specific?</b></label><span class="hint">Leave it empty and we pick a ${esc(subj.toLowerCase())} lesson that fits ${esc(child.child_name)}'s age.</span>
+      <div class="row"><input id="f_lesson" value="${esc(d.lesson)}" placeholder="e.g. halves and quarters, telling the truth" style="flex:1;min-width:200px"><button type="button" class="btn secondary ico-spark" id="suggestLesson" ${d._suggesting ? "disabled" : ""}>${d._suggesting ? "Thinking…" : "Suggest one"}</button></div></div>
+    <div class="mk-q"><b>What kind of world?</b>${picks("world", BOOK_WORLDS)}</div>
+    <div class="mk-q"><b>What mood?</b><div class="seg" role="group">${BOOK_MOODS.map(o => `<button type="button" data-bk="mood" data-val="${o[0]}" aria-pressed="${d.mood === o[0]}">${esc(o[1])}</button>`).join("")}</div></div>
+    <div class="mk-q"><label for="f_theme"><b>Your own story idea</b> <span class="hint">(optional)</span></label><input id="f_theme" value="${esc(d.theme)}" placeholder="e.g. Bobo the dog gets lost at the beach"></div>
+    <div class="mk-go"><button type="submit" class="btn go">Write the book</button><button type="button" class="btn secondary" id="surpriseGo">Surprise me</button></div>
+    <p class="mk-sum">${esc(child.child_name)}'s interests, limits and consequence strength come from the Child profile.</p>
+  </form></div>`;
+}
+function readForm(){
+  if (!$("setupForm") || !draft) return;
+  draft.lesson = ($("f_lesson") ? $("f_lesson").value.trim() : draft.lesson);
+  draft.theme = ($("f_theme") ? $("f_theme").value.trim() : draft.theme);
+}
+function bookSettings(d){
+  const c = child || {};
+  return {child_name: c.child_name || "Alex", child_age: c.child_age || 7, reading_level: c.reading_level || "early reader", interests: c.interests || "",
+    limits: c.limits || "nothing scary, no fighting", consequence_level: c.consequence_level || "medium",
+    lesson_type: d.lesson_type || "math", lesson: d.lesson || "", theme: bookTheme(d)};
 }
 function warmupView(){ // the loading screen while the first chapter is written
   if (S.error) return errorCard();
@@ -2288,6 +2322,7 @@ document.addEventListener("click", e => {
     if (k === "reports") { reports = []; try { localStorage.removeItem("storyforge_reports"); } catch(e) {} }
     render(); return;
   }
+  if (t.dataset.bk) { readForm(); draft[t.dataset.bk] = t.dataset.val; render(); return; }
   if (t.dataset.filter) { libFilter[t.dataset.filter] = t.dataset.val; render(); return; }
   if (t.id === "libClear") { libFilter = {topic: "all", level: "all", age: "all", q: ""}; render(); return; }
   if (t.dataset.soon !== undefined) { const b = SOON[+t.dataset.soon]; showBanner(`"${b.title}" is coming soon. Try a book marked Ready.`); clearTimeout(window.__soonT); window.__soonT = setTimeout(() => showBanner(), 3500); return; }
@@ -2314,6 +2349,8 @@ document.addEventListener("click", e => {
       break;
     }
     case "suggestLesson": suggestLesson(); break;
+    case "surpriseGo": { const keys = BOOK_SUBJECTS.map(x => x[0]); startStory(bookSettings({lesson_type: keys[Math.floor(Math.random() * keys.length)], lesson: "", theme: "", world: "any", mood: "any"})); break; }
+    case "setupProfile": profileReturn = "setup"; profileSaved = false; pdraft = {child_name:"", child_age:7, reading_level:"early reader", interests:"", limits:"", consequence_level:"medium"}; screen = "profile"; render(); break;
     case "goCustom": goTab("setup"); break;
     case "goProfile": profileSaved = false; pdraft = {child_name:"", child_age:7, reading_level:"early reader", interests:"", limits:"", consequence_level:"medium", ...(child || {})}; screen = "profile"; render(); break;
     case "profileBack": screen = "parents"; render(); break;
@@ -2343,14 +2380,6 @@ document.addEventListener("click", e => {
       break;
   }
 });
-function readForm(){
-  if (!$("setupForm")) return;
-  const v = (id, was) => $(id) ? $(id).value.trim() : was; // fields the profile already covers are not on the form
-  draft = {...draft,
-    child_name: v("f_name", draft.child_name), child_age: +v("f_age", draft.child_age) || 7, interests: v("f_int", draft.interests),
-    lesson_type: v("f_type", draft.lesson_type), reading_level: v("f_read", draft.reading_level), lesson: v("f_lesson", draft.lesson),
-    theme: v("f_theme", draft.theme), limits: v("f_lim", draft.limits)};
-}
 function readQuick(){
   if ($("q_age")) quick.age = +$("q_age").value || 7;
   if ($("q_name")) quick.name = $("q_name").value.trim();
@@ -2360,11 +2389,12 @@ async function suggestLesson(){
   draft._suggesting = true; render();
   const subj = (SUBJECTS.find(s => s[0] === draft.lesson_type) || ["", draft.lesson_type])[1];
   try {
-    const r = await ai(`You help a parent set up an educational story game. Subject: ${subj}. Child age: ${draft.child_age}. Child's interests: ${draft.interests || "not given"}.
+    const r = await ai(`You help a parent set up an educational story game. Subject: ${subj}. Child age: ${(child || {}).child_age || 7}. Child's interests: ${(child || {}).interests || "not given"}.
 Suggest ONE specific, age-appropriate lesson that works well inside a story with choices, and a fun story idea that uses the child's interests.
 Return ONLY JSON: {"lesson": "short specific lesson, max 12 words", "theme": "one-sentence story idea"}`, "quick");
     if (r.lesson) draft.lesson = r.lesson;
     if (r.theme && !draft.theme) draft.theme = r.theme;
+    draft.world = "any";
   } catch(e) { showBanner(aiError(e), true); }
   draft._suggesting = false; render();
 }
@@ -2372,16 +2402,13 @@ document.addEventListener("submit", e => {
   if (e.target.id === "profileForm") { // save the child's profile
     e.preventDefault(); readProfile();
     if (!pdraft.child_name) { $("p_name").focus(); return; }
-    saveChild(pdraft); profileSaved = true; draft = null; screen = "parents"; render(); return;
+    saveChild(pdraft); profileSaved = true; draft = null; screen = profileReturn || "parents"; profileReturn = ""; render(); return;
   }
   if (e.target.id !== "setupForm") return;
   e.preventDefault();
   readForm();
-  const s = {...draft, ...(child || {})};
-  delete s._suggesting;
-  s.child_name = s.child_name || "Alex";
-  if (!child && draft.child_name) saveChild(s); // first book: remember the child for next time
-  startStory(s);
+  if (!child) { goTab("parents"); return; }
+  startStory(bookSettings(draft));
 });
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter" || !e.target.id) return;
