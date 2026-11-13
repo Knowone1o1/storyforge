@@ -224,8 +224,17 @@ textarea{min-height:84px;resize:vertical}
 .saved{font-weight:600;color:var(--leaf)}
 
 /* Bottom bar: the app's five places, with Make a book as the big one in the middle */
-.tabs{flex:none;display:grid;grid-template-columns:1fr 1fr auto 1fr 1fr;align-items:end;gap:4px;background:var(--paper);border-top:4px solid var(--ink);padding:6px max(10px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px))}
+.tabs{flex:none;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:6px;background:var(--paper);border-top:4px solid var(--ink);padding:6px max(10px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px))}
 .tabs[hidden]{display:none}
+.tabside{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:0}
+.tabside.grown{position:relative;margin-top:14px;padding-top:12px;background:var(--grape-soft);border:3px solid var(--ink);border-radius:18px}
+.sidecap{position:absolute;top:-14px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:var(--ink);color:var(--on-ink);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600;line-height:1.2}
+.sidecap::before,.lockdot::before{content:"";width:13px;height:13px;flex:none;background:currentColor;-webkit-mask:var(--lock) center/contain no-repeat;mask:var(--lock) center/contain no-repeat;--lock:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h8V8a4 4 0 0 0-8 0z'/%3E%3C/svg%3E")}
+.tabs.open .sidecap{background:var(--leaf);color:var(--ink)}
+.tabs.open .sidecap::before,.tabs.open .lockdot{display:none}
+.lockdot{position:absolute;top:-30px;right:6px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--on-ink);display:grid;place-items:center}
+.tab.make{position:relative}
+@media (max-width:520px){.sidecap{font-size:12px;padding:2px 9px}}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;min-width:0;border:0;background:none;border-radius:16px;padding:4px 2px;font-weight:600;font-size:15px;line-height:1.1;color:var(--ink-soft)}
 .tab span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ti{display:block;width:52px;height:32px;border-radius:999px;background:transparent;position:relative}
@@ -1740,13 +1749,50 @@ function saveReport(){
   try { localStorage.setItem("storyforge_reports", JSON.stringify(reports)); } catch(e) {}
 }
 let gate = null;
+/* The grown-up password. Only a scrambled fingerprint of it is kept on the device, never the password itself. */
+let lock = null;
+try { const saved = JSON.parse(localStorage.getItem("storyforge_lock") || "null"); if (saved && saved.hash && saved.salt) lock = saved; } catch(e) {}
+async function fingerprint(password, salt){
+  const text = salt + ":" + password;
+  if (window.crypto && crypto.subtle && window.TextEncoder) {
+    try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)); return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join(""); } catch(e) {}
+  }
+  let h1 = 0x811c9dc5, h2 = 0x1b873593; // fallback where the browser has no built-in hashing
+  for (let i = 0; i < text.length; i++) { h1 = Math.imul(h1 ^ text.charCodeAt(i), 16777619); h2 = Math.imul(h2 + text.charCodeAt(i), 0x85ebca6b) ^ (h2 >>> 13); }
+  return "f" + (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16);
+}
+async function setPassword(){
+  const a = ($("gateNew").value || ""), b = ($("gateNew2").value || "");
+  if (a.length < 4) { gate.msg = "Use at least 4 characters."; render(); return; }
+  if (a !== b) { gate.msg = "The two passwords are not the same. Type them again."; render(); return; }
+  const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  lock = {salt, hash: await fingerprint(a, salt)};
+  try { localStorage.setItem("storyforge_lock", JSON.stringify(lock)); } catch(e) {}
+  gate = null; unlocked = true; openGrown(gateTarget);
+}
+async function tryPassword(){
+  const typed = $("gateIn").value || "";
+  if (lock && typed && await fingerprint(typed, lock.salt) === lock.hash) { gate = null; unlocked = true; openGrown(gateTarget); return; }
+  gate.msg = "That is not the password. Try again."; render();
+  const again = $("gateIn"); if (again) again.focus();
+}
 function gateView(){
-  if (!gate) gate = {a: 3 + Math.floor(Math.random() * 6), b: 3 + Math.floor(Math.random() * 6), wrong: false};
+  if (!gate) gate = {msg: "", change: false};
+  const note = gate.msg ? `<p class="conseq" role="alert">${esc(gate.msg)}</p>` : "";
+  if (!lock || gate.change) return `<div class="view">${bar("Grown-ups")}
+  <div class="card stack"><h2>${gate.change ? "Choose a new password" : "Set a grown-up password"}</h2>
+    <p class="sub">Make a book, the child profile and Settings are for grown-ups. The password keeps them closed while your child reads. It stays on this device.</p>
+    <div class="field"><label for="gateNew">${gate.change ? "New password" : "Password"}</label><input id="gateNew" type="password" autocomplete="new-password"></div>
+    <div class="field"><label for="gateNew2">Type it again</label><input id="gateNew2" type="password" autocomplete="new-password"></div>
+    ${note}
+    <div class="tools"><button type="button" class="btn go" id="gateSet">Save password</button></div></div></div>`;
   return `<div class="view">${bar("Grown-ups")}
-  <div class="card stack"><h2>For grown-ups</h2><p class="sub">Children, ask a grown-up to help with this one.</p>
-    <p class="question">What is ${gate.a} × ${gate.b}?</p>
-    <div class="own"><input id="gateIn" inputmode="numeric" autocomplete="off" placeholder="Type the answer"><button type="button" class="btn" id="gateGo">Open</button></div>
-    ${gate.wrong ? `<p class="sub">That is not it. Try again.</p>` : ""}</div></div>`;
+  <div class="card stack"><h2>Grown-ups only</h2><p class="sub">Children, ask a grown-up to help with this one.</p>
+    <div class="field"><label for="gateIn">Grown-up password</label><input id="gateIn" type="password" autocomplete="current-password"></div>
+    ${note}
+    <div class="tools"><button type="button" class="btn" id="gateGo">Open</button>
+      <button type="button" class="btn secondary" data-wipe="lock">${confirmKey === "lock" ? "Tap again to erase and start over" : "Forgot the password"}</button></div>
+    ${confirmKey === "lock" ? `<p class="sub">There is no account, so a forgotten password cannot be sent to you. Starting over removes the password, the child profile, the saved books and the reading reports from this device. Stars stay.</p>` : ""}</div></div>`;
 }
 function reportCard(e){
   const r = e.report || {}, mark = v => v === true ? "✔ Right" : v === false ? "Not yet" : "Skipped";
@@ -1819,14 +1865,18 @@ let unlocked = false, gateTarget = "parents", confirmKey = "";
 function renderTabs(){
   const nav = $("tabs"), hide = screen === "story" || screen === "warmup" || screen === "ending";
   nav.hidden = hide; if (hide) return;
+  nav.classList.toggle("open", unlocked);
   const on = screen === "gate" ? gateTarget : (TAB_OF[screen] || "home");
-  nav.innerHTML = TABS.map(t => `<button type="button" class="tab ${t[0] === "setup" ? "make" : ""} ${on === t[0] ? "on" : ""}" data-tab="${t[0]}" ${on === t[0] ? `aria-current="page"` : ""}><i class="ti ti-${t[2]}" aria-hidden="true"></i><span>${t[0] === "parents" && child ? esc(child.child_name) : t[1]}</span></button>`).join("");
+  const tab = t => `<button type="button" class="tab ${t[0] === "setup" ? "make" : ""} ${on === t[0] ? "on" : ""}" data-tab="${t[0]}" ${on === t[0] ? `aria-current="page"` : ""}><i class="ti ti-${t[2]}" aria-hidden="true"></i>${t[0] === "setup" ? `<i class="lockdot" aria-hidden="true"></i>` : ""}<span>${t[0] === "parents" && child ? esc(child.child_name) : t[1]}</span></button>`;
+  // left: the child's places. middle: make a book. right: the grown-up side, boxed and labelled.
+  nav.innerHTML = `<div class="tabside">${TABS.slice(0, 2).map(tab).join("")}</div>${tab(TABS[2])}
+    <div class="tabside grown"><span class="sidecap">${unlocked ? "Grown-ups: open" : "Grown-ups"}</span>${TABS.slice(3).map(tab).join("")}</div>`;
 }
 /* Bookshelf and Library are the child's. Make a book, Child and Settings are for grown-ups and sit behind one question. */
 function goTab(tab){
   stopSpeak(); $("crew").classList.remove("open"); confirmKey = "";
   if (tab === "home" || tab === "library") { unlocked = false; screen = tab; render(); return; }
-  if (!unlocked) { gate = null; gateTarget = tab; screen = "gate"; render(); return; }
+  if (!unlocked) { gate = null; gateTarget = tab; screen = "gate"; render(); const f = $("gateIn") || $("gateNew"); if (f) f.focus(); return; }
   openGrown(tab);
 }
 function openGrown(tab){
@@ -1877,6 +1927,7 @@ function settingsView(){
     <div class="setrow"><div><b>${stars.count} ${stars.count === 1 ? "star" : "stars"} and the stickers on finished books</b></div>${wipeButton("stars", "Reset stars")}</div>
     <div class="setrow"><div><b>${books.length} ${books.length === 1 ? "book" : "books"} made for your child</b></div>${wipeButton("books", "Remove these books")}</div>
     <div class="setrow"><div><b>${reports.length} reading ${reports.length === 1 ? "report" : "reports"}</b></div>${wipeButton("reports", "Clear reports")}</div>
+    <div class="setrow"><div><b>Grown-up password</b><p class="sub">Opens Make a book, the child profile and Settings.</p></div><button type="button" class="btn secondary" id="changePw">Change password</button></div>
     <div class="setrow"><div><b>${child ? esc(child.child_name) + "'s profile" : "No child profile yet"}</b></div><button type="button" class="btn secondary" data-tab="parents">${child ? "Open profile" : "Set it up"}</button></div>
   </div></div>`;
 }
@@ -2106,6 +2157,11 @@ document.addEventListener("click", e => {
     confirmKey = "";
     if (k === "stars") { stars = {count: 0, books: {}}; try { localStorage.removeItem("storyforge_stars"); } catch(e) {} }
     if (k === "books") { books = []; try { localStorage.removeItem("storyforge_books"); } catch(e) {} }
+    if (k === "lock") { // forgotten password: the grown-up data goes with it
+      lock = null; forgetChild(); books = []; reports = []; draft = null;
+      ["storyforge_lock", "storyforge_books", "storyforge_reports"].forEach(key => { try { localStorage.removeItem(key); } catch(e) {} });
+      gate = null;
+    }
     if (k === "reports") { reports = []; try { localStorage.removeItem("storyforge_reports"); } catch(e) {} }
     render(); return;
   }
@@ -2121,7 +2177,9 @@ document.addEventListener("click", e => {
   }
   switch (t.id) {
     case "goParents": goTab("parents"); break;
-    case "gateGo": { const v = parseInt(($("gateIn").value || "").trim(), 10); if (gate && v === gate.a * gate.b) { gate = null; unlocked = true; openGrown(gateTarget); } else { if (gate) gate.wrong = true; render(); } break; }
+    case "gateGo": tryPassword(); break;
+    case "gateSet": setPassword(); break;
+    case "changePw": gate = {msg: "", change: true}; gateTarget = "settings"; screen = "gate"; render(); break;
     case "quickGo": {
       readQuick();
       const c = child || {}, age = c.child_age || quick.age;
@@ -2201,7 +2259,7 @@ document.addEventListener("submit", e => {
 });
 document.addEventListener("keydown", e => {
   if (e.key !== "Enter" || !e.target.id) return;
-  const map = {warmIn:"warmGo", ownIn:"ownGo", thinkIn:"thinkGo", afterIn:"afterGo", gateIn:"gateGo"};
+  const map = {warmIn:"warmGo", ownIn:"ownGo", thinkIn:"thinkGo", afterIn:"afterGo", gateIn:"gateGo", gateNew2:"gateSet"};
   if (map[e.target.id]) { e.preventDefault(); $(map[e.target.id]).click(); }
 });
 
