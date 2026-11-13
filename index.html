@@ -331,6 +331,8 @@ textarea{min-height:84px;resize:vertical}
 .cover .rm .x::before,.cover .rm .x::after{content:"";position:absolute;left:6px;top:0;width:2.5px;height:14px;background:currentColor;border-radius:2px}
 .cover .rm .x::before{transform:rotate(45deg)} .cover .rm .x::after{transform:rotate(-45deg)}
 @media (prefers-reduced-motion:reduce){.cover.editing{animation:none}}
+.shelf.rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 18px;align-items:end;overflow:visible;padding:8px 6px 0}
+.shelf.rows .cover{width:auto}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -1415,8 +1417,39 @@ const SCENE_RULES = `Each scene is {"sky":"#hex","ground":"#hex","time":"day or 
 - "scenery" only sets the place: 5 to 8 entries, each {"type","x","z","size","color","move"}. x from -5 to 5, z from -3 to -1. move is one of: none, bob, sway, drift, spin.
 - type is one of: tree, pine, bush, flower, mushroom, rock, hill, mountain, house, castle, tent, fence, signpost, campfire, cloud, sun, moon, star, pond, river, nest, ball, balloon, egg, apple, box, chest, table, cake, cookie, jar, book, boat, rocket, plane, car, snowman, butterfly, sphere, cone, cylinder. For anything else use the closest type.
 - Colours are hex codes. Use a bright, friendly palette. The app decides the exact layout.`;
-const PAGE_RULES = `A page is 1 or 2 short, simple, complete sentences (at most 18 words) for the reading level. Something must happen on every second page, so the picture can change.`;
-const OPTION_RULES = `The chapter ends with a "question" and exactly 4 "options": one "wise", one "okay", one "tempting_bad" (it must sound fun, quick or exciting) and one "clearly_bad". The lesson must matter to the outcome. For math, the pages state the numbers and the options are different answers or approaches. Labels are at most 8 words, phrased as actions. Each option has "leads_to": a few words on what it will cause. tempting_bad and clearly_bad options also have "coach": one warm sentence that names the better idea.`;
+/* How hard a book may be, from the child's age and reading level (the reading level wins when it is lower).
+   Used by the Director, the Guardian and "Suggest one", so words AND ideas stay at the child's level. */
+function levelGuide(age, reading){
+  age = Number(age) || 7; reading = String(reading || "");
+  let band = age <= 5 ? 0 : age <= 7 ? 1 : 2;
+  if (/pre-reader|listen/i.test(reading)) band = 0; else if (/early/i.test(reading)) band = Math.min(band, 1);
+  const words = [
+    "Sentences of at most 7 words. Only short everyday words a 4-year-old says out loud (cat, big, run, home). Repeat words often.",
+    "Sentences of at most 9 words, one idea per sentence. Short everyday words a 6- or 7-year-old can sound out (sun, jump, share, egg). No word longer than 3 syllables except names. No idioms.",
+    "Sentences of at most 13 words. Everyday words a 9-year-old knows. Explain any new word in the same sentence."][band];
+  const math = [
+    "Math: counting to 10, more and less, big and small, simple shapes. No adding sums written as numbers.",
+    `Math: counting to 20, adding and taking away within ${age <= 6 ? 10 : 20}, half of a small even number (2, 4, 6, 8 or 10), sharing a few things equally between 2 friends. Never multiplying, dividing, fractions beyond half, money with cents, or numbers above 20.`,
+    "Math: adding and taking away within 100, the 2, 5 and 10 times tables, halves and quarters, telling the time to the half hour. No long division, no decimals."][band];
+  const science = [
+    "Science: what a child can see, hear or touch: colours, weather, animal homes, day and night, hot and cold. No scientific terms.",
+    "Science: things a child can see happen: plants need water and sun, some things float and some sink, ice melts when warm, magnets pull metal, day and night. No terms like gravity, orbit, atmosphere, oxygen, molecule, energy or photosynthesis: say what happens in plain words instead (things fall down, the Earth turns).",
+    "Science: simple cause and effect, life cycles, the water cycle, magnets, light and shadows. Name one new term at most and explain it in plain words."][band];
+  const other = [
+    "Geography and values: home, family, sharing, saying sorry, being kind.",
+    "Geography: big easy ideas only (hot desert, cold snowy place, the sea, a mountain). Values: sharing, taking turns, telling the truth, being kind.",
+    "Geography: continents, oceans, countries and their weather. Values: fairness, honesty, courage, helping others."][band];
+  const q = ["Questions and choices: one short idea, at most 6 words, answerable by a 4-year-old.",
+    "Questions and choices: at most 8 words, one step to think about, numbers within the math range above.",
+    "Questions and choices: at most 10 words, at most two steps to think about."][band];
+  return `LEVEL GUIDE (follow it strictly; it matters more than making the lesson rich): the child is ${age} and reads at "${reading || "their age"}" level.
+- Words: ${words}
+- Ideas: ${math} ${science} ${other}
+- ${q}
+- If the lesson asked for is harder than this, teach the simplest first step of it instead.`;
+}
+const PAGE_RULES = `A page is 1 or 2 short, complete sentences, at the sentence length the LEVEL GUIDE gives. Something must happen on every second page, so the picture can change.`;
+const OPTION_RULES = `The chapter ends with a "question" and exactly 4 "options": one "wise", one "okay", one "tempting_bad" (it must sound fun, quick or exciting) and one "clearly_bad". The lesson must matter to the outcome. For math, the pages state the numbers and the options are different answers or approaches. Labels are phrased as actions and as short as the LEVEL GUIDE says. Each option has "leads_to": a few words on what it will cause. tempting_bad and clearly_bad options also have "coach": one warm sentence that names the better idea.`;
 function bookBrief(){
   const st = S.settings;
   return `CHILD: ${st.child_name}, age ${st.child_age}, reading level: ${st.reading_level}. ${st.child_name} is the hero.
@@ -1425,7 +1458,8 @@ THEME: ${st.theme || "invent one from the interests"}
 LESSON TO TEACH: ${st.lesson ? st.lesson + " (type: " + st.lesson_type + ")" : `pick ONE specific, age-appropriate ${st.lesson_type} lesson for a ${st.child_age}-year-old and return it in "lesson"`}
 PARENT LIMITS (never break these): ${st.limits || "none given"}
 CONSEQUENCE STRENGTH: ${st.consequence_level}
-VERIFIED FACTS (only use these for factual claims): ${S.facts || "none"}`;
+VERIFIED FACTS (only use these for factual claims): ${S.facts || "none"}
+${levelGuide(st.child_age, st.reading_level)}`;
 }
 function firstChapterPrompt(){
   return `You are the Director agent of StoryForge. You are writing a branching picture book for one specific child, who reads it alone and makes 3 choices. Every choice leads to a DIFFERENT next chapter. Right now, write only the plan and chapter 1.
@@ -1469,16 +1503,18 @@ function readChapter(raw, withOptions){
 }
 async function guardChapters(chapters, what){
   const st = S.settings, lines = [];
-  chapters.forEach(ch => { ch.pages.forEach(pg => lines.push(pg.text)); (ch.options || []).forEach(o => lines.push(o.label)); });
+  chapters.forEach(ch => { ch.pages.forEach(pg => lines.push(pg.text)); if (ch.question) lines.push(ch.question); (ch.options || []).forEach(o => lines.push(o.label)); });
   const g = log("Guardian", `checking ${what} against the parent's limits…`);
   try {
     const gr = await ai(`You are the Guardian agent, a child-safety and quality reviewer for a children's book.
 Child age: ${st.child_age}. Parent limits: ${st.limits || "none"}. Consequence strength: ${st.consequence_level}.
-Check every line: 1) nothing breaks the parent's limits, 2) setbacks are natural, never cruel, scary or shaming, 3) the language fits a ${st.child_age}-year-old.
+Check every line: 1) nothing breaks the parent's limits, 2) setbacks are natural, never cruel, scary or shaming, 3) the words AND the ideas follow this guide; rewrite any line that is too long, uses hard words or asks for maths or science beyond it:
+${levelGuide(st.child_age, st.reading_level)}
 LINES: ${JSON.stringify(lines)}
 Return ONLY JSON: {"approved": true or false, "note": "one short sentence about your check", "replace": [{"find": "a line exactly as given", "with": "a safer line of about the same length"}]}. Leave "replace" empty if nothing must change.`, "quick");
     const fixes = (Array.isArray(gr.replace) ? gr.replace : []).filter(f => f && typeof f.find === "string" && typeof f.with === "string" && f.with.trim());
-    chapters.forEach(ch => ch.pages.forEach(pg => { const f = fixes.find(x => x.find === pg.text); if (f) pg.text = f.with.trim(); }));
+    const fix = t => { const f = fixes.find(x => x.find === t); return f ? f.with.trim() : t; };
+    chapters.forEach(ch => { ch.pages.forEach(pg => { pg.text = fix(pg.text); }); if (ch.question) ch.question = fix(ch.question); (ch.options || []).forEach(o => { o.label = fix(o.label); }); });
     logDone(g, (fixes.length ? `made ${fixes.length} fix${fixes.length > 1 ? "es" : ""}: ` : "approved: ") + (gr.note || "safe and age-appropriate"));
   } catch(e) { logDone(g, "skipped this check", "fail"); }
 }
@@ -2192,7 +2228,7 @@ function homeView(){
       <div class="tools"><button type="button" class="btn" data-tab="library">Pick one from the library</button><button type="button" class="btn secondary" data-tab="setup">Make a book</button></div></div>
     <div class="plank" style="margin-top:0"></div></div>`;
   return `<div class="view">${bar(title)}${bar2}
-  <div class="shelf">${made}${read}</div>
+  <div class="shelf rows">${made}${read}</div>
   <div class="plank"></div>
   </div>`;
 }
@@ -2480,11 +2516,10 @@ async function suggestLesson(){
   const subj = (SUBJECTS.find(s => s[0] === draft.lesson_type) || ["", draft.lesson_type])[1];
   try {
     const r = await ai(`You help a parent set up an educational story game. Subject: ${subj}. Child age: ${(child || {}).child_age || 7}. Child's interests: ${(child || {}).interests || "not given"}.
-Suggest ONE specific, age-appropriate lesson that works well inside a story with choices, and a fun story idea that uses the child's interests.
-Return ONLY JSON: {"lesson": "short specific lesson, max 12 words", "theme": "one-sentence story idea"}`, "quick");
-    if (r.lesson) draft.lesson = r.lesson;
-    if (r.theme && !draft.theme) draft.theme = r.theme;
-    draft.world = "any";
+Suggest ONE specific lesson that works well inside a story with choices.
+${levelGuide((child || {}).child_age, (child || {}).reading_level)}
+Return ONLY JSON: {"lesson": "short specific lesson in plain words a parent understands, max 10 words"}`, "quick");
+    if (r.lesson) draft.lesson = r.lesson; // only the lesson: the story idea stays the parent's own
   } catch(e) { showBanner(aiError(e), true); }
   draft._suggesting = false; render();
 }
