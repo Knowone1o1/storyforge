@@ -1132,70 +1132,120 @@ const DEMO_BOOKS = (() => {
   const BOAT = {type:"boat", x:0, z:-.75, color:"#B9824F", color2:"#FFF3DC", move:"bob"};
   const farDot = at(DOT, 2.6, -2.7, {turn:-.3});
 
+  /* The book is a tree. Every option leads to its own next chapter, so what the child picks in chapter 1
+     decides which chapter 2 they read, and so on to one of four endings. Nothing is replayed.
+     Each page has a painting (art/dino/...), with a 3D scene as a stand-in if the painting cannot load. */
+  const S_EGGS = day({characters:[MIA, as(BOBO,{move:"hop"})], props:[eggs(8)]});
+  const S_NEST = day({characters:[at(MIA,-2.4,1.7,{turn:.5}), at(BOBO,-3.5,2.2,{turn:.5}), DOT], props:[eggs(4)], fixed:[NEST].concat(nestEggs(4))});
+  const S_BABIES = day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat(babies(1.2)), fixed:[NEST].concat(nestEggs(4))});
+  const S_RIVER = dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-3.7,2.2,{turn:.4}), farDot].concat(babies(1.5, "idle")), fixed:[{type:"river", x:0, z:-.9}, BOAT]});
+  const S_NIGHT = dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"idle"), baby(3.2,1.1,"idle"), baby(2.6,1.5,"idle"), baby(3.2,1.5,"idle")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])});
+  const P = (text, img, scene) => ({text, img: "art/dino/" + img + ".jpg", scene});
+  const BERRY_Q = {question: "There are 4 babies and 8 berries. How should Mia share them?", options: [
+    {label: "Give each baby 2 berries", hidden_type: "wise", leads_to: "Every baby gets the same. Nobody is left out.", next: "c3w"},
+    {label: "Give each baby 1 berry for now", hidden_type: "okay", leads_to: "Fair, but 4 berries are left and the babies are still hungry.", next: "c3o"},
+    {label: "Give all 8 to the cutest baby", hidden_type: "tempting_bad", leads_to: "One tummy ache and three sad babies.", coach: "It is hard when one is extra cute! Sharing equally means every baby gets the same: 2 each.", next: "c3t"},
+    {label: "Eat the berries herself", hidden_type: "clearly_bad", leads_to: "Four hungry babies.", coach: "Mia was hungry too. The berries were for the babies, and 8 shared by 4 is 2 each.", next: "c3b"}]};
+  const HATCH = [P("Crack! Crack! Four baby dinos pop out.", "c2c", S_BABIES), P("The babies open their mouths wide. They are very hungry!", "c2c", S_BABIES)];
+  const BOAT_Q = {question: "The boat carries half of the 4 babies. How many go first?", options: [
+    {label: "2 babies first, then 2 more", hidden_type: "wise", leads_to: "Half of 4 is 2. Two safe trips.", next: "ew"},
+    {label: "1 baby at a time", hidden_type: "okay", leads_to: "Safe, but four slow trips in the dark.", next: "eo"},
+    {label: "All 4 jump on. Splash party!", hidden_type: "tempting_bad", leads_to: "The little boat tips over.", coach: "A splash party sounds fun! The boat only holds half. Half of 4 is 2.", next: "et"},
+    {label: "Let them swim alone", hidden_type: "clearly_bad", leads_to: "The water is too fast for little dinos.", coach: "The river was too fast for little dinos. The boat can take half at a time: 2 and 2.", next: "eb"}]};
+  const RIVER = last => [
+    P("Bobo finds a little boat. It can carry half of the 4 babies each trip.", "c3c", S_RIVER),
+    P("Dot waits on the other side. She waves her tail.", "c3e", S_RIVER),
+    P(last, "c3e", S_RIVER)];
+
   return { dino: {
     key: "dino", canned: true, title: "Dino Rescue at Fraction Falls",
     settings: {child_name:"Mia", child_age:7, lesson:"Halves and sharing equally", lesson_type:"math"},
     check: {question: "What is half of 8?", answer: "4", accept: ["4", "four"]},
     report: {summary: "Mia's story practised halves and equal sharing with 8 eggs, 8 berries and 4 baby dinos.", highlights: ["Half of 8 is 4", "8 shared by 4 is 2 each", "Half of 4 is 2"], ask: "If we cut your sandwich in half, how many pieces do we get, and are they the same size?"},
-    chapters: [
-      { pages: [
-          {text: "Mia and Bobo walk to Fraction Falls. The water goes splash, splash, splash.", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})]})},
-          {text: "In the tall grass they find something round. It is 8 dino eggs!", img: "art/dino/c1b.jpg", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})], props:[eggs(8)]})},
-          {text: "The eggs are warm and wobbly. Bobo sniffs them. Sniff, sniff.", scene: day({characters:[MIA, BOBO], props:[eggs(8, {move:"shiver"})]})},
-          {text: "Oh no! One egg rolls away. It rolls down the hill.", scene: day({characters:[as(MIA,{move:"hop"}), as(BOBO,{move:"hop"})], props:[eggs(7)], fixed:[eggAt(.4, 3, "rollaway")]})},
-          {text: "Bobo runs fast. He brings the egg back, safe and sound.", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})], props:[eggs(8)]})},
-          {text: "Then a big green dino walks up. Her name is Dot, and she looks worried.", scene: day({characters:[MIA, BOBO, DOT], props:[eggs(8)]})}],
+    start: "c1",
+    graph: {
+      c1: { pages: [
+          P("Mia and Bobo walk to Fraction Falls. The water goes splash, splash, splash.", "c1a", day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})]})),
+          P("In the tall grass they find something round. It is 8 dino eggs!", "c1b", S_EGGS),
+          P("The eggs are warm and wobbly. Bobo sniffs them. Sniff, sniff.", "c1b", S_EGGS),
+          P("Oh no! One egg rolls away. It rolls down the hill.", "c1d", day({characters:[as(MIA,{move:"hop"}), as(BOBO,{move:"hop"})], props:[eggs(7)], fixed:[eggAt(.4, 3, "rollaway")]})),
+          P("Bobo runs fast. He brings the egg back, safe and sound.", "c1f", day({characters:[MIA, as(BOBO,{move:"hop"}), DOT], props:[eggs(8)]})),
+          P("Then a big green dino walks up. Her name is Dot, and she looks worried.", "c1f", day({characters:[MIA, BOBO, DOT], props:[eggs(8)]}))],
         question: "Dot's nest holds half of the 8 eggs. How many should Mia carry to the nest?",
         options: [
-          {label: "Carry 4 eggs to the nest", hidden_type: "wise", leads_to: "Half of 8 is 4. The nest is just right.",
-            result: {text: "Mia counts 4 eggs into the nest. Half are safe! Dot smiles a big dino smile.", scene: day({characters:[at(MIA,-2.2,1.7,{turn:.5, move:"wave"}), at(BOBO,-3.4,2.2,{turn:.5}), DOT], props:[eggs(4)], fixed:[NEST].concat(nestEggs(4))})}},
-          {label: "Carry 3 eggs, then come back", hidden_type: "okay", leads_to: "It works, but it takes two trips.",
-            result: {text: "Mia carries 3 eggs. That is not half yet. She goes back for 1 more, and now the nest has 4.", scene: day({characters:[at(MIA,-2.2,1.7,{turn:.5}), at(BOBO,-3.4,2.2,{turn:.5}), DOT], props:[eggs(5)], fixed:[NEST].concat(nestEggs(3))})}},
-          {label: "Roll all 8 down the hill. Wheee!", hidden_type: "tempting_bad", leads_to: "Fun for a second, then eggs everywhere.", coach: "Rolling looked fun! Eggs are safer when we carry them, and half of 8 is 4.",
-            result: {text: "Wheee! The eggs roll everywhere. Mia and Bobo chase them for a long time.", scene: day({characters:[at(MIA,-2.6,1.6,{move:"hop"}), at(BOBO,-1.2,2.4,{move:"walk"}), DOT], fixed:[eggAt(-4,2.6),eggAt(-.2,1.2,"rollaway"),eggAt(1.6,2.8),eggAt(3.6,1.8),eggAt(.6,2.2,"rollaway"),eggAt(4.6,2.9),eggAt(-3.2,.6),eggAt(2.4,.6)]})}},
-          {label: "Leave them. Eggs are boring.", hidden_type: "clearly_bad", leads_to: "The eggs get cold.", coach: "The eggs needed a helper. Next time we can count out half and carry them.",
-            result: {text: "The wind blows. The eggs get cold and shiver. Dot looks sad, so Mia hurries back to help.", scene: day({sky:"#B9C7D8", characters:[at(MIA,-3.2,1.8,{turn:.5}), at(BOBO,-4.2,2.4,{turn:.5}), DOT], props:[eggs(8,{move:"shiver"})]})}}] },
-      { pages: [
-          {text: "Now 4 eggs sit in the nest. The other 4 eggs rest in the grass.", scene: day({characters:[at(MIA,-2.4,1.7,{turn:.5}), at(BOBO,-3.5,2.2,{turn:.5})], props:[eggs(4)], fixed:[NEST].concat(nestEggs(4))})},
-          {text: "Mia and Bobo watch the eggs in the grass. They wait and wait.", scene: day({characters:[at(MIA,-2.4,1.7,{turn:.5}), at(BOBO,-3.5,2.2,{turn:.5, move:"hop"})], props:[eggs(4)], fixed:[NEST].concat(nestEggs(4))})},
-          {text: "Crack! Crack! The 4 eggs in the grass start to hatch.", scene: day({characters:[at(MIA,-2.4,1.7,{turn:.5, move:"hop"}), at(BOBO,-3.5,2.2,{turn:.5, move:"hop"})], props:[eggs(4, {move:"hop"})], fixed:[NEST].concat(nestEggs(4))})},
-          {text: "Four baby dinos pop out. They blink at Mia.", scene: day({characters:[at(MIA,-2.8,1.7,{turn:.5, move:"wave"}), at(BOBO,-3.9,2.3,{turn:.5, move:"hop"})].concat(babies(1.5, "idle")), fixed:[NEST].concat(nestEggs(4))})},
-          {text: "The babies open their mouths wide. They are very hungry!", scene: day({characters:[at(MIA,-2.8,1.7,{turn:.5}), at(BOBO,-3.9,2.3,{turn:.5})].concat(babies(1.5)), fixed:[NEST].concat(nestEggs(4))})},
-          {text: "Mia looks in her bag. She has 8 red berries.", scene: day({characters:[at(MIA,-2.8,1.3,{turn:.5})].concat(babies(.7, "idle")), props:[{type:"apple", count:8, size:.55, color:"#C2185B"}], fixed:[NEST].concat(nestEggs(4))})}],
-        question: "There are 4 babies and 8 berries. How should Mia share them?",
-        options: [
-          {label: "Give each baby 2 berries", hidden_type: "wise", leads_to: "8 shared by 4 is 2 each.",
-            result: {text: "Each baby gets 2 berries. Eight shared by four is two each. Nobody is left out.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5, move:"wave"})].concat(babies(1.2)), fixed:[NEST].concat(nestEggs(4), BX.reduce((a, x) => a.concat([berry(x-.16, 2.1), berry(x+.16, 2.1)]), []))})}},
-          {label: "Give each baby 1 berry for now", hidden_type: "okay", leads_to: "Fair, but they are still hungry.",
-            result: {text: "Each baby gets 1 berry. They are still hungry, so Mia hands out the other 4 too.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat(babies(1.2, "idle")), fixed:[NEST].concat(nestEggs(4), BX.map(x => berry(x, 2.1)), [berry(-2.6,2.6),berry(-2.9,2.75),berry(-2.3,2.75),berry(-2.6,2.95)])})}},
-          {label: "Give all 8 to the cutest baby", hidden_type: "tempting_bad", leads_to: "One tummy ache and three sad babies.", coach: "It is hard when one is extra cute! Sharing equally means every baby gets the same: 2 each.",
-            result: {text: "One baby gets all 8 berries and a tummy ache. Three babies cry. Mia shares again, 2 each.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat([baby(-1.2,1.2,"hop"), baby(-.4,1.2,"idle"), baby(.4,1.2,"idle"), baby(1.2,1.2,"idle")]), fixed:[NEST].concat(nestEggs(4), [0,1,2,3,4,5,6,7].map(i => berry(-1.2 + Math.cos(i*.785)*.5, 2.3 + Math.sin(i*.785)*.35)))})}},
-          {label: "Eat the berries herself", hidden_type: "clearly_bad", leads_to: "Hungry babies.", coach: "Mia was hungry too. The berries were for the babies, and 8 shared by 4 is 2 each.",
-            result: {text: "Mia eats the berries. Four little tummies rumble. Mia feels bad and picks 8 more.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat(babies(1.2, "idle")), fixed:[NEST].concat(nestEggs(4))})}}] },
-      { pages: [
-          {text: "The sun is going down. It is time for the babies to go home.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-3.7,2.2,{turn:.4})].concat(babies(1.5, "idle"))})},
-          {text: "But home is on the other side of the river. The water is fast.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-3.7,2.2,{turn:.4})].concat(babies(.4, "idle"))})},
-          {text: "Bobo finds a little boat. It is small and wobbly.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-1.6,.3,{turn:.6, move:"hop"})].concat(babies(1.5, "idle")), fixed:[{type:"river", x:0, z:-.9}, BOAT]})},
-          {text: "The boat can carry half of the 4 babies each trip.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"wave"}), at(BOBO,-3.7,2.2,{turn:.4})].concat(babies(1.5)), fixed:[{type:"river", x:0, z:-.9}, BOAT]})},
-          {text: "Dot waits on the other side. She waves her tail.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-3.7,2.2,{turn:.4}), farDot].concat(babies(1.5, "idle")), fixed:[{type:"river", x:0, z:-.9}, BOAT]})},
-          {text: "Mia thinks hard. Who goes first?", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"hop"}), at(BOBO,-3.7,2.2,{turn:.4}), farDot].concat(babies(1.5, "idle")), fixed:[{type:"river", x:0, z:-.9}, BOAT]})}],
-        question: "Half of the 4 babies go first. How many is that?",
-        options: [
-          {label: "2 babies first, then 2 more", hidden_type: "wise", leads_to: "Half of 4 is 2. Two safe trips.",
-            result: {text: "Two babies ride across, then two more. Half and half. Everyone is dry and safe.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"wave"}), farDot, baby(-.25,-.7,"idle"), baby(.3,-.7,"idle"), baby(1.6,-2.5,"hop"), baby(3.6,-2.3,"hop")], fixed:[{type:"river", x:0, z:-.9}, BOAT]})}},
-          {label: "1 baby at a time", hidden_type: "okay", leads_to: "Safe, but slow.",
-            result: {text: "One by one they cross. It is slow and the sun is almost gone, but they all make it.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), farDot, baby(0,-.7,"idle"), baby(-.4,1.5,"idle"), baby(.4,1.5,"idle"), baby(1.2,1.5,"idle")], fixed:[{type:"river", x:0, z:-.9}, BOAT]})}},
-          {label: "All 4 jump on. Splash party!", hidden_type: "tempting_bad", leads_to: "The boat tips over.", coach: "A splash party sounds fun! The boat only holds half. Half of 4 is 2.",
-            result: {text: "The boat tips. Splash! Four wet babies paddle back. They try again, two at a time.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"hop"}), farDot, baby(-1.3,-.2,"hop"), baby(-.5,.2,"hop"), baby(.6,.1,"hop"), baby(1.4,-.2,"hop")], fixed:[{type:"river", x:0, z:-.9}, Object.assign({}, BOAT, {move:"spin"})]})}},
-          {label: "Let them swim alone", hidden_type: "clearly_bad", leads_to: "The water is too fast.", coach: "The river was too fast for little dinos. The boat can take half at a time: 2 and 2.",
-            result: {text: "The water is too fast. Mia calls the babies back just in time. They use the boat.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"wave"}), farDot].concat(BX.map(x => baby(x, .5, "idle"))), fixed:[{type:"river", x:0, z:-.9}, BOAT]})}}] }],
-    endings: {
-      good: { pages: [
-        {text: "All the dinos are home. Dot gives Mia a shiny golden egg shell.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], props:[{type:"egg", count:1, color:"#FFD43B", move:"spin"}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"idle"), baby(3.2,1.1,"idle"), baby(2.6,1.5,"idle"), baby(3.2,1.5,"idle")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})},
-        {text: "Mia learned that half means two equal parts. Bobo wags his tail. The end.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"hop"), baby(3.2,1.1,"hop"), baby(2.6,1.5,"hop"), baby(3.2,1.5,"hop")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})}] },
-      mixed: { pages: [
-        {text: "It took a few tries, but all the dinos are home at last.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[MIA, BOBO, DOT, baby(2.6,1.1,"idle"), baby(3.2,1.1,"idle"), baby(2.6,1.5,"idle"), baby(3.2,1.5,"idle")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})},
-        {text: "Mia learned that half means two equal parts. Next time she will count first. The end.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"hop"), baby(3.2,1.1,"hop"), baby(2.6,1.5,"hop"), baby(3.2,1.5,"hop")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})}] } }
+          {label: "Carry 4 eggs to the nest", hidden_type: "wise", leads_to: "Half of 8 is 4. The nest is just right.", next: "c2w"},
+          {label: "Carry 3 eggs, then come back", hidden_type: "okay", leads_to: "Not half yet. A second trip, and a tired Mia.", next: "c2o"},
+          {label: "Roll all 8 down the hill. Wheee!", hidden_type: "tempting_bad", leads_to: "Eggs everywhere, and babies that hatch dizzy.", coach: "Rolling looked fun! Eggs are safer when we carry them, and half of 8 is 4.", next: "c2t"},
+          {label: "Leave them. Eggs are boring.", hidden_type: "clearly_bad", leads_to: "The eggs get cold in the wind.", coach: "The eggs needed a helper. Next time we can count out half and carry them.", next: "c2b"}] },
+
+      // chapter 2, four versions: one for each choice in chapter 1
+      c2w: Object.assign({ pages: [
+          P("Mia counts 4 eggs into the nest. One, two, three, four.", "r1w", S_NEST),
+          P("Half of 8 is 4! Dot smiles a big dino smile.", "r1w", S_NEST),
+          P("The other 4 eggs rest in the grass. Mia and Bobo watch them.", "c2a", S_NEST)].concat(HATCH, [
+          P("Mia looks in her bag. She has 8 red berries.", "c2e", S_BABIES)]) }, BERRY_Q),
+      c2o: Object.assign({ pages: [
+          P("Mia carries 3 eggs. Her arms are full.", "r1o", S_NEST),
+          P("Three is not half of 8. She has to go back for 1 more.", "r1o", S_NEST),
+          P("Two trips take a long time. Mia flops down in the grass to rest.", "c2a", S_NEST),
+          P("Crack! Crack! The 4 eggs in the grass hatch right next to her.", "c2c", S_BABIES),
+          P("Four baby dinos blink at Mia. They are very hungry!", "c2c", S_BABIES),
+          P("Mia is tired, but she finds 8 red berries in her bag.", "c2e", S_BABIES)] }, BERRY_Q),
+      c2t: Object.assign({ pages: [
+          P("Wheee! The eggs roll and bounce down the hill.", "r1t", day({characters:[at(MIA,-2.6,1.6,{move:"hop"}), at(BOBO,-1.2,2.4,{move:"walk"}), DOT], fixed:[eggAt(-4,2.6),eggAt(-.2,1.2,"rollaway"),eggAt(1.6,2.8),eggAt(3.6,1.8),eggAt(.6,2.2,"rollaway"),eggAt(4.6,2.9),eggAt(-3.2,.6),eggAt(2.4,.6)]})),
+          P("They roll everywhere. Mia and Bobo chase them for a long time.", "r1t", S_EGGS),
+          P("At last all 8 eggs are found. Mia puts them down very gently.", "c1b", S_EGGS),
+          P("But the bumpy ride woke them up. Crack! Four babies pop out early.", "c2c", S_BABIES),
+          P("The babies are dizzy from all that rolling. And very hungry!", "c2c", S_BABIES),
+          P("Mia is sorry. She finds 8 red berries in her bag to cheer them up.", "c2e", S_BABIES)] }, BERRY_Q),
+      c2b: Object.assign({ pages: [
+          P("Mia walks away. A cold wind starts to blow.", "r1b", day({sky:"#B9C7D8", characters:[at(MIA,-3.2,1.8,{turn:.5}), at(BOBO,-4.2,2.4,{turn:.5}), DOT], props:[eggs(8,{move:"shiver"})]})),
+          P("The eggs shiver. Dot looks so sad.", "r1b", S_EGGS),
+          P("Mia runs back. She tucks big leaves around the eggs like blankets.", "d1", S_EGGS),
+          P("Bobo curls up close. Dot blows warm air. Slowly the eggs get warm.", "d1", S_EGGS),
+          P("Crack! Four baby dinos pop out, safe and warm. They are hungry!", "c2c", S_BABIES),
+          P("Mia looks in her bag. She has 8 red berries.", "c2e", S_BABIES)] }, BERRY_Q),
+
+      // chapter 3, four versions: one for each choice in chapter 2
+      c3w: Object.assign({ pages: [
+          P("Each baby gets 2 berries. Eight shared by four is two each.", "r2w", S_BABIES),
+          P("Nobody is left out. Four full, happy babies!", "r2w", S_BABIES),
+          P("The sun is going down. Home is across the river, and the water is fast.", "c3a", S_RIVER)].concat(RIVER("Mia thinks hard. Who goes first?")) }, BOAT_Q),
+      c3o: Object.assign({ pages: [
+          P("Each baby gets 1 berry. That is fair, but 4 berries are left over.", "r2o", S_BABIES),
+          P("The babies are still hungry, so Mia hands out the other 4. Now it is 2 each.", "r2o", S_BABIES),
+          P("Sharing twice took a while. The sun is going down fast.", "c3a", S_RIVER)].concat(RIVER("It is getting late. Mia thinks hard. Who goes first?")) }, BOAT_Q),
+      c3t: Object.assign({ pages: [
+          P("The cutest baby gets all 8 berries. Gulp, gulp, gulp.", "r2t", S_BABIES),
+          P("Now one baby has a tummy ache, and three babies cry.", "r2t", S_BABIES),
+          P("Mia picks more berries so everyone gets 2. By then the sun is going down.", "c3a", S_RIVER)].concat(RIVER("One baby still feels wobbly. Mia thinks hard. Who goes first?")) }, BOAT_Q),
+      c3b: Object.assign({ pages: [
+          P("Mia eats the berries herself. Yum... oh no.", "r2b", S_BABIES),
+          P("Four little tummies rumble. Mia feels bad.", "r2b", S_BABIES),
+          P("She picks 8 more berries, 2 for each baby. By then the sun is going down.", "c3a", S_RIVER)].concat(RIVER("The babies are sleepy. Mia thinks hard. Who goes first?")) }, BOAT_Q),
+
+      // four endings: one for each choice in chapter 3
+      ew: { pages: [
+          P("Two babies ride across. Then two more. Half and half!", "r3w", S_RIVER),
+          P("Everyone is dry and safe on the other side.", "r3w", S_RIVER),
+          P("Dot gives Mia a shiny golden piece of eggshell to say thank you.", "e1", S_NIGHT),
+          P("Mia learned that half means two equal parts. The end.", "e1", S_NIGHT)] },
+      eo: { pages: [
+          P("One by one the babies cross. It takes four slow trips.", "r3o", S_RIVER),
+          P("The sun is gone and the stars are out, but they all make it.", "r3o", S_RIVER),
+          P("Dot tucks her babies in. She gives Mia a shiny piece of eggshell.", "e1", S_NIGHT),
+          P("Two at a time would be faster. Half of 4 is 2. The end.", "e1", S_NIGHT)] },
+      et: { pages: [
+          P("All four babies jump in. The little boat tips over. Splash!", "r3t", S_RIVER),
+          P("Four wet babies paddle back to the bank. Nobody is hurt.", "r3t", S_RIVER),
+          P("They try again, 2 at a time. Half and half works!", "r3w", S_RIVER),
+          P("Dot gives Mia a shiny piece of eggshell. Half of 4 is 2. The end.", "e1", S_NIGHT)] },
+      eb: { pages: [
+          P("The babies put their toes in. The water is too fast!", "r3b", S_RIVER),
+          P("Mia calls them back just in time. Bobo helps.", "r3b", S_RIVER),
+          P("They use the boat, 2 at a time. Half and half works!", "r3w", S_RIVER),
+          P("Everyone is home. Dot gives Mia a shiny piece of eggshell. The end.", "e1", S_NIGHT)] }
+    }
   } };
 })();
 function startDemo(key, settings){
@@ -1210,14 +1260,16 @@ function makeDemoScene(){
   const book = S.demo, n = S.scenes.length + 1, last = S.choices[S.choices.length - 1];
   const picked = last && last.options.find(o => o.label === last.label);
   const wise = S.choices.filter(c => c.hidden_type === "wise").length;
-  const ch = n <= book.chapters.length ? book.chapters[n - 1] : (wise >= 2 ? book.endings.good : book.endings.mixed);
+  const ch = book.graph
+    ? (book.graph[n === 1 ? book.start : (picked && picked.next)] || book.graph[book.start]) // a tree: the option picked names the next chapter
+    : n <= book.chapters.length ? book.chapters[n - 1] : (wise >= 2 ? book.endings.good : book.endings.mixed);
   const pages = [];
   if (n === 1) pages.push({text: `${book.title}. A book for ${S.settings.child_name}.`, cover: true, src: ch.pages[0]});
   if (picked && picked.result) pages.push({text: picked.result.text, cons: true, src: picked.result});
   ch.pages.forEach((pg, i) => pages.push({text: pg.text, src: pg, first: i === 0}));
   const options = (ch.options || []).map(o => Object.assign({}, o));
   for (let i = options.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [options[i], options[j]] = [options[j], options[i]]; }
-  const scene = {consequence_text: picked && picked.result ? picked.result.text : "", scene_text: ch.pages.map(pg => pg.text).join(" "), question: ch.question || "", options, is_ending: !ch.options, _pages: pages, scene3d: null};
+  const scene = {consequence_text: picked ? (picked.result ? picked.result.text : picked.leads_to || "") : "", scene_text: ch.pages.map(pg => pg.text).join(" "), question: ch.question || "", options, is_ending: !ch.options, _pages: pages, scene3d: null};
   S.scenes.push(scene); S.page = 0; S.busy = false; S.error = null;
   return scene;
 }
@@ -1545,7 +1597,7 @@ Reply in 1-2 warm, simple sentences. Praise good thinking; if they missed the po
   S.choices[S.choices.length - 1].thinkback = answer;
   t.busy = false; render(); speak(t.reply);
 }
-function finishThink(){ S.think = null; S.page = currentScene().consequence_text ? 1 : 0; render(); speakPage(); }
+function finishThink(){ S.think = null; S.page = (pagesOf(currentScene())[0] || {}).cons ? 1 : 0; render(); speakPage(); }
 function rewind(){
   if (S.rewindUsed || !S.choices.length || S.busy) return;
   stopSpeak();

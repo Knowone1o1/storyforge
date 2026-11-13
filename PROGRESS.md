@@ -1,6 +1,13 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:54 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 1:11 PM. Deck locks at 4:00 PM.
+
+## Newest: the dino book truly branches and is fully painted
+
+- "Dino Rescue at Fraction Falls" is now a tree, not a line. The choice in chapter 1 decides which of 4 different chapter 2s is read; the choice in chapter 2 decides which of 4 chapter 3s; the choice in chapter 3 decides which of 4 endings. Nothing is replayed and there is no "result page, then carry on as if you picked right". The book is `DEMO_BOOKS.dino.graph` in `index.html`: every option has `next`, the id of the chapter it leads to.
+- Every page has a painting in the cover style (24 paintings in `art/dino/`, made with Figma's image generator). Counts were checked against the text; three were redone for wrong counts. If a painting cannot load, the page shows its 3D scene.
+- All four paths played to the end locally: 24 pages each, every painting loaded, 0 AI calls.
+- Not yet: AI books (Surprise book, Make a book) still use the older shape, where each option gets its own result page and the story then joins up again. Making those branch the same way is the next job.
 
 ## Newest: longer books, no loading mid-book, grown-ups area
 
