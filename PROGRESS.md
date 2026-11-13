@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:21 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:23 PM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -34,6 +34,8 @@ Every `git push` to `main` updates the live website by itself within about a min
 - Each page's picture is now a small animated 3D scene (a toy-like island with characters, trees, houses and so on), drawn live in the page with Three.js. Characters wave and hop, clouds drift, the camera sways gently.
 - How it works: the Illustrator agent only describes the scene as a short list (what, where, which colour). Code in `index.html` (the `3D PICTURES` section) builds it from ready-made pieces. To add a new kind of object or animal, add it to `THINGS` or the character functions there.
 - The hero keeps the same look through the whole book.
+- Second pass on the models: characters now have faces, hair styles, hands and shoes, and they blink, look around, wave and walk. Animals have ears, muzzles and wagging tails. Scenery has detail (house with windows and chimney smoke, castle, pond with lily pads and ripples, campfire with flickering flames). The island has grass, pebbles and flowers, a gradient sky and floating specks. Everything pops in one by one when a page opens.
+- 37 object types and 12 character kinds are available to the Illustrator; the list is in `scene3dPrompt` in `index.html`.
 - If 3D is not available on a device, or the AI's description is unusable, the page falls back to the old flat drawing.
 - Tested with the fake AI only. How good real scenes look depends on how well the real AI places things.
 
