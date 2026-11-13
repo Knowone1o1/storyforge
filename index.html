@@ -333,6 +333,10 @@ textarea{min-height:84px;resize:vertical}
 @media (prefers-reduced-motion:reduce){.cover.editing{animation:none}}
 .shelf.rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 18px;align-items:end;overflow:visible;padding:8px 6px 0}
 .shelf.rows .cover{width:auto}
+.readsl input[type=range]{width:100%;height:40px;accent-color:var(--tomato);cursor:pointer}
+.readsl-ticks{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.readsl-ticks button{border:0;background:none;font:inherit;font-size:14px;line-height:1.2;color:var(--ink);opacity:.55;padding:6px 2px;min-height:44px;text-align:center;cursor:pointer}
+.readsl-ticks button.on{opacity:1;font-weight:700}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -717,7 +721,7 @@ No one-dimensional choices: the tempting_bad option must sound fun, quick or exc
   return `You are the Director agent of StoryForge, an educational story game made for one specific child by their parent.
 CHILD: ${st.child_name}, age ${st.child_age}, reading level: ${st.reading_level}.
 THE CHILD'S INTERESTS (from the parent): ${st.interests || "not given: pick things most kids this age love (animals, space, treasure, sports…)"}. Build the story world, characters and details around these so it feels made just for ${st.child_name}. ${st.child_name} is the hero.
-THEME: ${st.theme || "invent one from the interests"}
+STORY IDEA AND SETTING: ${st.theme || "invent one from the interests"}
 LESSON TO TEACH: ${st.lesson ? st.lesson + " (type: " + st.lesson_type + ")" : `not chosen yet: pick ONE specific, age-appropriate ${st.lesson_type} lesson for a ${st.child_age}-year-old and return it in "lesson"`}
 PARENT LIMITS (never break these): ${st.limits || "none given"}
 CONSEQUENCE STRENGTH: ${st.consequence_level}
@@ -1170,26 +1174,47 @@ const Stage3D = (() => {
 })();
 /* Pictures for generated books: every page gets its own painting from the site's /api/image.
    The cast description keeps the characters looking the same on every page; the book's seed keeps the style steady. */
-function paintUrl(book, text){
-  // describe only the characters this page is about, so the picture shows what the text says
+function paintUrl(book, text, picture){
+  // the Art Director's description of the picture (what the text MEANS), the hero's fixed look on every page,
+  // the other characters this page names, and the book's cover as a reference so everyone looks the same
+  const about = picture || text;
   const parts = String(book.cast || "").split(/(?<=[.;])\s+/).filter(Boolean);
-  const named = parts.filter(c => { const name = (c.match(/[A-Z][a-z]+/) || [""])[0]; return name && new RegExp("\\b" + name + "\\b").test(text); });
-  const who = (named.length ? named : parts.slice(0, 1)).join(" ");
-  const scene = `Picture-book scene: ${text} ${who ? "(" + who + ")" : ""}`.trim();
-  return `/api/image?s=${book.seed}&p=${encodeURIComponent(scene.slice(0, 900))}`;
+  const hero = book.heroLook || parts[0] || "";
+  const heroName = (hero.match(/[A-Z][a-z]+/) || [""])[0];
+  const others = parts.filter(c => { const name = (c.match(/[A-Z][a-z]+/) || [""])[0]; return name && name !== heroName && new RegExp("\\b" + name + "\\b", "i").test(about + " " + text); });
+  const scene = `Picture-book scene: ${about}\nCharacters, drawn exactly like this in every picture of the book: ${[hero, ...others].join(" ")}`;
+  const ref = book.coverImg ? `&r=${encodeURIComponent(book.coverImg)}` : "";
+  return `/api/image?s=${book.seed}&p=${encodeURIComponent(scene.slice(0, 1000))}${ref}`;
+}
+async function planPictures(book, chapters, what, soFar){ // the Art Director turns each page's text into what its picture must show
+  const id = log("Art Director", `planning the pictures for ${what}…`);
+  try {
+    const r = await ai(`You are the Art Director agent of a children's picture book. For every page below, write what its picture must show, so the illustrator draws what the text MEANS.
+${soFar ? "STORY SO FAR (for context):\n" + soFar + "\n" : ""}CHARACTERS: ${book.cast}
+${chapters.map((ch, i) => `CHAPTER ${i + 1}:\n` + ch.pages.map((pg, k) => `  ${k + 1}. "${pg.text}"`).join("\n")).join("\n")}
+Rules: one sentence per page, at most 40 words. Say the place, which characters are in the picture and what each one is doing, and the important objects with their exact counts. Read the words the way the story means them: "takes 2 turns" in a computer game means playing 2 rounds at the computer, not spinning around. Keep the same place from page to page unless the text moves somewhere else. Name the characters but do not describe how they look (that is added separately). No words, letters or numbers in the picture.
+Return ONLY JSON: {"chapters":[{"pictures":["", ...]}]} with ${chapters.length} chapter${chapters.length > 1 ? "s" : ""}, in order, and exactly one picture per page.`, "quick");
+    const cs = Array.isArray(r.chapters) ? r.chapters : [];
+    let n = 0;
+    chapters.forEach((ch, i) => { const ps = cs[i] && Array.isArray(cs[i].pictures) ? cs[i].pictures : []; ch.pages.forEach((pg, k) => { if (typeof ps[k] === "string" && ps[k].trim()) { pg.picture = ps[k].trim(); n++; } }); });
+    logDone(id, `planned ${n} pictures for ${what}`);
+  } catch(e) { logDone(id, "skipped planning; the illustrator reads the text", "fail"); }
 }
 function paintChapters(book, chapters){
   if (!onSite) return false;
-  chapters.forEach(ch => ch.pages.forEach(pg => { if (!pg.img) pg.img = paintUrl(book, pg.text); }));
+  chapters.forEach(ch => ch.pages.forEach(pg => { if (!pg.img) pg.img = paintUrl(book, pg.text, pg.picture); }));
   return true;
 }
 const painted = new Map(); // picture url -> promise that settles once it has loaded (true) or failed (false)
 function paintReady(u){
   if (!u) return Promise.resolve(true);
-  if (!painted.has(u)) painted.set(u, new Promise(res => {
-    const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u;
-    setTimeout(() => res(false), 60000); // never wait longer than a minute
-  }));
+  if (!painted.has(u)) {
+    const m = /[?&]r=([^&]+)/.exec(u), before = m ? paintReady(decodeURIComponent(m[1])) : Promise.resolve(true);
+    painted.set(u, before.then(() => new Promise(res => {
+      const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u;
+      setTimeout(() => res(false), 60000); // never wait longer than a minute
+    })));
+  }
   return painted.get(u);
 }
 const pageImg = pg => pg && pg.src && !pg.src.imgFailed ? pg.src.img : "";
@@ -1428,35 +1453,63 @@ const SCENE_RULES = `Each scene is {"sky":"#hex","ground":"#hex","time":"day or 
 - "scenery" only sets the place: 5 to 8 entries, each {"type","x","z","size","color","move"}. x from -5 to 5, z from -3 to -1. move is one of: none, bob, sway, drift, spin.
 - type is one of: tree, pine, bush, flower, mushroom, rock, hill, mountain, house, castle, tent, fence, signpost, campfire, cloud, sun, moon, star, pond, river, nest, ball, balloon, egg, apple, box, chest, table, cake, cookie, jar, book, boat, rocket, plane, car, snowman, butterfly, sphere, cone, cylinder. For anything else use the closest type.
 - Colours are hex codes. Use a bright, friendly palette. The app decides the exact layout.`;
-/* How hard a book may be, from the child's age and reading level (the reading level wins when it is lower).
-   Used by the Director, the Guardian and "Suggest one", so words AND ideas stay at the child's level. */
+const READ_STEPS = [
+  {label: "Listens only", hint: "Read aloud to them: tiny sentences, lots of repeating."},
+  {label: "Just starting", hint: "Short words they can sound out, sentences of up to 8 words."},
+  {label: "Early reader", hint: "Everyday words and a few fun new ones, sentences of up to 12 words."},
+  {label: "Growing reader", hint: "Richer words and some dialogue, sentences of up to 15 words."},
+  {label: "Confident reader", hint: "Lively vocabulary, longer sentences, real puzzles to think about."}];
+const VALUES = "kindness, honesty, sharing, bravery, patience, saying sorry and forgiving, helping others, gratitude, trying again after a mistake, including someone who is left out, listening, keeping promises, being responsible, respecting differences, caring for animals and nature, being a good friend, handling big feelings, teamwork, being fair";
+function readBand(age, reading){ // 0..4, from a reading step label or the profile's reading level
+  age = Number(age) || 7; const r = String(reading || "").toLowerCase();
+  const i = READ_STEPS.findIndex(x => x.label.toLowerCase() === r); if (i >= 0) return i;
+  if (/pre-reader|listen/.test(r)) return 0;
+  if (/just|start/.test(r)) return 1;
+  if (/early/.test(r)) return 2;
+  if (/growing/.test(r)) return 3;
+  if (/confident/.test(r)) return age >= 9 ? 4 : 3;
+  return age <= 5 ? 1 : age <= 7 ? 2 : age <= 8 ? 3 : 4;
+}
+/* How hard a book may be (the reading step chosen for the book wins). Used by the Director, the Guardian and the Suggest buttons,
+   so words AND ideas stay at the child's level. */
 function levelGuide(age, reading){
-  age = Number(age) || 7; reading = String(reading || "");
-  let band = age <= 5 ? 0 : age <= 7 ? 1 : 2;
-  if (/pre-reader|listen/i.test(reading)) band = 0; else if (/early/i.test(reading)) band = Math.min(band, 1);
+  age = Number(age) || 7;
+  const band = readBand(age, reading);
   const words = [
-    "Sentences of at most 7 words. Only short everyday words a 4-year-old says out loud (cat, big, run, home). Repeat words often.",
-    "Sentences of at most 9 words, one idea per sentence. Short everyday words a 6- or 7-year-old can sound out (sun, jump, share, egg). No word longer than 3 syllables except names. No idioms.",
-    "Sentences of at most 13 words. Everyday words a 9-year-old knows. Explain any new word in the same sentence."][band];
+    "Sentences of at most 6 words; the book is read aloud. Only short everyday words a 4-year-old says (cat, big, run, home). Repeat words and patterns.",
+    "Sentences of at most 8 words, one idea each. Short words a 5- or 6-year-old can sound out (sun, jump, egg). No idioms.",
+    "Sentences of at most 12 words. Everyday words a 7-year-old knows, plus at most one fun new word per page that the sentence makes clear. Sentences may join two ideas with and, but or because.",
+    "Sentences of at most 15 words. Words an 8-year-old meets in school books; a new word is fine when the page makes its meaning clear. Use describing words and a little dialogue.",
+    "Sentences of at most 20 words. Rich, lively vocabulary for a 9- or 10-year-old, dialogue, and some longer sentences; explain any specialist word in passing."][band];
   const math = [
-    "Math: counting to 10, more and less, big and small, simple shapes. No adding sums written as numbers.",
-    `Math: counting to 20, adding and taking away within ${age <= 6 ? 10 : 20}, half of a small even number (2, 4, 6, 8 or 10), sharing a few things equally between 2 friends. Never multiplying, dividing, fractions beyond half, money with cents, or numbers above 20.`,
-    "Math: adding and taking away within 100, the 2, 5 and 10 times tables, halves and quarters, telling the time to the half hour. No long division, no decimals."][band];
+    "Math: counting to 10, more and less, big and small, simple shapes. No sums written as numbers.",
+    "Math: counting to 20, adding and taking away within 10, half of 2, 4, 6, 8 or 10, sharing equally between 2 friends.",
+    "Math: adding and taking away within 20, doubles and halves up to 20, counting in 2s, 5s and 10s, sharing equally between 2, 3 or 4, simple coin sums in whole units, telling o'clock times. No multiplication signs, decimals or numbers above 100.",
+    "Math: adding and taking away within 100, the 2, 3, 4, 5 and 10 times tables, halves, thirds and quarters of shapes and groups, money in whole units, time to the quarter hour, measuring length.",
+    "Math: times tables up to 10 x 10, simple division (with remainders), fractions of amounts, perimeter, money with change, reading simple charts."][band];
   const science = [
     "Science: what a child can see, hear or touch: colours, weather, animal homes, day and night, hot and cold. No scientific terms.",
-    "Science: things a child can see happen: plants need water and sun, some things float and some sink, ice melts when warm, magnets pull metal, day and night. No terms like gravity, orbit, atmosphere, oxygen, molecule, energy or photosynthesis: say what happens in plain words instead (things fall down, the Earth turns).",
-    "Science: simple cause and effect, life cycles, the water cycle, magnets, light and shadows. Name one new term at most and explain it in plain words."][band];
-  const other = [
-    "Geography and values: home, family, sharing, saying sorry, being kind.",
-    "Geography: big easy ideas only (hot desert, cold snowy place, the sea, a mountain). Values: sharing, taking turns, telling the truth, being kind.",
-    "Geography: continents, oceans, countries and their weather. Values: fairness, honesty, courage, helping others."][band];
-  const q = ["Questions and choices: one short idea, at most 6 words, answerable by a 4-year-old.",
-    "Questions and choices: at most 8 words, one step to think about, numbers within the math range above.",
-    "Questions and choices: at most 10 words, at most two steps to think about."][band];
-  return `LEVEL GUIDE (follow it strictly; it matters more than making the lesson rich): the child is ${age} and reads at "${reading || "their age"}" level.
+    "Science: plants need water and sun, some things float and some sink, ice melts when warm, magnets pull metal, day and night. Plain words, no scientific terms.",
+    "Science: seeds growing into plants, animals and their babies, floating and sinking, melting and freezing, pushes and pulls, shadows, the seasons. You may name one simple term (like roots or melt) and show what it means.",
+    "Science: life cycles, habitats, the water cycle, magnets, light and shadows, simple forces, the Moon changing shape. One or two terms, each explained in plain words.",
+    "Science: food chains, the planets and their orbits, solids, liquids and gases, simple circuits, the human body. Explain every term in plain words."][band];
+  const geo = [
+    "Geography: home, park, beach, farm, city.",
+    "Geography: hot desert, cold snowy place, the sea, a mountain, a forest.",
+    "Geography: maps and directions (left, right, near, far), homes and weather in different parts of the world, rivers and seas.",
+    "Geography: continents, oceans, countries and their weather, famous landmarks, compass directions.",
+    "Geography: climates, how people live in different countries, capitals, the world's great rivers and mountains, reading simple maps."][band];
+  const values = `Values: any of ${VALUES}. Teach the value that was asked for, and do not drift into taking turns unless that was asked.` + (band >= 3 ? " The right choice may take some thought." : " Keep the right choice clear and concrete.");
+  const q = ["Questions and choices: at most 6 words, one simple idea.",
+    "Questions and choices: at most 8 words, one step to think about.",
+    "Questions and choices: at most 10 words, one or two steps to think about.",
+    "Questions and choices: at most 12 words, two steps to think about; the options may differ in subtle ways.",
+    "Questions and choices: at most 15 words; they may need real reasoning."][band];
+  return `LEVEL GUIDE (follow it strictly): the child is ${age} and reads at the "${READ_STEPS[band].label}" step.
 - Words: ${words}
-- Ideas: ${math} ${science} ${other}
+- Ideas: ${math} ${science} ${geo} ${values}
 - ${q}
+- Do not go simpler than this guide either: use the full range it allows.
 - If the lesson asked for is harder than this, teach the simplest first step of it instead.`;
 }
 const PAGE_RULES = `A page is 1 or 2 short, complete sentences, at the sentence length the LEVEL GUIDE gives. Something must happen on every second page, so the picture can change.`;
@@ -1478,7 +1531,7 @@ ${bookBrief()}
 Chapter 1 has exactly 6 pages. ${PAGE_RULES}
 ${OPTION_RULES}
 "check": one short question that tests the lesson, answerable in a few words, with its answer.
-Return ONLY this JSON: {"title":"","lesson":"","hero_look":"one sentence: how ${S.settings.child_name} looks","cast":"one sentence describing how each main character looks (the hero first, then any friend or animal), with clothes and colours, for the illustrator","check":{"question":"","answer":""},"chapter":{"pages":["","","","","",""],"question":"","options":[{"label":"","hidden_type":"wise|okay|tempting_bad|clearly_bad","leads_to":"","coach":""}]}}`;
+Return ONLY this JSON: {"title":"","lesson":"","hero_look":"one sentence for the illustrator: ${S.settings.child_name} is a boy or a girl (say which, matching the pronouns you use), skin tone, hair colour and style, and exact clothes with colours. It never changes during the book.","cast":"one short sentence per main character, each starting with their name (the hero first, then any friend or animal): boy, girl or animal, skin or fur colour, hair, clothes and colours","check":{"question":"","answer":""},"chapter":{"pages":["","","","","",""],"question":"","options":[{"label":"","hidden_type":"wise|okay|tempting_bad|clearly_bad","leads_to":"","coach":""}]}}`;
 }
 function storySoFar(book, id){
   const chain = []; let c = book.graph[id];
@@ -1569,10 +1622,13 @@ async function writeFirstChapter(){
   ch.depth = 1; ch.parent = null;
   const book = {key: null, canned: false, live: true, title: str(raw.title) || "Your story", start: "c1", graph: {c1: ch}, fetch: {}, ready: {},
     check: raw.check && str(raw.check.question) ? {question: str(raw.check.question), answer, accept: [answer.toLowerCase()]} : null};
-  book.seed = 1 + Math.floor(Math.random() * 99999); book.cast = str(raw.cast) || S.heroLook;
+  book.seed = 1 + Math.floor(Math.random() * 99999); book.cast = str(raw.cast) || S.heroLook; book.heroLook = S.heroLook;
   await guardChapters([ch], "chapter 1");
+  if (onSite) {
+    book.coverImg = `/api/image?s=${book.seed}&p=${encodeURIComponent(`Picture-book cover for "${book.title}": the main characters together, facing us, joyful and inviting. ${book.heroLook} ${book.cast}`.slice(0, 900))}`;
+    await planPictures(book, [ch], "chapter 1", "");
+  }
   if (paintChapters(book, [ch])) {
-    book.coverImg = `/api/image?s=${book.seed}&p=${encodeURIComponent(`Picture-book cover for "${book.title}", the main characters together, joyful and inviting. (${book.cast})`.slice(0, 900))}`;
     const id = log("Illustrator", "painting the cover and the pages of chapter 1"); logDone(id);
   }
   else { book.heroReady = drawChapters(book, ["c1"], "chapter 1"); await book.heroReady; } // no painter here (Claude page): 3D pictures
@@ -1600,6 +1656,7 @@ async function writeNext(book, id){
   const ids = versions.map((ch, k) => { const cid = `${id}-${k + 1}`; ch.depth = depth; ch.parent = {id, label: parent.options[k].label}; book.graph[cid] = ch; parent.options[k].next = cid; return cid; });
   book.ready[id] = true;
   if (typeof storeBooks === "function") storeBooks(); // a saved book keeps the chapters written so far
+  if (onSite) await planPictures(book, versions, what, storySoFar(book, id));
   if (paintChapters(book, versions)) { const pid = log("Illustrator", `painting the pages of ${what}`); logDone(pid); }
   else Promise.resolve(book.heroReady).then(() => drawChapters(book, ids, what)); // pictures follow in the background
 }
@@ -2251,11 +2308,11 @@ const BOOK_SUBJECTS = [["math","Math","Numbers, shapes, sharing"],["science","Sc
 const BOOK_WORLDS = [["any","Any world","Built from what they love"],["adventure","Adventure","Maps, quests, treasure"],["animals","Animals","Pets and wild friends"],["space","Space","Rockets and planets"],["magic","Magic","Wizards and wishes"],["sea","Under the sea","Fish, shells, submarines"],["dinos","Dinosaurs","Eggs, fossils, roars"],["home","Everyday life","Home, school, friends"]];
 const BOOK_MOODS = [["any","Any mood"],["funny","Funny"],["exciting","Exciting"],["calm","Calm, for bedtime"]];
 let profileReturn = "";
-function newDraft(){ return {lesson_type: "math", lesson: "", theme: "", world: "any", mood: "any"}; }
+function newDraft(){ return {lesson_type: "math", lesson: "", theme: "", world: "any", mood: "any", reading: child ? readBand(child.child_age, child.reading_level) : 2, _seen: []}; }
 function bookTheme(d){
   const w = BOOK_WORLDS.find(x => x[0] === d.world), m = BOOK_MOODS.find(x => x[0] === d.mood);
   return [w && d.world !== "any" ? `Set the story in this kind of world: ${w[1]} (${w[2].toLowerCase()}).` : "",
-    m && d.mood !== "any" ? `Make the mood ${m[1].toLowerCase()}.` : "", d.theme ? `The parent's idea: ${d.theme}` : ""].filter(Boolean).join(" ");
+    m && d.mood !== "any" ? `Make the mood ${m[1].toLowerCase()}.` : "", d.theme ? `How the story shows the lesson (the parent's idea, follow it closely): ${d.theme}` : ""].filter(Boolean).join(" ");
 }
 function setupView(){
   if (!child) return `<div class="view">${bar("Make a book")}<div class="card stack">
@@ -2267,14 +2324,19 @@ function setupView(){
   const picks = (field, items) => `<div class="picks" role="group">${items.map(o => `<button type="button" class="pick" data-bk="${field}" data-val="${o[0]}" aria-pressed="${d[field] === o[0]}"><b>${esc(o[1])}</b>${o[2] ? `<small>${esc(o[2])}</small>` : ""}</button>`).join("")}</div>`;
   const subj = (BOOK_SUBJECTS.find(x => x[0] === d.lesson_type) || ["", ""])[1];
   return `<div class="view">${bar("Make a book")}
-  <div class="forwho"><span>This book is for</span><b>${esc(child.child_name)}, ${esc(child.child_age)}</b><span class="hint">${esc(child.reading_level)}</span><span class="grow"></span><button type="button" class="btn secondary" id="goProfile">Edit profile</button></div>
+  <div class="forwho"><span>This book is for</span><b>${esc(child.child_name)}, ${esc(child.child_age)}</b><span class="grow"></span><button type="button" class="btn secondary" id="goProfile">Edit profile</button></div>
   <form id="setupForm" class="card mk">
     <div class="mk-q"><b>What should the book teach?</b>${picks("lesson_type", BOOK_SUBJECTS)}</div>
-    <div class="mk-q"><label for="f_lesson"><b>Anything specific?</b></label><span class="hint">Leave it empty and we pick a ${esc(subj.toLowerCase())} lesson that fits ${esc(child.child_name)}'s age.</span>
-      <div class="row"><input id="f_lesson" value="${esc(d.lesson)}" placeholder="e.g. halves and quarters, telling the truth" style="flex:1;min-width:200px"><button type="button" class="btn secondary ico-spark" id="suggestLesson" ${d._suggesting ? "disabled" : ""}>${d._suggesting ? "Thinking…" : "Suggest one"}</button></div></div>
+    <div class="mk-q"><label for="f_read"><b>Reading level for this book</b></label>
+      <div class="readsl"><input type="range" id="f_read" min="0" max="4" step="1" value="${d.reading}" aria-valuetext="${esc(READ_STEPS[d.reading].label)}">
+      <div class="readsl-ticks">${READ_STEPS.map((x, i) => `<button type="button" data-rs="${i}" class="${i === +d.reading ? "on" : ""}">${esc(x.label)}</button>`).join("")}</div></div>
+      <span class="hint" id="f_read_hint">${esc(READ_STEPS[d.reading].hint)}</span></div>
+    <div class="mk-q"><label for="f_lesson"><b>The lesson</b></label><span class="hint">Just the lesson, in a few words. Leave it empty and we pick a ${esc(subj.toLowerCase())} lesson at this reading level.</span>
+      <div class="row"><input id="f_lesson" value="${esc(d.lesson)}" placeholder="${esc(({math: "e.g. Halves are two equal parts", science: "e.g. Plants need water and sun", geography: "e.g. Deserts are hot and dry", moral: "e.g. Sharing is caring", reading: "e.g. Words that rhyme"})[d.lesson_type] || "e.g. Sharing is caring")}" style="flex:1;min-width:200px"><button type="button" class="btn secondary ico-spark" id="suggestLesson" ${d._suggesting ? "disabled" : ""}>${d._suggesting ? "Thinking…" : "Suggest one"}</button></div></div>
     <div class="mk-q"><b>What kind of world?</b>${picks("world", BOOK_WORLDS)}</div>
     <div class="mk-q"><b>What mood?</b><div class="seg" role="group">${BOOK_MOODS.map(o => `<button type="button" data-bk="mood" data-val="${o[0]}" aria-pressed="${d.mood === o[0]}">${esc(o[1])}</button>`).join("")}</div></div>
-    <div class="mk-q"><label for="f_theme"><b>Your own story idea</b> <span class="hint">(optional)</span></label><input id="f_theme" value="${esc(d.theme)}" placeholder="e.g. Bobo the dog gets lost at the beach"></div>
+    <div class="mk-q"><label for="f_theme"><b>How should the story show it?</b> <span class="hint">(optional)</span></label><span class="hint">The situation where ${esc(child.child_name)} learns the lesson.</span>
+      <div class="row"><input id="f_theme" value="${esc(d.theme)}" placeholder="e.g. ${esc(child.child_name)} has one big cookie at the picnic and two hungry friends" style="flex:1;min-width:200px"><button type="button" class="btn secondary ico-spark" id="suggestIdea" ${d._ideaing ? "disabled" : ""}>${d._ideaing ? "Thinking…" : "Suggest one"}</button></div></div>
     <div class="mk-go"><button type="submit" class="btn go">Write the book</button><button type="button" class="btn secondary" id="surpriseGo">Surprise me</button></div>
     <p class="mk-sum">${esc(child.child_name)}'s interests, limits and consequence strength come from the Child profile.</p>
   </form></div>`;
@@ -2283,10 +2345,12 @@ function readForm(){
   if (!$("setupForm") || !draft) return;
   draft.lesson = ($("f_lesson") ? $("f_lesson").value.trim() : draft.lesson);
   draft.theme = ($("f_theme") ? $("f_theme").value.trim() : draft.theme);
+  if ($("f_read")) draft.reading = +$("f_read").value;
 }
 function bookSettings(d){
   const c = child || {};
-  return {child_name: c.child_name || "Alex", child_age: c.child_age || 7, reading_level: c.reading_level || "early reader", interests: c.interests || "",
+  const step = READ_STEPS[d.reading] ? READ_STEPS[d.reading].label : (c.reading_level || "Early reader");
+  return {child_name: c.child_name || "Alex", child_age: c.child_age || 7, reading_level: step, interests: c.interests || "",
     limits: c.limits || "nothing scary, no fighting", consequence_level: c.consequence_level || "medium",
     lesson_type: d.lesson_type || "math", lesson: d.lesson || "", theme: bookTheme(d)};
 }
@@ -2434,6 +2498,7 @@ document.addEventListener("click", e => {
   const w = e.target.closest(".w"); if (w) { tapWord(w); return; }
   const t = e.target.closest("button"); if (!t) { $("crew").classList.remove("open"); return; }
   if (t.dataset.tab) { goTab(t.dataset.tab); return; }
+  if (t.dataset.rs !== undefined && draft) { readForm(); draft.reading = +t.dataset.rs; render(); return; }
   if (t.id === "shelfEdit") { shelfEdit = !shelfEdit; removeArm = ""; render(); return; }
   if (t.id === "shelfRestore") { hiddenLib = []; storeHidden(); removeArm = ""; render(); return; }
   if (t.dataset.remove) {
@@ -2489,6 +2554,7 @@ document.addEventListener("click", e => {
       break;
     }
     case "suggestLesson": suggestLesson(); break;
+    case "suggestIdea": suggestIdea(); break;
     case "surpriseGo": { const keys = BOOK_SUBJECTS.map(x => x[0]); startStory(bookSettings({lesson_type: keys[Math.floor(Math.random() * keys.length)], lesson: "", theme: "", world: "any", mood: "any"})); break; }
     case "setupProfile": profileReturn = "setup"; profileSaved = false; pdraft = {child_name:"", child_age:7, reading_level:"early reader", interests:"", limits:"", consequence_level:"medium"}; screen = "profile"; render(); break;
     case "goCustom": goTab("setup"); break;
@@ -2536,18 +2602,45 @@ function readQuick(){
   if ($("q_age")) quick.age = +$("q_age").value || 7;
   if ($("q_name")) quick.name = $("q_name").value.trim();
 }
+const LESSON_POOL = {
+  moral: VALUES.split(", "),
+  math: ["counting on", "adding two groups", "taking away", "halves", "doubles", "equal sharing", "shapes around us", "measuring longer and shorter", "telling the time", "counting money", "patterns", "odd and even", "quarters", "times tables", "fractions of a group"],
+  science: ["how seeds grow", "floating and sinking", "melting and freezing", "magnets", "shadows", "animal homes", "the seasons", "where rain comes from", "baby animals growing up", "why we need sleep", "the Moon's shapes", "push and pull", "what plants need", "bugs and their jobs"],
+  geography: ["hot and cold places", "reading a simple map", "rivers to the sea", "mountains", "islands", "the continents", "the oceans", "homes around the world", "weather around the world", "deserts", "rainforests", "the North and South Pole"],
+  reading: ["rhyming words", "letter sounds", "describing words", "action words", "opposites", "words that sound the same", "long and short vowels", "telling a story in order"]};
+function pickSome(list, n){ return list.slice().sort(() => Math.random() - .5).slice(0, n); }
 async function suggestLesson(){
   readForm();
   draft._suggesting = true; render();
   const subj = (SUBJECTS.find(s => s[0] === draft.lesson_type) || ["", draft.lesson_type])[1];
+  const st = bookSettings(draft), seen = draft._seen || (draft._seen = []);
   try {
-    const r = await ai(`You help a parent set up an educational story game. Subject: ${subj}. Child age: ${(child || {}).child_age || 7}. Child's interests: ${(child || {}).interests || "not given"}.
-Suggest ONE specific lesson that works well inside a story with choices.
-${levelGuide((child || {}).child_age, (child || {}).reading_level)}
-Return ONLY JSON: {"lesson": "short specific lesson in plain words a parent understands, max 10 words"}`, "quick");
-    if (r.lesson) draft.lesson = r.lesson; // only the lesson: the story idea stays the parent's own
+    const r = await ai(`You help a parent set up an educational story game. Subject: ${subj}. Child age: ${st.child_age}. Child's interests: ${st.interests || "not given"}.
+Suggest ONE specific lesson that works well inside a story with choices. For inspiration, pick one of these or something like them: ${pickSome(LESSON_POOL[draft.lesson_type] || [], 6).join(", ")}.
+${seen.length ? "Do not suggest any of these again: " + seen.join("; ") + "." : ""}
+${levelGuide(st.child_age, st.reading_level)}
+Return ONLY JSON: {"lesson": "the lesson only, max 8 words, like a short motto or skill a parent understands (e.g. Sharing is caring; Halves are two equal parts)"}`, "quick");
+    if (r.lesson) { draft.lesson = String(r.lesson).trim(); seen.push(draft.lesson); } // only the lesson: the story idea is its own field
   } catch(e) { showBanner(aiError(e), true); }
   draft._suggesting = false; render();
+}
+async function suggestIdea(){
+  readForm();
+  draft._ideaing = true; render();
+  const subj = (SUBJECTS.find(s => s[0] === draft.lesson_type) || ["", draft.lesson_type])[1];
+  const st = bookSettings(draft), w = BOOK_WORLDS.find(x => x[0] === draft.world), m = BOOK_MOODS.find(x => x[0] === draft.mood);
+  try {
+    const r = await ai(`You help a parent plan a picture book with choices for ${st.child_name}, age ${st.child_age}. Interests: ${st.interests || "not given"}.
+Subject: ${subj}. Lesson: ${draft.lesson ? `"${draft.lesson}"` : `not chosen yet: choose one specific ${subj.toLowerCase()} lesson (a short motto or skill, max 8 words) and return it in "lesson"`}.
+World: ${w && draft.world !== "any" ? w[1] : "any, built from the interests"}. Mood: ${m && draft.mood !== "any" ? m[1] : "any"}.
+${draft.theme ? `The parent's current idea, which you should replace with a fresh one: ${draft.theme}` : ""}
+Suggest ONE story idea (one or two sentences, max 30 words) that shows HOW the story teaches the lesson: a concrete situation where ${st.child_name} has to use the lesson, with who is involved and what is at stake. Use the child's interests.
+${levelGuide(st.child_age, st.reading_level)}
+Return ONLY JSON: {"idea": "", "lesson": ""}`, "quick");
+    if (r.idea) draft.theme = String(r.idea).trim();
+    if (!draft.lesson && r.lesson) draft.lesson = String(r.lesson).trim();
+  } catch(e) { showBanner(aiError(e), true); }
+  draft._ideaing = false; render();
 }
 document.addEventListener("submit", e => {
   if (e.target.id === "profileForm") { // save the child's profile
@@ -2570,6 +2663,13 @@ document.addEventListener("keydown", e => {
 /* the warm-up screen waits for scene 1; show the story button state when it arrives */
 render();
 loadCaps();
+document.addEventListener("input", e => { // the reading slider updates its labels as it moves
+  if (e.target.id !== "f_read" || !draft) return;
+  draft.reading = +e.target.value; const x = READ_STEPS[draft.reading];
+  e.target.setAttribute("aria-valuetext", x.label);
+  if ($("f_read_hint")) $("f_read_hint").textContent = x.hint;
+  document.querySelectorAll(".readsl-ticks button").forEach((b, i) => b.classList.toggle("on", i === draft.reading));
+});
 </script>
 </body>
 </html>

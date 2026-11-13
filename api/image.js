@@ -19,25 +19,46 @@ function findImage(data){ // the image can sit in a few places depending on the 
   }
   return null;
 }
-async function viaGemini(prompt, notes){
+async function askGemini(model, input, notes, label){
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+    method: "POST",
+    headers: {"Content-Type": "application/json", "x-goog-api-key": KEY()},
+    body: JSON.stringify({model, input}),
+    signal: AbortSignal.timeout(40000),
+  });
+  const data = await r.json().catch(() => ({}));
+  const img = r.ok ? findImage(data) : null;
+  if (img) return {img: {buf: Buffer.from(img.b64, "base64"), type: img.type || "image/png", by: model + label}};
+  notes.push(`${model}${label}: ${r.status} ${String((data.error && (data.error.message || data.error.status)) || data.message || JSON.stringify(data).slice(0, 220)).slice(0, 220)}`);
+  return {status: r.status};
+}
+// ref: the book's cover, so the characters look the same on every page. If a model refuses the picture input,
+// the same model is asked again without it.
+async function viaGemini(prompt, notes, ref){
   if (!KEY()) { notes.push("gemini: no key"); return null; }
   for (const model of GEMINI_MODELS) {
     if (deadModels.has(model)) continue;
     try {
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "x-goog-api-key": KEY()},
-        body: JSON.stringify({model, input: [{type: "text", text: prompt}]}),
-        signal: AbortSignal.timeout(40000),
-      });
-      const data = await r.json().catch(() => ({}));
-      const img = r.ok ? findImage(data) : null;
-      if (img) return {buf: Buffer.from(img.b64, "base64"), type: img.type || "image/png", by: model};
-      notes.push(`${model}: ${r.status} ${String((data.error && (data.error.message || data.error.status)) || data.message || JSON.stringify(data).slice(0, 220)).slice(0, 220)}`);
-      if (r.status === 400 || r.status === 404) deadModels.add(model); // 402 and 429 can clear once billing or quota catches up, so those are retried
+      if (ref) {
+        const a = await askGemini(model, [{type: "text", text: `${prompt}\nThe attached picture is this book's cover. Draw the same characters looking exactly the same as on it (same face, skin colour, hair, clothes and colours) and in the same painting style, but in the new scene above. Do not copy the cover's layout or any title text.`},
+          {type: "image", data: ref.b64, mime_type: ref.type}], notes, "+cover");
+        if (a.img) return a.img;
+      }
+      const b = await askGemini(model, [{type: "text", text: prompt}], notes, "");
+      if (b.img) return b.img;
+      if (b.status === 400 || b.status === 404) deadModels.add(model); // 402 and 429 can clear once billing or quota catches up, so those are retried
     } catch (e) { notes.push(`${model}: ${e && e.message}`); }
   }
   return null;
+}
+async function coverFor(req, r, notes){ // fetch the cover (already painted and cached) from this same site
+  if (!r || !r.startsWith("/api/image?") || /[?&]r=/.test(r)) return null;
+  try {
+    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const res = await fetch(`https://${host}${r}`, {signal: AbortSignal.timeout(45000)});
+    if (!res.ok) { notes.push(`cover: ${res.status}`); return null; }
+    return {b64: Buffer.from(await res.arrayBuffer()).toString("base64"), type: (res.headers.get("content-type") || "image/png").split(";")[0]};
+  } catch (e) { notes.push(`cover: ${e && e.message}`); return null; }
 }
 async function viaPollinations(prompt, seed, notes){
   try {
@@ -50,12 +71,13 @@ async function viaPollinations(prompt, seed, notes){
 
 export default async function handler(req, res) {
   const q = req.query || {};
-  const scene = String(q.p || "").trim().slice(0, 1200);
+  const scene = String(q.p || "").trim().slice(0, 1400);
   const seed = Math.abs(parseInt(q.s, 10) || 7) % 1000000;
   if (!scene) return res.status(400).json({code: "bad_request"});
   const prompt = `${scene} ${STYLE}`; // the scene first, so the painter draws what happens
   const notes = [];
-  const img = (q.via !== "free" && await viaGemini(`${BOOK_STYLE}\nScene: ${scene}`, notes)) || await viaPollinations(prompt, seed, notes);
+  const ref = q.via !== "free" ? await coverFor(req, String(q.r || ""), notes) : null;
+  const img = (q.via !== "free" && await viaGemini(`${BOOK_STYLE}\nScene: ${scene}`, notes, ref)) || await viaPollinations(prompt, seed, notes);
   if (!img) { console.error("image failed", notes.join(" | ")); return res.status(502).json({code: "image_error", notes}); }
   res.setHeader("Content-Type", img.type);
   res.setHeader("Cache-Control", "public, max-age=31536000, s-maxage=31536000, immutable"); // same page, same picture

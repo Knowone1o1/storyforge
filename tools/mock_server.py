@@ -51,6 +51,10 @@ class H(http.server.SimpleHTTPRequestHandler):
           "scenery":[{"type":"mountain","x":-3.5,"z":-2.5,"size":1.4},{"type":"tree","x":-4,"z":0,"size":1.2},{"type":"pine","x":3.8,"z":-1.5,"size":1.3},{"type":"cloud","x":-2,"z":-1},{"type":"cloud","x":-1.6,"z":-2,"size":1.3},{"type":"sun","x":4,"z":-2},
             {"type":"pond","x":2.5,"z":1.5},{"type":"house","x":0.5,"z":-2.2,"size":1.2,"color":"#FFD27A","color2":"#FF6B5E"},{"type":"bush","x":0.6,"z":-2.1},{"type":"flower","x":-0.5,"z":2.4},{"type":"rock","x":4.2,"z":1},{"type":"mushroom","x":-4.6,"z":2.6},{"type":"tree","x":0,"z":1.5}]})
         elif "Illustrator agent" in p: text = '<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="450" fill="#bde"/><circle cx="400" cy="225" r="80" fill="#fc3"><animate attributeName="r" values="80;95;80" dur="3s" repeatCount="indefinite"/></circle></svg>'
+        elif "Art Director agent" in p:
+            n = p.count("CHAPTER ") - 1
+            text = json.dumps({"chapters":[{"pictures":["Kai and the fox on a green hill, picture %d" % k for k in range(1,9)]} for _ in range(max(1,n))]})
+        elif "Suggest ONE story idea" in p: text = json.dumps({"idea":"Kai finds one big kite at the park and his friend wants to fly it too.","lesson":"Sharing is caring"})
         elif "Director agent" in p:
             s = dict(SCENE)
             if "ENDING scene" in p: s.update(options=[], is_ending=True, consequence_text="The nest is safe.", scene_text="Everyone cheers. The end.")
