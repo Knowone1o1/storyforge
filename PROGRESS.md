@@ -1,6 +1,15 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 1:11 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 1:25 PM. Deck locks at 4:00 PM.
+
+## Newest: AI books branch too
+
+- Surprise books and "Make a book" are now trees like the dino book: every option leads to its own, different next chapter (4 versions of chapter 2, 4 of chapter 3 for the path taken, 4 endings). No result page, no replay.
+- The Director works one step ahead (`fetchNext` / `writeNext` in `index.html`): while chapter 1 is read it writes all four chapter 2s, and so on. The Guardian checks each batch and the Illustrator builds its 3D pictures. If the child chooses before a batch is done, the page shows "writing" until it is.
+- The book opens after chapter 1 alone is written, so the first wait is shorter than when the whole book was written up front.
+- A saved book keeps the chapters written so far; unexplored branches are written when someone goes there.
+- One book now takes about 12 AI requests (4 writing, 4 checking, 4 drawing).
+- Tested with the fake AI only: two surprise books played to different endings with no waiting, and a saved one reopened.
 
 ## Newest: the dino book truly branches and is fully painted
 
