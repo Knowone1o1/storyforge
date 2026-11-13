@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 11:47 AM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 11:56 AM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -19,6 +19,14 @@ The live site runs on a free Gemini key with a small daily limit (roughly 20 req
 | Code | this repo, `main` branch | Lorenzo (`Knowone1o1`) and Angelo (`trang0360`) can both push. |
 
 Every `git push` to `main` updates the live website by itself within about a minute. The Claude version only changes when Lorenzo republishes it.
+
+## Newest change: reading mode and new look
+
+- StoryForge is now reading software first. In a story, half the screen is big reading text and the other half is a moving picture of the scene. The child reads 3 short pages, then picks what happens next.
+- The scene's result ("What happened next") is its own page. The narrator can read any page aloud ("Read it to me") and reads the four choices aloud too.
+- The parent report now shows words read.
+- New visual style on every screen: bright blue and white, rounded, friendly, in the spirit of Epic. Phone and tablet first. The agent panel is a "Backstage" drawer at the bottom on phones and tablets.
+- Tested with the fake AI only (full story, rewind, own idea, ending, report, phone width). Not yet tried with the real AI: whether the real pictures actually move depends on the AI following the new drawing instruction.
 
 ## Done
 

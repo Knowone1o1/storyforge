@@ -2,7 +2,7 @@
 # Run:  python tools/mock_server.py   then open http://localhost:8765
 import json, os, sys, http.server, functools
 ROOT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-SCENE = {"consequence_text":"", "scene_text":"Mia and Bobo find 8 dino eggs by the falls. Half must go to the nest.", "question":"What do you do?",
+SCENE = {"consequence_text":"", "scene_text":"Mia and Bobo walk to Fraction Falls. They find 8 dino eggs in the grass. The eggs are warm and wobbly. A big green dino looks worried. Half of the eggs must go back to the nest. Mia has to count.", "question":"What do you do?",
  "options":[{"label":"Carry 4 eggs to the nest","hidden_type":"wise","leads_to":"The nest is safe."},{"label":"Carry 3 eggs, come back later","hidden_type":"okay","leads_to":"One egg waits."},{"label":"Slide all eggs down the falls","hidden_type":"tempting_bad","leads_to":"Eggs scatter."},{"label":"Leave the eggs alone","hidden_type":"clearly_bad","leads_to":"Eggs get cold."}],
  "meter_change":{"hearts":0,"item_gained":"","item_lost":""},"image_description":"eggs","is_ending":False,
  "lesson":"halves","title":"Dino Rescue","hero_look":"Mia in purple","warmup":{"question":"What is half of 8?","answer":"4"}}
@@ -15,7 +15,7 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         p = body["prompt"]
-        if "Illustrator agent" in p: text = '<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="450" fill="#bde"/><circle cx="400" cy="225" r="80" fill="#fc3"/></svg>'
+        if "Illustrator agent" in p: text = '<svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="450" fill="#bde"/><circle cx="400" cy="225" r="80" fill="#fc3"><animate attributeName="r" values="80;95;80" dur="3s" repeatCount="indefinite"/></circle></svg>'
         elif "Director agent" in p:
             s = dict(SCENE)
             if "ENDING scene" in p: s.update(options=[], is_ending=True, consequence_text="The nest is safe.", scene_text="Everyone cheers. The end.")
