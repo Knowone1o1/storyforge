@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, about 1:00 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 11:47 AM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
