@@ -1183,11 +1183,22 @@ function paintChapters(book, chapters){
   chapters.forEach(ch => ch.pages.forEach(pg => { if (!pg.img) pg.img = paintUrl(book, pg.text); }));
   return true;
 }
-const warmed = new Set();
-function warmPaintings(){ // start painting the next pages before the child gets there
+const painted = new Map(); // picture url -> promise that settles once it has loaded (true) or failed (false)
+function paintReady(u){
+  if (!u) return Promise.resolve(true);
+  if (!painted.has(u)) painted.set(u, new Promise(res => {
+    const im = new Image(); im.onload = () => res(true); im.onerror = () => res(false); im.src = u;
+    setTimeout(() => res(false), 60000); // never wait longer than a minute
+  }));
+  return painted.get(u);
+}
+const pageImg = pg => pg && pg.src && !pg.src.imgFailed ? pg.src.img : "";
+function warmPaintings(){ // start painting the next pages, and the first page of every possible next chapter
   if (!S || !S.demo || !S.demo.live || screen !== "story") return;
-  const pages = (currentScene() || {})._pages || [];
-  pages.slice(S.page + 1, S.page + 4).forEach(pg => { const u = pg.src && pg.src.img; if (u && !warmed.has(u)) { warmed.add(u); const im = new Image(); im.src = u; } });
+  const sc = currentScene() || {}, pages = sc._pages || [];
+  pages.slice(S.page + 1, S.page + 4).forEach(pg => paintReady(pageImg(pg)));
+  if (S.page >= pages.length - 2 && sc.options && S.demo.graph) // nearly at the choice: paint the opening of each branch
+    sc.options.forEach(o => { const nx = o.next && S.demo.graph[o.next]; if (nx && nx.pages && nx.pages[0] && nx.pages[0].img) paintReady(nx.pages[0].img); });
 }
 function pagePaint(sc){ // a painted picture for the page being read, if the book has one
   const pages = sc._pages || [], pg = pages[Math.min(S.page, pages.length - 1)], src = pg && pg.src;
@@ -1636,7 +1647,10 @@ async function makeScene(){
       try { await fetchNext(book, here); }
       catch(e) { S.busy = false; S.error = aiError(e); render(); return null; }
     }
-    return makeDemoScene();
+    const scene = makeDemoScene();
+    const first = book.live ? pageImg((scene._pages || [])[0]) : "";
+    if (first) { S.busy = true; S.painting = true; render(); await paintReady(first); S.busy = false; S.painting = false; }
+    return scene;
   }
   const n = S.scenes.length + 1;
   S.busy = true; S.error = null; render();
@@ -2351,7 +2365,7 @@ function storyView(){
   const art = `<div class="art" data-art="${n-1}">${pagePaint(sc) ? `<img class="paint" src="${esc(pagePaint(sc))}" alt="">` : pageSpec(sc) ? "" : sc.svg || (sc.noArt ? NO_ART : `<div class="wait"><span class="blobs"><i></i><i></i><i></i></span><small>The Illustrator is drawing…</small></div>`)}</div>`;
   let side;
   if (S.error) side = `<div class="conseq">${esc(S.error)}</div><div class="tools"><button type="button" class="btn" id="retry">Try again</button></div>`;
-  else if (S.busy) side = `<div class="wait" style="margin:auto"><span class="blobs"><i></i><i></i><i></i></span><span>Writing what happens next</span></div>`;
+  else if (S.busy) side = `<div class="wait" style="margin:auto"><span class="blobs"><i></i><i></i><i></i></span><span>${S.painting ? "Painting the next page" : "Writing what happens next"}</span></div>`;
   else if (S.think) {
     const t = S.think;
     side = `${sc.consequence_text ? `<p class="readtext" style="font-size:24px">${wordsHTML(sc.consequence_text)}</p>` : ""}
@@ -2492,6 +2506,18 @@ document.addEventListener("click", e => {
       const sc = currentScene(), pages = pagesOf(sc), pg = pages[S.page];
       if (pg && !pg.read && !pg.cover) { pg.read = true; S.wordsRead += pg.text.split(/\s+/).filter(Boolean).length; }
       if (sc.is_ending && S.page >= pages.length - 1) { goEnding(); break; }
+      const nextImg = S.demo && S.demo.live ? pageImg(pages[S.page + 1]) : "";
+      if (nextImg) {
+        if (S.painting) break;
+        S.painting = true; t.disabled = true; t.innerHTML = `<span class="spin" aria-hidden="true"></span>Painting…`;
+        const from = S.page, scene = sc;
+        paintReady(nextImg).then(() => {
+          S.painting = false;
+          if (screen !== "story" || currentScene() !== scene || S.page !== from) return; // the child went somewhere else meanwhile
+          S.page++; turnDir = 1; render(); speakPage();
+        });
+        break;
+      }
       S.page++; turnDir = 1; render(); speakPage(); break;
     }
     case "pageBack": if (S.page > 0) { S.page--; turnDir = -1; render(); speakPage(); } break;

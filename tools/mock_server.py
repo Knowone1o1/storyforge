@@ -12,6 +12,7 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/api/health"): return self._json({"ok":True,"ai":True})
         if self.path.startswith("/api/image"): # a fake painting (one of the dino book's), so the page flow can be tested for free
+            import time; time.sleep(float(os.environ.get("FAKE_PAINT_SECONDS", "1.5"))) # pretend painting takes a moment
             pics = sorted(f for f in os.listdir(os.path.join(ROOT, "art", "dino")) if f.endswith(".jpg"))
             with open(os.path.join(ROOT, "art", "dino", pics[abs(hash(self.path)) % len(pics)]), "rb") as fh: data = fh.read()
             self.send_response(200); self.send_header("Content-Type", "image/jpeg"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
