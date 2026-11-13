@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:09 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:15 PM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -20,7 +20,15 @@ The live site runs on a free Gemini key with a small daily limit (roughly 20 req
 
 Every `git push` to `main` updates the live website by itself within about a minute. The Claude version only changes when Lorenzo republishes it.
 
-## Newest change: it is a book now
+## Newest change: 3D pictures
+
+- Each page's picture is now a small animated 3D scene (a toy-like island with characters, trees, houses and so on), drawn live in the page with Three.js. Characters wave and hop, clouds drift, the camera sways gently.
+- How it works: the Illustrator agent only describes the scene as a short list (what, where, which colour). Code in `index.html` (the `3D PICTURES` section) builds it from ready-made pieces. To add a new kind of object or animal, add it to `THINGS` or the character functions there.
+- The hero keeps the same look through the whole book.
+- If 3D is not available on a device, or the AI's description is unusable, the page falls back to the old flat drawing.
+- Tested with the fake AI only. How good real scenes look depends on how well the real AI places things.
+
+## Earlier change: it is a book now
 
 - No warm-up. A story opens straight on its title page and reads like a book: an open two-page spread, text on the left page and the moving picture on the right, page number at the bottom, a progress bar under the book.
 - The child reads a few pages, then picks what happens next. Three branch points per book. One question at the very end feeds the parent report.

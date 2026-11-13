@@ -318,7 +318,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .book .opts{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){.cover,.progress i{transition:none}}
+.art canvas{display:block;width:100%;height:100%}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 <header class="top"><div class="top-in">
@@ -655,12 +657,232 @@ SCENE JSON: ${JSON.stringify({consequence_text:scene.consequence_text, scene_tex
 Return ONLY JSON: {"approved": true or false, "note": "one short sentence about your check", "fixed": null or {"consequence_text": "", "scene_text": "", "options": [same shape]}}. Only fill "fixed" if something must change.`;
 }
 
+/* ============ 3D PICTURES ============ */
+/* Each picture is a small toy-like 3D scene on a round island, built from simple shapes and gently animated.
+   The Illustrator agent only describes the scene (what, where, which colour); this code builds and renders it. */
+const Stage3D = (() => {
+  let R = null, shown = null, watcher = null;
+  let usable;
+  const ok = () => {
+    if (usable === undefined) {
+      try { const c = document.createElement("canvas"); usable = !!(window.THREE && (c.getContext("webgl") || c.getContext("experimental-webgl"))); }
+      catch(e) { usable = false; }
+    }
+    return usable;
+  };
+  const num = (v, d, lo, hi) => { v = Number(v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+  const col = (v, d) => new THREE.Color(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(v || "")) ? v : d);
+  const mesh = (geo, c, glow) => {
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: c, roughness: .85, metalness: 0, flatShading: true, emissive: glow ? c : 0x000000, emissiveIntensity: glow ? .7 : 0}));
+    m.castShadow = !glow; m.receiveShadow = !glow; return m;
+  };
+  const put = (g, m, x, y, z) => { m.position.set(x, y, z); g.add(m); return m; };
+  const sph = (r, d) => new THREE.SphereGeometry(r, d || 14, 10);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const cone = (r, h, n) => new THREE.ConeGeometry(r, h, n || 8);
+  const cyl = (a, b, h, n) => new THREE.CylinderGeometry(a, b, h, n || 10);
+
+  /* ---- things ---- */
+  const THINGS = {
+    tree(g, c){ put(g, mesh(cyl(.12,.17,.8), 0x8A5A3B), 0,.4,0); put(g, mesh(sph(.6,8), c), 0,1.2,0); put(g, mesh(sph(.38,7), c), .3,1.55,.1); },
+    pine(g, c){ put(g, mesh(cyl(.1,.14,.5), 0x8A5A3B), 0,.25,0); [[.62,.8,.75],[.48,.7,1.2],[.32,.6,1.6]].forEach(a => put(g, mesh(cone(a[0],a[1],7), c), 0,a[2],0)); },
+    bush(g, c){ put(g, mesh(sph(.38,7), c), 0,.3,0); put(g, mesh(sph(.28,7), c), .35,.24,.05); put(g, mesh(sph(.26,7), c), -.32,.22,.1); },
+    flower(g, c){ put(g, mesh(cyl(.03,.03,.5,6), 0x2E9E5B), 0,.25,0); for (let i = 0; i < 5; i++) put(g, mesh(sph(.1,6), c), Math.cos(i*1.257)*.14, .55, Math.sin(i*1.257)*.14); put(g, mesh(sph(.09,6), 0xFFC83D), 0,.57,0); },
+    rock(g, c){ const m = put(g, mesh(new THREE.DodecahedronGeometry(.42), c), 0,.26,0); m.scale.y = .7; },
+    hill(g, c){ const m = put(g, mesh(sph(1.5,12), c), 0,0,0); m.scale.y = .5; },
+    mountain(g, c){ put(g, mesh(cone(1.5,2.6,6), c), 0,1.3,0); put(g, mesh(cone(.52,.9,6), 0xFFFFFF), 0,2.16,0); },
+    house(g, c, c2){ put(g, mesh(box(1.3,.95,1.1), c), 0,.475,0); const r = put(g, mesh(cone(1.08,.75,4), c2), 0,1.32,0); r.rotation.y = Math.PI/4; put(g, mesh(box(.3,.5,.05), 0x6B4A2F), 0,.25,.56); put(g, mesh(box(.26,.26,.05), 0xCFE8FF), .38,.6,.56); },
+    cloud(g, c){ put(g, mesh(sph(.5,8), c), 0,0,0); put(g, mesh(sph(.38,8), c), .5,-.05,0); put(g, mesh(sph(.34,8), c), -.48,-.08,.05); },
+    sun(g, c){ put(g, mesh(sph(.6,16), c, true), 0,0,0); },
+    moon(g, c){ put(g, mesh(sph(.5,16), c, true), 0,0,0); },
+    star(g, c){ put(g, mesh(new THREE.OctahedronGeometry(.28), c, true), 0,0,0); },
+    pond(g, c){ put(g, mesh(cyl(1.4,1.4,.05,24), c), 0,.03,0); },
+    ball(g, c){ put(g, mesh(sph(.34,14), c), 0,.34,0); },
+    egg(g, c){ const m = put(g, mesh(sph(.26,12), c), 0,.33,0); m.scale.y = 1.3; },
+    box(g, c){ put(g, mesh(box(.7,.7,.7), c), 0,.35,0); },
+    table(g, c){ put(g, mesh(box(1.3,.1,.8), c), 0,.7,0); [[-.55,-.3],[.55,-.3],[-.55,.3],[.55,.3]].forEach(a => put(g, mesh(cyl(.05,.05,.66,6), c), a[0],.33,a[1])); },
+    cookie(g, c){ put(g, mesh(cyl(.3,.3,.09,12), c), 0,.06,0); [[.1,.1],[-.12,.05],[.02,-.14]].forEach(a => put(g, mesh(sph(.04,5), 0x4A2E1B), a[0],.11,a[1])); },
+    jar(g, c){ put(g, mesh(cyl(.32,.3,.7,12), c), 0,.35,0); put(g, mesh(cyl(.26,.26,.1,12), 0x3F9BFF), 0,.75,0); },
+    book(g, c){ const m = put(g, mesh(box(.6,.12,.44), c), 0,.07,0); m.rotation.y = .3; },
+    boat(g, c, c2){ put(g, mesh(box(1.3,.3,.55), c), 0,.2,0); put(g, mesh(cyl(.03,.03,1.1,6), 0x8A5A3B), 0,.9,0); const sail = put(g, mesh(cone(.45,.9,3), c2), .02,1.0,0); sail.rotation.y = Math.PI/2; },
+    rocket(g, c, c2){ put(g, mesh(cyl(.3,.3,1.1,12), c), 0,.9,0); put(g, mesh(cone(.3,.5,12), c2), 0,1.7,0); [0,2.1,4.2].forEach(a => put(g, mesh(cone(.16,.45,4), c2), Math.cos(a)*.34,.42,Math.sin(a)*.34)); },
+    plane(g, c, c2){ const b = put(g, mesh(cyl(.2,.14,1.5,10), c), 0,0,0); b.rotation.z = Math.PI/2; put(g, mesh(box(.4,.06,1.8), c2), .1,0,0); put(g, mesh(box(.25,.4,.06), c2), -.65,.2,0); put(g, mesh(sph(.2,8), c), .75,0,0); },
+    car(g, c){ put(g, mesh(box(1.3,.34,.62), c), 0,.36,0); put(g, mesh(box(.7,.3,.56), c), -.05,.68,0); [[-.4,.33],[.4,.33],[-.4,-.33],[.4,-.33]].forEach(a => { const w = put(g, mesh(cyl(.17,.17,.12,10), 0x2B2B3A), a[0],.17,a[1]); w.rotation.x = Math.PI/2; }); },
+    sphere(g, c){ put(g, mesh(sph(.4,14), c), 0,.4,0); },
+    cone(g, c){ put(g, mesh(cone(.4,.9,10), c), 0,.45,0); },
+    cylinder(g, c){ put(g, mesh(cyl(.35,.35,.8,12), c), 0,.4,0); }
+  };
+  const THING_COLOR = {tree:"#2FAE66", pine:"#1F8F5A", bush:"#3BB877", flower:"#FF6B8E", rock:"#9AA3AF", hill:"#69C383", mountain:"#8B95A7", house:"#FFD27A", cloud:"#FFFFFF", sun:"#FFD43B", moon:"#F5F0D0", star:"#FFE066", pond:"#6EC3FF", ball:"#FF6B5E", egg:"#FFF6E0", box:"#D9A066", table:"#B9824F", cookie:"#D9A066", jar:"#DDF2FF", book:"#7B5CFF", boat:"#E0703A", rocket:"#F4F4F8", plane:"#FF6B5E", car:"#39A0FF", sphere:"#FF9F43", cone:"#7B5CFF", cylinder:"#39A0FF"};
+  const SKY_THINGS = {cloud: 3.6, sun: 4.6, moon: 4.6, star: 4.2, plane: 3.2};
+  const DEFAULT_MOVE = {cloud:"drift", star:"spin", tree:"sway", pine:"sway", flower:"sway", plane:"bob", boat:"bob", sun:"none"};
+
+  /* ---- characters ---- */
+  const eyes = (g, y, z, gap, r) => { [-gap, gap].forEach(x => put(g, mesh(sph(r || .035,6), 0x1B1B2B), x, y, z)); };
+  function person(g, o, kid){
+    const shirt = col(o.color, "#39A0FF"), skin = col(o.skin, "#F2C29B"), hair = col(o.hair, "#5A3A22");
+    [-.11,.11].forEach(x => put(g, mesh(cyl(.07,.07,.45,8), 0x34405A), x,.225,0));
+    put(g, mesh(cyl(.2,.26,.55,10), shirt), 0,.72,0);
+    const arms = [-1,1].map(d => { const a = new THREE.Group(); a.position.set(d*.27,.95,0); put(a, mesh(cyl(.055,.055,.42,6), shirt), 0,-.21,0); put(a, mesh(sph(.065,6), skin), 0,-.44,0); a.rotation.z = d*.18; g.add(a); return a; });
+    put(g, mesh(sph(.27,14), skin), 0,1.24,0);
+    const h = put(g, mesh(sph(.285,12), hair), 0,1.31,-.05); h.scale.set(1,.82,1);
+    eyes(g, 1.24, .25, .09);
+    g.userData.arm = arms[1];
+    g.scale.multiplyScalar(kid ? .85 : 1.08);
+  }
+  function animal(g, o, kind){
+    const fur = col(o.color, {dog:"#C98B4F", cat:"#F0A94B", bunny:"#F4F1EA", bear:"#8A5A3B"}[kind] || "#C98B4F"), light = fur.clone().lerp(new THREE.Color(0xffffff), .45);
+    const b = put(g, mesh(sph(.34,12), fur), 0,.46,0); b.scale.set(1,.85,1.35);
+    [[-.17,.26],[.17,.26],[-.17,-.26],[.17,-.26]].forEach(a => put(g, mesh(cyl(.07,.07,.3,7), fur), a[0],.15,a[1]));
+    put(g, mesh(sph(.25,12), fur), 0,.82,.4);
+    put(g, mesh(sph(.11,8), light), 0,.76,.62); put(g, mesh(sph(.04,6), 0x1B1B2B), 0,.8,.72);
+    eyes(g, .88, .61, .1);
+    [-1,1].forEach(d => {
+      if (kind === "cat") put(g, mesh(cone(.09,.18,4), fur), d*.15,1.08,.38);
+      else if (kind === "bunny") put(g, mesh(cyl(.05,.06,.42,7), fur), d*.1,1.22,.36);
+      else if (kind === "bear") put(g, mesh(sph(.09,7), fur), d*.19,1.04,.36);
+      else { const e = put(g, mesh(box(.1,.26,.06), fur.clone().multiplyScalar(.75)), d*.25,.84,.4); e.rotation.z = d*.25; }
+    });
+    const t = put(g, mesh(kind === "bunny" || kind === "bear" ? sph(.1,7) : cyl(.04,.05,.36,6), fur), 0, kind === "bunny" || kind === "bear" ? .5 : .68, -.5); if (kind !== "bunny" && kind !== "bear") t.rotation.x = -.7;
+  }
+  function dino(g, o){
+    const c = col(o.color, "#4DBB6D"), belly = c.clone().lerp(new THREE.Color(0xffffff), .5);
+    const b = put(g, mesh(sph(.5,12), c), 0,.72,0); b.scale.set(1,.9,1.25);
+    put(g, mesh(sph(.34,10), belly), 0,.62,.3);
+    const n = put(g, mesh(cyl(.17,.24,.8,8), c), 0,1.3,.38); n.rotation.x = .35;
+    put(g, mesh(sph(.27,12), c), 0,1.72,.6); eyes(g, 1.8, .82, .11);
+    const tl = put(g, mesh(cone(.24,1,7), c), 0,.62,-.85); tl.rotation.x = -1.35;
+    [-.25,.25].forEach(x => put(g, mesh(cyl(.13,.15,.42,8), c), x,.21,.05));
+    for (let i = 0; i < 4; i++) put(g, mesh(cone(.08,.2,4), 0xFFC83D), 0, 1.22 - i*.03, -.1 - i*.24);
+  }
+  function bird(g, o){
+    const c = col(o.color, "#39A0FF"); const y = 2.6;
+    put(g, mesh(sph(.24,10), c), 0,y,0); put(g, mesh(sph(.15,8), c), 0,y+.2,.2); eyes(g, y+.23, .33, .06, .025);
+    const bk = put(g, mesh(cone(.05,.16,5), 0xFFA53D), 0,y+.17,.38); bk.rotation.x = Math.PI/2;
+    g.userData.wings = [-1,1].map(d => { const w = new THREE.Group(); w.position.set(d*.2,y,0); put(w, mesh(box(.42,.04,.26), c), d*.2,0,0); g.add(w); return w; });
+  }
+  function robot(g, o){
+    const c = col(o.color, "#B8C4D6");
+    put(g, mesh(box(.55,.6,.4), c), 0,.72,0); put(g, mesh(box(.44,.36,.36), c), 0,1.24,0);
+    [-.1,.1].forEach(x => put(g, mesh(sph(.05,8), 0x39E0FF, true), x,1.27,.19));
+    put(g, mesh(cyl(.015,.015,.22,5), 0x55627A), 0,1.52,0); put(g, mesh(sph(.05,6), 0xFF6B5E, true), 0,1.65,0);
+    [-.14,.14].forEach(x => put(g, mesh(box(.14,.42,.16), 0x55627A), x,.21,0));
+    const arms = [-1,1].map(d => { const a = new THREE.Group(); a.position.set(d*.36,.95,0); put(a, mesh(box(.1,.44,.1), 0x55627A), 0,-.2,0); g.add(a); return a; });
+    g.userData.arm = arms[1];
+  }
+  function character(o){
+    const g = new THREE.Group(), kind = String(o.kind || "kid").toLowerCase();
+    if (kind === "kid" || kind === "child") person(g, o, true);
+    else if (kind === "adult" || kind === "person" || kind === "parent") person(g, o, false);
+    else if (kind === "dino" || kind === "dinosaur" || kind === "dragon") dino(g, o);
+    else if (kind === "bird") bird(g, o);
+    else if (kind === "robot") robot(g, o);
+    else animal(g, o, kind);
+    return g;
+  }
+
+  function build(spec){
+    const scene = new THREE.Scene(), anims = [];
+    const night = spec.time === "night", sunset = spec.time === "sunset";
+    const sky = col(spec.sky, night ? "#1D2A55" : sunset ? "#FFC9A3" : "#BFE3FF"), ground = col(spec.ground, "#8FD694");
+    scene.background = sky; scene.fog = new THREE.Fog(sky, 16, 34);
+    scene.add(new THREE.HemisphereLight(sky.clone().lerp(new THREE.Color(0xffffff), .6), ground, night ? .35 : .55));
+    const sun = new THREE.DirectionalLight(sunset ? 0xFFD2A6 : 0xffffff, night ? .4 : .75);
+    sun.position.set(5, 9, 6); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, {left:-9, right:9, top:9, bottom:-9, near:1, far:30}); sun.shadow.bias = -.0005;
+    scene.add(sun);
+    const island = mesh(cyl(7.2, 6.3, 1.2, 40), ground); island.position.y = -.6; island.castShadow = false; scene.add(island);
+    const place = (g, o, isChar, i) => {
+      const type = String(o.type || "").toLowerCase(), s = num(o.size, 1, .3, 3);
+      const y = isChar ? 0 : (SKY_THINGS[type] || 0);
+      g.position.set(num(o.x, 0, -5.5, 5.5), y, num(o.z, 0, -3.5, 3.5) - (SKY_THINGS[type] ? 2 : 0));
+      g.scale.multiplyScalar(s);
+      const move = String(o.move || (isChar ? "idle" : DEFAULT_MOVE[type] || "none")).toLowerCase();
+      anims.push({g, move, x: g.position.x, y: g.position.y, ph: i * 1.7});
+      scene.add(g);
+    };
+    (Array.isArray(spec.objects) ? spec.objects : []).slice(0, 18).forEach((o, i) => {
+      if (!o || typeof o !== "object") return;
+      const type = String(o.type || "").toLowerCase(), make = THINGS[type] || THINGS.sphere, g = new THREE.Group();
+      make(g, col(o.color, THING_COLOR[type] || "#FF9F43"), col(o.color2, "#FF6B5E"));
+      place(g, o, false, i);
+    });
+    (Array.isArray(spec.characters) ? spec.characters : []).slice(0, 5).forEach((o, i) => { if (o && typeof o === "object") place(character(o), o, true, i + 20); });
+    return {scene, anims};
+  }
+  function tick(){
+    if (!R || !R.canvas.isConnected) { if (R) R.raf = 0; return; }
+    R.raf = requestAnimationFrame(tick);
+    const t = R.clock.getElapsedTime();
+    const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!still) R.built.anims.forEach(a => {
+      const g = a.g, u = g.userData;
+      if (a.move === "bob" || a.move === "idle") g.position.y = a.y + Math.sin(t*2 + a.ph) * (a.move === "idle" ? .03 : .1);
+      else if (a.move === "hop") g.position.y = a.y + Math.abs(Math.sin(t*3 + a.ph)) * .32;
+      else if (a.move === "spin") g.rotation.y = t + a.ph;
+      else if (a.move === "sway") g.rotation.z = Math.sin(t*1.2 + a.ph) * .05;
+      else if (a.move === "drift") g.position.x = a.x + Math.sin(t*.25 + a.ph) * .9;
+      if (u.arm) u.arm.rotation.z = a.move === "wave" ? 2.3 + Math.sin(t*6) * .35 : .18;
+      if (u.wings) u.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * Math.sin(t*9) * .6; });
+    });
+    const ang = still ? 0 : Math.sin(t * .22) * .16;
+    R.camera.position.set(Math.sin(ang) * 11, 3.3, Math.cos(ang) * 11); R.camera.lookAt(0, 1, 0);
+    R.renderer.render(R.built.scene, R.camera);
+  }
+  function fit(el){
+    const w = el.clientWidth || 640, h = el.clientHeight || 360;
+    R.renderer.setSize(w, h, false);
+    R.camera.aspect = w / h;
+    // keep the whole island (about 6 units either side) in view whatever the picture's shape
+    R.camera.fov = Math.min(78, Math.max(30, 2 * Math.atan(.58 / (w / h)) * 180 / Math.PI)); R.camera.updateProjectionMatrix();
+  }
+  function show(el, spec){
+    try {
+      if (!R) {
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+        renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
+        R = {renderer, canvas: renderer.domElement, camera: new THREE.PerspectiveCamera(36, 16/9, .1, 80), clock: new THREE.Clock(), raf: 0};
+        R.canvas.setAttribute("role", "img"); R.canvas.setAttribute("aria-label", "Moving picture of the scene");
+      }
+      if (shown !== spec) { R.built = build(spec); shown = spec; }
+      if (R.canvas.parentNode !== el) { el.textContent = ""; el.appendChild(R.canvas); }
+      fit(el);
+      if (watcher) watcher.disconnect();
+      if (window.ResizeObserver) { watcher = new ResizeObserver(() => { if (R.canvas.isConnected) fit(el); }); watcher.observe(el); }
+      if (!R.raf) tick();
+      return true;
+    } catch(e) { usable = false; return false; }
+  }
+  return {ok, show};
+})();
+function mountArt(){
+  if (screen !== "story" || !S) return;
+  const el = document.querySelector(".art[data-art]"); if (!el) return;
+  const sc = S.scenes[+el.dataset.art];
+  if (sc && sc.scene3d && !Stage3D.show(el, sc.scene3d)) { sc.scene3d = null; illustrate(sc); } // 3D failed here: fall back to a drawing
+}
+function scene3dPrompt(scene){
+  return `You are the Illustrator agent for a children's picture book. Design ONE small 3D scene, like a toy diorama, for this page. You only describe it as JSON; the app builds it.
+The stage is a round island. x goes from -5 (left) to 5 (right). z goes from -3 (back) to 3 (front). size 1 is normal, 0.5 small, 2 big.
+"objects": 7 to 14 things, each {"type","x","z","size","color","move"}.
+  type is one of: tree, pine, bush, flower, rock, hill, mountain, house, cloud, sun, moon, star, pond, ball, egg, box, table, cookie, jar, book, boat, rocket, plane, car, sphere, cone, cylinder.
+  For anything else, use the closest type. Things the story counts (for example 8 eggs) must appear exactly that many times.
+  move is one of: none, bob, hop, spin, sway, drift.
+"characters": 1 to 4, each {"kind","x","z","size","color","skin","hair","move"}.
+  kind is one of: kid, adult, dog, cat, bunny, bear, dino, bird, robot, animal. color is the shirt or fur colour. skin and hair only for kid and adult. move is one of: idle, hop, wave.
+Colours are hex codes like "#FFC83D". Use a bright, friendly palette. Spread things out so nothing overlaps, keep characters near the front (z from 0 to 2.5) and scenery behind them.
+The hero is ${S.settings.child_name}: ${S.heroLook}. ${S.hero3d ? `Use exactly this for the hero, changing only x, z and move: ${JSON.stringify(S.hero3d)}` : "Put the hero first in characters, as a kid."}
+The page to illustrate: ${scene.image_description || scene.scene_text}
+Return ONLY this JSON: {"sky":"#hex","ground":"#hex","time":"day or sunset or night","objects":[...],"characters":[...]}`;
+}
+
 /* ============ STORY ENGINE ============ */
 function newStory(settings){
   stopSpeak();
   logItems = []; logId = 0;
   S = {settings, scenes:[], choices:[], snapshots:[], meters:{hearts:3, items:[]}, facts:"", busy:false, error:null,
-       rewindUsed:false, page:0, wordsRead:0, think:null, title:"", heroLook:"", warmup:null, warmBefore:"", warmAfter:"", report:null, reportBusy:false};
+       rewindUsed:false, page:0, wordsRead:0, think:null, title:"", heroLook:"", warmup:null, warmBefore:"", warmAfter:"", report:null, reportBusy:false, hero3d:null};
 }
 async function startStory(settings){
   newStory(settings);
@@ -729,6 +951,18 @@ async function makeScene(){
 }
 async function illustrate(scene){
   if (!cap.sample) return;
+  if (Stage3D.ok() && scene.scene3d !== null) {
+    const id3 = log("Illustrator", "building the 3D picture…");
+    try {
+      const spec = await ai(scene3dPrompt(scene), "default");
+      if (!spec || !Array.isArray(spec.characters) || !Array.isArray(spec.objects)) throw new Error("bad scene");
+      if (!S.hero3d && spec.characters[0]) S.hero3d = Object.assign({}, spec.characters[0]);
+      scene.scene3d = spec;
+      logDone(id3, "built the 3D picture");
+      mountArt();
+      return;
+    } catch(err) { logDone(id3, "3D picture failed, drawing it instead", "fail"); scene.scene3d = null; }
+  }
   const id = log("Illustrator", "drawing the picture…");
   const prompt = `You are the Illustrator agent for a children's picture book. Draw ONE illustration as an SVG.
 Rules: viewBox="0 0 800 450", flat friendly shapes, soft bright colors, a full background (sky or room), simple cute characters with round eyes, NO text or letters, no <script>, no <image>, no external links, under 7000 characters.
@@ -861,6 +1095,7 @@ function render(){
   else if (screen === "warmup") st.innerHTML = warmupView();
   else if (screen === "story") st.innerHTML = storyView();
   else if (screen === "ending") st.innerHTML = endingView();
+  mountArt();
   renderLog();
 }
 const COVERS = [
@@ -955,7 +1190,7 @@ function storyView(){
   const pages = pagesOf(sc);
   const atChoice = S.page >= pages.length;
   const idle = !S.error && !S.busy && !S.think;
-  const art = `<div class="art" data-art="${n-1}">${sc.svg || (sc.noArt ? NO_ART : `<div class="wait"><span class="blobs"><i></i><i></i><i></i></span><small>The Illustrator is drawing…</small></div>`)}</div>`;
+  const art = `<div class="art" data-art="${n-1}">${sc.scene3d ? "" : sc.svg || (sc.noArt ? NO_ART : `<div class="wait"><span class="blobs"><i></i><i></i><i></i></span><small>The Illustrator is drawing…</small></div>`)}</div>`;
   const speakBtn = canSpeak() ? `<button type="button" class="speakbtn ico-speak" id="replay">Read it to me</button>` : "";
   const before = S.scenes.slice(0, n - 1).reduce((a, x) => a + pagesOf(x).length, 0);
   let side;
