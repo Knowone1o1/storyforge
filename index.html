@@ -231,7 +231,7 @@ textarea{min-height:84px;resize:vertical}
 .sidecap{position:absolute;top:-14px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:var(--ink);color:var(--on-ink);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600;line-height:1.2}
 .sidecap::before,.lockdot::before{content:"";width:13px;height:13px;flex:none;background:currentColor;-webkit-mask:var(--lock) center/contain no-repeat;mask:var(--lock) center/contain no-repeat;--lock:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h8V8a4 4 0 0 0-8 0z'/%3E%3C/svg%3E")}
 .tabs.open .sidecap{background:var(--leaf);color:var(--ink)}
-.tabs.open .sidecap::before,.tabs.open .lockdot{display:none}
+.tabs.open .sidecap::before,.tabs.open .lockdot,.tabs.nolock .sidecap::before,.tabs.nolock .lockdot{display:none}
 .lockdot{position:absolute;top:-30px;right:6px;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--on-ink);display:grid;place-items:center}
 .tab.make{position:relative}
 @media (max-width:520px){.sidecap{font-size:12px;padding:2px 9px}}
@@ -1750,6 +1750,7 @@ function saveReport(){
 }
 let gate = null;
 /* The grown-up password. Only a scrambled fingerprint of it is kept on the device, never the password itself. */
+const LOCK_ON = false; // the grown-up password is switched off for the demo; set to true to bring it back
 let lock = null;
 try { const saved = JSON.parse(localStorage.getItem("storyforge_lock") || "null"); if (saved && saved.hash && saved.salt) lock = saved; } catch(e) {}
 async function fingerprint(password, salt){
@@ -1865,18 +1866,19 @@ let unlocked = false, gateTarget = "parents", confirmKey = "";
 function renderTabs(){
   const nav = $("tabs"), hide = screen === "story" || screen === "warmup" || screen === "ending";
   nav.hidden = hide; if (hide) return;
-  nav.classList.toggle("open", unlocked);
+  nav.classList.toggle("open", LOCK_ON && unlocked);
+  nav.classList.toggle("nolock", !LOCK_ON);
   const on = screen === "gate" ? gateTarget : (TAB_OF[screen] || "home");
   const tab = t => `<button type="button" class="tab ${t[0] === "setup" ? "make" : ""} ${on === t[0] ? "on" : ""}" data-tab="${t[0]}" ${on === t[0] ? `aria-current="page"` : ""}><i class="ti ti-${t[2]}" aria-hidden="true"></i>${t[0] === "setup" ? `<i class="lockdot" aria-hidden="true"></i>` : ""}<span>${t[0] === "parents" && child ? esc(child.child_name) : t[1]}</span></button>`;
   // left: the child's places. middle: make a book. right: the grown-up side, boxed and labelled.
   nav.innerHTML = `<div class="tabside">${TABS.slice(0, 2).map(tab).join("")}</div>${tab(TABS[2])}
-    <div class="tabside grown"><span class="sidecap">${unlocked ? "Grown-ups: open" : "Grown-ups"}</span>${TABS.slice(3).map(tab).join("")}</div>`;
+    <div class="tabside grown"><span class="sidecap">${LOCK_ON && unlocked ? "Grown-ups: open" : "Grown-ups"}</span>${TABS.slice(3).map(tab).join("")}</div>`;
 }
 /* Bookshelf and Library are the child's. Make a book, Child and Settings are for grown-ups and sit behind one question. */
 function goTab(tab){
   stopSpeak(); $("crew").classList.remove("open"); confirmKey = "";
   if (tab === "home" || tab === "library") { unlocked = false; screen = tab; render(); return; }
-  if (!unlocked) { gate = null; gateTarget = tab; screen = "gate"; render(); const f = $("gateIn") || $("gateNew"); if (f) f.focus(); return; }
+  if (LOCK_ON && !unlocked) { gate = null; gateTarget = tab; screen = "gate"; render(); const f = $("gateIn") || $("gateNew"); if (f) f.focus(); return; }
   openGrown(tab);
 }
 function openGrown(tab){
@@ -1927,7 +1929,7 @@ function settingsView(){
     <div class="setrow"><div><b>${stars.count} ${stars.count === 1 ? "star" : "stars"} and the stickers on finished books</b></div>${wipeButton("stars", "Reset stars")}</div>
     <div class="setrow"><div><b>${books.length} ${books.length === 1 ? "book" : "books"} made for your child</b></div>${wipeButton("books", "Remove these books")}</div>
     <div class="setrow"><div><b>${reports.length} reading ${reports.length === 1 ? "report" : "reports"}</b></div>${wipeButton("reports", "Clear reports")}</div>
-    <div class="setrow"><div><b>Grown-up password</b><p class="sub">Opens Make a book, the child profile and Settings.</p></div><button type="button" class="btn secondary" id="changePw">Change password</button></div>
+    ${LOCK_ON ? `<div class="setrow"><div><b>Grown-up password</b><p class="sub">Opens Make a book, the child profile and Settings.</p></div><button type="button" class="btn secondary" id="changePw">Change password</button></div>` : ""}
     <div class="setrow"><div><b>${child ? esc(child.child_name) + "'s profile" : "No child profile yet"}</b></div><button type="button" class="btn secondary" data-tab="parents">${child ? "Open profile" : "Set it up"}</button></div>
   </div></div>`;
 }
