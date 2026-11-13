@@ -330,6 +330,7 @@ async function webSample(prompt, opts){
     r = await fetch("/api/sample", {method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({prompt, tier: opts && opts.modelTier === "quick" ? "quick" : "default"})});
   } catch(e) { throw {code:"network"}; }
+  if (r.status === 504) throw {code:"network"}; // the server gave up waiting: worth another try
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw {code: data.code || "ai_error"};
   return {text: data.text || ""};
@@ -439,7 +440,7 @@ function parseJSON(t){ const s = t.indexOf("{"), e = t.lastIndexOf("}"); if (s <
 async function ai(prompt, tier){
   if (!cap.sample) throw {code:"no_ai"};
   let last;
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 4; i++) {
     try {
       if (typeof cap.sample.json === "function") {
         const v = await cap.sample.json(prompt, {modelTier: tier || "default"});
@@ -450,7 +451,9 @@ async function ai(prompt, tier){
       return parseJSON(r.text);
     } catch (e) {
       last = e;
-      if (e && (e.code === "not_granted" || e.code === "rate_limited" || e.code === "no_ai")) throw e;
+      if (e && (e.code === "not_granted" || e.code === "rate_limited" || e.code === "no_ai" || e.code === "no_key")) throw e;
+      if (e && e.code === "network") { await new Promise(r => setTimeout(r, 1200)); continue; } // connection hiccup: wait and retry
+      if (i >= 1) throw e; // a bad answer gets one retry
       prompt += "\n\nIMPORTANT: Reply with ONLY one valid JSON object and nothing else.";
     }
   }

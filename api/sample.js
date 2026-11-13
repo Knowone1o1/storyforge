@@ -4,11 +4,13 @@
 
 // Free-tier limits are small, so each tier has a list: if one model is out of
 // free requests (or unavailable) the next one is tried.
-// Flash = better stories and pictures, but only about 20 free requests a day.
-// Flash-Lite = about 500 free requests a day.
+// Flash-Lite goes first: it answers in a few seconds and has about 500 free
+// requests a day. Flash writes a bit better but is slow (a first scene took over
+// 30 seconds, long enough for some Wi-Fi networks to drop the request) and has
+// only about 20 free requests a day, so it is the backup.
 const MODELS = {
-  default: ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
-  quick: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+  default: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"],
+  quick: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"],
 };
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const MAX_PROMPT_CHARS = 20000;
@@ -20,7 +22,7 @@ async function callGemini(model, prompt, withConfig) {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": (process.env.GEMINI_API_KEY || process.env.GEMINI) },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(50000),
+    signal: AbortSignal.timeout(18000),
   });
   const data = await r.json().catch(() => ({}));
   return { status: r.status, data };
