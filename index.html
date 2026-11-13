@@ -138,6 +138,8 @@ textarea{min-height:84px;resize:vertical}
 .art{overflow:hidden;aspect-ratio:16/9;max-width:100%;background:var(--sky-soft);display:flex;align-items:center;justify-content:center}
 .art svg{width:100%;height:100%;display:block}
 .art canvas{display:block;width:100%;height:100%}
+.art:has(img.paint){background:var(--paper-deep) linear-gradient(110deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%) 0 0/250% 100%;animation:paintwait 1.4s linear infinite}
+@keyframes paintwait{to{background-position:-150% 0}}
 .art img.paint{display:block;width:100%;height:100%;object-fit:cover;animation:paintdrift 18s ease-in-out infinite alternate}
 @keyframes paintdrift{from{transform:scale(1.02)}to{transform:scale(1.1) translate(-1.5%,-1%)}}
 @media (prefers-reduced-motion:reduce){.art img.paint{animation:none}}
@@ -365,6 +367,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 /* Live-site mode: when the page is NOT inside Claude but on our own website, the same four
    capabilities are provided by our /api endpoint (AI) and the browser (voice out, voice in). */
 let webNoKey = false;
+let onSite = false; // true on the website, where /api/image paints pictures
 async function webCaps(){
   if (!/^https?:$/.test(location.protocol)) return null;
   let health;
@@ -376,6 +379,7 @@ async function webCaps(){
     } catch(e) { if (window.claude && window.claude.use) return null; await new Promise(r => setTimeout(r, 500)); }
   }
   if (!health || !health.ok) return null;
+  onSite = true;
   if (!health.ai) { webNoKey = true; return [null, null, null, null]; }
   return [webSample, health.voice ? webEleven() : null, webDictation(), null];
 }
@@ -1148,6 +1152,23 @@ const Stage3D = (() => {
   }
   return {ok, show};
 })();
+/* Pictures for generated books: every page gets its own painting from the site's /api/image.
+   The cast description keeps the characters looking the same on every page; the book's seed keeps the style steady. */
+function paintUrl(book, text){
+  const scene = `${text} ${book.cast ? "Characters: " + book.cast : ""}`.trim();
+  return `/api/image?s=${book.seed}&p=${encodeURIComponent(scene.slice(0, 900))}`;
+}
+function paintChapters(book, chapters){
+  if (!onSite) return false;
+  chapters.forEach(ch => ch.pages.forEach(pg => { if (!pg.img) pg.img = paintUrl(book, pg.text); }));
+  return true;
+}
+const warmed = new Set();
+function warmPaintings(){ // start painting the next pages before the child gets there
+  if (!S || !S.demo || !S.demo.live || screen !== "story") return;
+  const pages = (currentScene() || {})._pages || [];
+  pages.slice(S.page + 1, S.page + 4).forEach(pg => { const u = pg.src && pg.src.img; if (u && !warmed.has(u)) { warmed.add(u); const im = new Image(); im.src = u; } });
+}
 function pagePaint(sc){ // a painted picture for the page being read, if the book has one
   const pages = sc._pages || [], pg = pages[Math.min(S.page, pages.length - 1)], src = pg && pg.src;
   return src && src.img && !src.imgFailed ? src.img : "";
@@ -1165,6 +1186,7 @@ function mountArt(){
   if (screen !== "story" || !S) return;
   const el = document.querySelector(".art[data-art]"); if (!el) return;
   const sc = S.scenes[+el.dataset.art]; if (!sc) return;
+  warmPaintings();
   if (pagePaint(sc)) return; // a painting is showing
   const spec = pageSpec(sc);
   if (spec && !Stage3D.show(el, spec) && !S.demo) { sc.scene3d = null; illustrate(sc); } // 3D failed here: fall back to a drawing
@@ -1388,7 +1410,7 @@ ${bookBrief()}
 Chapter 1 has exactly 6 pages. ${PAGE_RULES}
 ${OPTION_RULES}
 "check": one short question that tests the lesson, answerable in a few words, with its answer.
-Return ONLY this JSON: {"title":"","lesson":"","hero_look":"one sentence: how ${S.settings.child_name} looks","check":{"question":"","answer":""},"chapter":{"pages":["","","","","",""],"question":"","options":[{"label":"","hidden_type":"wise|okay|tempting_bad|clearly_bad","leads_to":"","coach":""}]}}`;
+Return ONLY this JSON: {"title":"","lesson":"","hero_look":"one sentence: how ${S.settings.child_name} looks","cast":"one sentence describing how each main character looks (the hero first, then any friend or animal), with clothes and colours, for the illustrator","check":{"question":"","answer":""},"chapter":{"pages":["","","","","",""],"question":"","options":[{"label":"","hidden_type":"wise|okay|tempting_bad|clearly_bad","leads_to":"","coach":""}]}}`;
 }
 function storySoFar(book, id){
   const chain = []; let c = book.graph[id];
@@ -1477,9 +1499,10 @@ async function writeFirstChapter(){
   ch.depth = 1; ch.parent = null;
   const book = {key: null, canned: false, live: true, title: str(raw.title) || "Your story", start: "c1", graph: {c1: ch}, fetch: {}, ready: {},
     check: raw.check && str(raw.check.question) ? {question: str(raw.check.question), answer, accept: [answer.toLowerCase()]} : null};
+  book.seed = 1 + Math.floor(Math.random() * 99999); book.cast = str(raw.cast) || S.heroLook;
   await guardChapters([ch], "chapter 1");
-  book.heroReady = drawChapters(book, ["c1"], "chapter 1"); // the hero's look is fixed by chapter 1's pictures
-  await book.heroReady;
+  if (paintChapters(book, [ch])) { const id = log("Illustrator", "painting the pages of chapter 1"); logDone(id); }
+  else { book.heroReady = drawChapters(book, ["c1"], "chapter 1"); await book.heroReady; } // no painter here (Claude page): 3D pictures
   return book;
 }
 function fetchNext(book, id){ // start (or join) the writing of the 4 chapters that follow chapter `id`
@@ -1504,7 +1527,8 @@ async function writeNext(book, id){
   const ids = versions.map((ch, k) => { const cid = `${id}-${k + 1}`; ch.depth = depth; ch.parent = {id, label: parent.options[k].label}; book.graph[cid] = ch; parent.options[k].next = cid; return cid; });
   book.ready[id] = true;
   if (typeof storeBooks === "function") storeBooks(); // a saved book keeps the chapters written so far
-  Promise.resolve(book.heroReady).then(() => drawChapters(book, ids, what)); // pictures follow in the background
+  if (paintChapters(book, versions)) { const pid = log("Illustrator", `painting the pages of ${what}`); logDone(pid); }
+  else Promise.resolve(book.heroReady).then(() => drawChapters(book, ids, what)); // pictures follow in the background
 }
 
 /* ============ STORY ENGINE ============ */

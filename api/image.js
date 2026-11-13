@@ -3,7 +3,7 @@
 // back to Pollinations (free, no key) if Gemini refuses. GET so browsers and Vercel can cache it.
 const KEY = () => process.env.GEMINI_API_KEY || process.env.GEMINI;
 const GEMINI_MODELS = ["gemini-3.1-flash-lite-image", "gemini-3.1-flash-image", "gemini-nano-banana-2.1"];
-const STYLE = "Children's picture-book illustration, hand-painted gouache with visible textured brush strokes, warm dark-brown outlines, rich saturated colours, soft warm light, cheerful and gentle. No text, no letters, no words, no numbers, no signs, no border, no watermark.";
+const STYLE = "Soft gouache painting for young children, cute friendly cartoon characters with round faces, warm bright colours, gentle storybook lighting, detailed background. No text, no letters.";
 let deadModels = new Set(); // models that refused this key, skipped until the server restarts
 
 function findImage(data){ // the image can sit in a few places depending on the API revision
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   const scene = String(q.p || "").trim().slice(0, 1200);
   const seed = Math.abs(parseInt(q.s, 10) || 7) % 1000000;
   if (!scene) return res.status(400).json({code: "bad_request"});
-  const prompt = `${STYLE}\n${scene}`;
+  const prompt = `${scene} ${STYLE}`; // the scene first, so the painter draws what happens
   const notes = [];
   const img = (q.via !== "free" && await viaGemini(prompt, notes)) || await viaPollinations(prompt, seed, notes);
   if (!img) { console.error("image failed", notes.join(" | ")); return res.status(502).json({code: "image_error", notes}); }
