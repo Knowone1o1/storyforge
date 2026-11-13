@@ -6,326 +6,240 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>StoryForge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Literata:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,400;0,700;1,400&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one storybook page in a single column, phone and tablet first. Bright blue-and-white library look with soft, chunky edges. Story screen is a reader: big text on one half, a moving picture on the other.
-   The agent crew works "backstage" in a bottom drawer, and moves to a side column on wide screens. Single bright theme by choice. */
+/* Design: the book is the only bright object. Reading happens in a deep-blue room with the paper spread glowing in the middle;
+   every other screen is quiet, light and left-aligned. Two typefaces: Literata (a book face) for titles and story text,
+   Atkinson Hyperlegible (made for easy reading) for controls. One loud colour, sun yellow, reserved for "go on". */
 :root{
-  --bg:#E9F4FF; --page:#FFFFFF; --ink:#13294B; --ink-soft:#4A6183; --line:#C9DDF2; --shade:#BCD3EC;
-  --blue:#0A73D6; --blue-dark:#07569F; --sun:#FFC83D; --sun-dark:#D99B00; --sun-soft:#FFF3C9;
-  --tomato:#FF6B5E; --tomato-soft:#FFE0DC; --sky:#39A0FF; --sky-soft:#D6EBFF;
-  --leaf:#22B573; --leaf-dark:#15864F; --leaf-soft:#D2F3E2; --grape:#7B5CFF; --grape-dark:#5A3FD6; --grape-soft:#E6DFFF;
-  --mute:#F1F5FA; --mute-line:#D5DEE9; --ring:rgba(255,107,94,.35);
-  --crew-line:rgba(255,255,255,.3); --crew-row:rgba(255,255,255,.09);
-  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
-  --body:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
-  --r:20px; --bw:2px; --drop:0 5px 0 var(--shade); --drop-s:0 4px 0 var(--shade);
-  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px));
+  --ink:#14233F; --ink-soft:#52607A; --ground:#F4F7FC; --page:#FFFFFF; --paper:#FFFDF6; --line:#D9E1EE; --mute:#EEF2F8;
+  --blue:#2F5D8A; --blue-deep:#234868; --night:#16314D; --foil:#F1DFA9; --sun:#FFC83D; --sun-deep:#8A5B00;
+  --red:#D8452F; --green:#1C8F5A; --violet:#7A4FD0;
+  --blue-tint:#E6EEF6; --sun-tint:#FFF4D1; --red-tint:#FCE6E1; --green-tint:#DDF3E8;
+  --on-night:#FFFFFF; --on-night-soft:rgba(255,255,255,.72); --night-line:rgba(255,255,255,.22); --night-fill:rgba(255,255,255,.1);
+  --gutter:rgba(20,35,63,.2); --lift:rgba(8,20,50,.55); --ring:rgba(216,69,47,.3); --shelf:#C9D6EC; --shelf-edge:#A9BBDA;
+  --read:"Literata",Georgia,"Times New Roman",serif;
+  --ui:"Atkinson Hyperlegible",Verdana,"Segoe UI",system-ui,sans-serif;
+  --focus:var(--blue);
   color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
-button{font-family:inherit;font-size:inherit;cursor:pointer;color:var(--ink)}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--grape);outline-offset:2px}
+body{background:var(--ground);color:var(--ink);font-family:var(--ui);font-size:17px;line-height:1.5}
+body[data-screen="story"]{background:var(--night);--focus:var(--sun)}
+button{font-family:inherit;font-size:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .hidden{display:none !important}
-h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1,h2,h3{font-family:var(--read);font-weight:700;line-height:1.12;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:26px} h3{font-size:20px}
 p{margin:0}
 
 /* Top bar */
-.top{background:var(--blue);color:var(--page)}
-.top-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:10px;padding-block:10px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
-.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:900;font-size:24px;line-height:1}
-.brand svg{width:30px;height:30px;flex:none}
-.brand span{color:var(--sun)}
-.tag{opacity:.8;font-size:14px;margin-left:6px}
-@media (max-width:760px){.tag{display:none}}
+.top{background:var(--page);border-bottom:1px solid var(--line)}
+.top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:10px;padding-block:10px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--read);font-weight:700;font-size:22px;line-height:1;letter-spacing:-.01em}
+.brand svg{width:26px;height:26px;flex:none}
 .spacer{flex:1}
-.ghost{min-height:40px;background:transparent;border:2px solid var(--crew-line);color:var(--page);border-radius:999px;padding:4px 14px;font-weight:700;font-size:15px}
-.ghost:hover{border-color:var(--page)}
+.ghost{flex:none;white-space:nowrap;min-height:40px;background:transparent;border:1.5px solid var(--line);border-radius:10px;padding:4px 14px;font-weight:700;font-size:15px}
+.ghost:hover{border-color:var(--ink-soft)}
+body[data-screen="home"] #homeBtn{display:none}
+body[data-screen="story"] .top{background:transparent;border-bottom-color:transparent;color:var(--on-night)}
+body[data-screen="story"] .ghost{border-color:var(--night-line)}
+body[data-screen="story"] .ghost:hover{border-color:var(--on-night)}
 
-.banner{margin:16px var(--gr) 0 var(--gl);padding:12px 16px;border-radius:14px;background:var(--page);border:2px solid var(--line);box-shadow:var(--drop-s);font-weight:700}
-.banner.err{background:var(--tomato-soft)}
+.banner{max-width:1088px;margin:16px auto 0;padding:12px 16px;border-radius:12px;background:var(--sun-tint);font-weight:700}
+.banner.err{background:var(--red-tint)}
+@media (max-width:1120px){.banner{margin-left:max(16px, env(safe-area-inset-left, 0px));margin-right:max(16px, env(safe-area-inset-right, 0px))}}
 
-.layout{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding-block:20px 96px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
-#stage{display:flex;flex-direction:column;gap:20px;min-width:0}
-@media (min-width:1080px){.layout{grid-template-columns:minmax(0,1fr) 320px;padding-block:28px 40px}}
+.layout{max-width:1120px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+#stage{display:flex;flex-direction:column;gap:28px;min-width:0}
+body[data-screen="story"] .layout{padding-block:6px 32px}
 
 /* Shared pieces */
-.card{background:var(--page);border:2px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--drop);min-width:0}
-@media (min-width:700px){.card{padding:28px}}
+.card{background:var(--page);border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0}
+@media (min-width:700px){.card{padding:32px}}
 .stack{display:flex;flex-direction:column;gap:16px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:2px solid var(--line);border-radius:14px;padding:8px 20px;font-family:var(--display);font-weight:800;font-size:18px;line-height:1.1;background:var(--sun);color:var(--ink);box-shadow:var(--drop-s);transition:transform .08s, box-shadow .08s}
-.btn:active{transform:translateY(3px);box-shadow:0 0 0 var(--shade)}
-.btn.secondary{background:var(--page)}
-.btn.mint{background:var(--leaf)}
-.btn.go{background:var(--tomato)}
-.btn[disabled]{opacity:.5;cursor:not-allowed}
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .sub{color:var(--ink-soft);max-width:60ch}
-.pill{display:inline-block;border:2px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;background:var(--page);align-self:flex-start}
-.pill.free{background:var(--leaf-soft)}
-.pill.premium{background:var(--grape-soft)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:0;border-radius:12px;padding:8px 20px;font-weight:700;font-size:17px;line-height:1.15;background:var(--blue);color:var(--page);transition:transform .08s}
+.btn:hover{background:var(--blue-deep)}
+.btn:active{transform:scale(.97)}
+.btn.secondary{background:var(--page);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.secondary:hover{background:var(--mute)}
+.btn.go,.btn.go:hover{background:var(--sun);color:var(--ink)}
+.btn.mint,.btn.mint:hover{background:var(--green);color:var(--page)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
 .ico-play::before,.ico-speak::before,.ico-rewind::before,.ico-spark::before,.mic::before{content:"";width:1.15em;height:1.15em;flex:none;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
 .ico-play{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 4v16l13-8z'/%3E%3C/svg%3E")}
 .ico-speak{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9zm12 3a4 4 0 0 0-2-3.5v7a4 4 0 0 0 2-3.5z'/%3E%3C/svg%3E")}
 .ico-rewind{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 6v12l-8-6zm10 0v12l-8-6z'/%3E%3C/svg%3E")}
 .ico-spark{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z'/%3E%3C/svg%3E")}
 .mic{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 15a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4zm7-4h-2a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1a7 7 0 0 0 6-6.9z'/%3E%3C/svg%3E")}
+label{font-weight:700;font-size:15px}
+.hint{color:var(--ink-soft);font-size:14px}
+input,select,textarea{font-family:inherit;font-size:17px;min-height:48px;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--page);color:var(--ink);min-width:0;max-width:100%}
+input:hover,select:hover,textarea:hover{border-color:var(--ink-soft)}
+textarea{min-height:76px;resize:vertical}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{min-height:44px;border:1.5px solid var(--line);background:var(--page);border-radius:10px;padding:6px 16px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--page)}
+.own{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.own input{grid-column:1/-1}
+.own > button:only-of-type{grid-column:1/-1}
+.mic{display:inline-flex;gap:8px;align-items:center;justify-content:center;min-height:48px;border:0;border-radius:12px;padding:6px 16px;font-weight:700;font-size:17px;line-height:1.15;background:var(--ink);color:var(--page)}
+.mic.on{background:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px var(--ring)}}
+.writing{display:flex;align-items:center;gap:12px;font-weight:700;color:var(--ink-soft)}
+.spin{flex:none;width:22px;height:22px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--blue);animation:sp .9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.wait{display:flex;flex-direction:column;align-items:center;gap:10px;font-weight:700;color:var(--ink-soft);text-align:center}
+.blobs{display:flex;gap:8px}
+.blobs i{width:14px;height:14px;border-radius:50%;background:var(--blue);animation:hop 1s ease-in-out infinite}
+.blobs i:nth-child(2){background:var(--sun);animation-delay:.15s}
+.blobs i:nth-child(3){background:var(--red);animation-delay:.3s}
+@keyframes hop{50%{transform:translateY(-9px)}}
+.conseq{border-radius:12px;padding:12px 16px;font-weight:700;background:var(--red-tint)}
+.conseq.good{background:var(--green-tint)}
+.next-label,.eyebrow,.coach .who{display:block;font-size:14px;font-weight:700;color:var(--ink-soft)}
+.pill{font-size:14px;font-weight:700;color:var(--ink-soft)}
 
-/* Home */
-.hero{display:flex;flex-direction:column;gap:10px;padding:8px 2px 4px}
-.hero h1{font-size:clamp(30px,6.2vw,54px);font-weight:900;max-width:18ch}
-.hero p{max-width:58ch;font-size:18px}
-.card-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.card-h h2,.section-h h2{font-size:26px}
-.section-h{display:flex;align-items:center;gap:10px;margin:8px 0 -6px}
-.quick{display:flex;flex-direction:column;gap:14px}
+/* Home: the shelf comes first */
+.hero{display:flex;flex-direction:column;gap:8px;padding-top:8px}
+.hero h1{font-size:clamp(30px,5vw,46px)}
+.hero p{max-width:52ch;font-size:18px;color:var(--ink-soft)}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 22px;align-items:start}
+.cover{display:flex;flex-direction:column;gap:10px;text-align:left;padding:0;border:0;background:none;color:var(--ink);min-width:0}
+.cover-face{display:flex;aspect-ratio:2/3;max-width:100%;padding:10px 10px 10px 16px;background:var(--c,var(--blue));border-radius:3px 8px 8px 3px;box-shadow:inset 7px 0 0 var(--gutter), 0 14px 22px -14px var(--lift);transform-origin:bottom center;transition:transform .14s}
+.cover:hover .cover-face{transform:translateY(-6px)}
+.cover-frame{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0;padding:12px 8px;border:1.5px solid var(--foil);outline:1px solid var(--foil);outline-offset:-5px;border-radius:2px;color:var(--foil);text-align:center}
+.cover-title{font-family:var(--read);font-weight:700;font-size:19px;line-height:1.16;text-wrap:balance}
+.cover-rule{width:38px;height:9px;background:linear-gradient(var(--foil),var(--foil)) center/100% 1.5px no-repeat;position:relative}
+.cover-rule::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;background:var(--foil);transform:translate(-50%,-50%) rotate(45deg)}
+.cover-by{font-family:var(--read);font-style:italic;font-size:13px;line-height:1.25}
+.cover-meta{font-size:14px;line-height:1.35;color:var(--ink-soft)}
+.cover-meta b{display:block;color:var(--ink)}
+.makeband{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--blue);color:var(--page);border-radius:16px;padding:24px}
+.makeband > div{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 280px}
+.makeband p{color:var(--on-night-soft);max-width:48ch}
+.quick{display:flex;flex-direction:column;gap:12px}
 .quick-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:center}
 .quick-row label{margin:0}
 @media (max-width:640px){.quick-row{grid-template-columns:auto minmax(0,1fr)}.quick-row input,.quick-row .btn{grid-column:1/-1}}
-.lib{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
-.libcard{display:flex;flex-direction:column;text-align:left;padding:0;overflow:hidden;background:var(--page);border:2px solid var(--line);border-radius:var(--r);box-shadow:var(--drop);transition:transform .1s, box-shadow .1s}
-.libcard:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--shade)}
-.libcard:active{transform:translateY(3px);box-shadow:0 1px 0 var(--shade)}
-.libart{aspect-ratio:2/1;max-width:100%;border-bottom:2px solid var(--line)}
-.libart svg{display:block;width:100%;height:100%}
-.libbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.libbody b{font-family:var(--display);font-size:20px;line-height:1.15}
-.libmeta{font-size:14px;color:var(--ink-soft)}
-@media (max-width:560px){.libcard{flex-direction:row}.libart{width:36%;flex:none;aspect-ratio:auto;border-bottom:0;border-right:2px solid var(--line)}}
-.custom{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--grape-soft)}
-.custom h3{font-size:22px}
-.custom > div{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 260px}
 
 /* Parent setup */
-.form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media (max-width:640px){.form{grid-template-columns:1fr}}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field.full{grid-column:1/-1}
 .field.row{flex-direction:row}
-label{font-weight:700;font-size:15px}
-.hint{color:var(--ink-soft);font-size:13px}
-input,select,textarea{font-family:inherit;font-size:17px;min-height:48px;border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--page);color:var(--ink);min-width:0;max-width:100%}
-textarea{min-height:72px;resize:vertical}
-.seg{display:flex;gap:8px;flex-wrap:wrap}
-.seg button{min-height:44px;border:2px solid var(--line);background:var(--page);border-radius:999px;padding:6px 16px;font-weight:700}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
 
-/* Story */
-.storyhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.storyhead h2{font-size:clamp(22px,4.4vw,30px);flex:1;min-width:180px}
-.dots{display:flex;gap:6px}
-.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:14px;background:var(--mute)}
-.dot.on{background:var(--sun);box-shadow:0 2px 0 var(--shade)}
-.dot.done{background:var(--leaf)}
-.meters{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.hearts{display:flex;gap:4px}
-.heart{width:24px;height:24px;background:var(--tomato);-webkit-mask:var(--h) center/contain no-repeat;mask:var(--h) center/contain no-repeat;--h:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21S3 14.6 3 8.6C3 5.5 5.4 3.5 8 3.5c1.6 0 3 .8 4 2.1 1-1.300 2.400-2.100 4-2.100 2.600 0 5 2 5 5.100 0 6-9 12.400-9 12.400z'/%3E%3C/svg%3E")}
-.heart.off{background:var(--mute-line)}
-.bag{font-size:14px;border:2px solid var(--line);background:var(--sun-soft);border-radius:999px;padding:2px 12px}
-.art{border:2px solid var(--line);border-radius:var(--r);overflow:hidden;aspect-ratio:16/9;max-width:100%;background:var(--sky-soft);display:flex;align-items:center;justify-content:center}
-.art svg{width:100%;height:100%;display:block}
-.wait{display:flex;flex-direction:column;align-items:center;gap:12px;font-weight:700;color:var(--ink-soft)}
-.blobs{display:flex;gap:8px}
-.blobs i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:var(--tomato);animation:hop 1s ease-in-out infinite}
-.blobs i:nth-child(2){background:var(--sun);animation-delay:.15s}
-.blobs i:nth-child(3){background:var(--sky);animation-delay:.3s}
-@keyframes hop{50%{transform:translateY(-10px)}}
-.conseq{border:2px solid var(--line);border-radius:14px;padding:12px 16px;font-weight:700;background:var(--tomato-soft)}
-.conseq.good{background:var(--leaf-soft)}
-.scenetext{font-size:clamp(19px,2.6vw,23px);line-height:1.6;max-width:62ch}
-.question{font-family:var(--display);font-weight:800;font-size:clamp(22px,3.4vw,28px);line-height:1.2}
-.opts{display:grid;grid-template-columns:1fr;gap:12px}
-@media (min-width:700px){.opts{grid-template-columns:1fr 1fr}}
-.opt{display:flex;gap:12px;align-items:center;text-align:left;min-height:64px;border:2px solid var(--line);border-radius:16px;padding:10px 14px;font-weight:700;font-size:19px;line-height:1.25;box-shadow:var(--drop);transition:transform .08s, box-shadow .08s}
-.opt:hover{transform:translateY(-1px);box-shadow:0 5px 0 var(--shade)}
-.opt:active{transform:translateY(4px);box-shadow:0 0 0 var(--shade)}
-.opt .k{flex:none;width:40px;height:40px;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:20px;border:2px solid var(--line)}
-.o0{background:var(--tomato-soft)} .o0 .k{background:var(--tomato);border-radius:50%}
-.o1{background:var(--sky-soft)} .o1 .k{background:var(--sky);border-radius:10px}
-.o2{background:var(--leaf-soft)} .o2 .k{background:var(--leaf);border-radius:50% 50% 10px 50%}
-.o3{background:var(--grape-soft)} .o3 .k{background:var(--grape);color:var(--page);border-radius:10px 50%}
-.own{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center}
-@media (max-width:600px){.own{grid-template-columns:1fr 1fr}.own input{grid-column:1/-1}.own > :last-child:nth-child(2){grid-column:1/-1}}
-.mic{display:inline-flex;gap:8px;align-items:center;justify-content:center;min-height:48px;border:2px solid var(--line);border-radius:999px;padding:6px 18px;font-family:var(--display);font-weight:800;font-size:17px;line-height:1.1;background:var(--grape);color:var(--page);box-shadow:var(--drop-s)}
-.mic.on{background:var(--tomato);color:var(--ink);animation:pulse 1s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 8px var(--ring)}}
-.tools{display:flex;gap:10px;flex-wrap:wrap}
-.writing{display:flex;align-items:center;gap:12px;padding:16px;border-radius:14px;border:2px dashed var(--line);background:var(--sun-soft);font-weight:700}
-.spin{flex:none;width:22px;height:22px;border-radius:50%;border:4px solid var(--page);border-top-color:var(--grape);animation:sp .9s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-.think{border:2px solid var(--line);border-radius:16px;padding:16px;background:var(--grape-soft);display:flex;flex-direction:column;gap:10px}
-.think h3{font-size:22px}
-.coach{padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--page);font-weight:700}
-.coach .who,.eyebrow{display:block;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft)}
-
-/* Ending */
-.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
-.col{min-width:0}
-.col h3{font-size:18px;margin-bottom:8px}
-.node{border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--mute);border:2px solid var(--mute-line);color:var(--ink-soft);font-size:14px}
-.node b{display:block;color:var(--ink);font-size:15px}
-.node.chosen{background:var(--page);border-color:var(--ink);box-shadow:var(--drop-s);color:var(--ink)}
-.badge{display:inline-block;font-size:12px;font-weight:700;border:1.5px solid var(--line);color:var(--ink);border-radius:999px;padding:0 9px;margin-top:4px}
-.b-wise{background:var(--leaf-soft)} .b-okay{background:var(--sky-soft)} .b-tempting_bad{background:var(--sun-soft)} .b-clearly_bad{background:var(--tomato-soft)}
-.report{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.stat{border:2px solid var(--line);background:var(--sun-soft);border-radius:14px;padding:14px;min-width:0}
-.stat .n{font-family:var(--display);font-size:26px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}
-.stat .l{font-size:14px;color:var(--ink-soft)}
-.quote{font-family:var(--display);font-size:22px;font-weight:800;line-height:1.25;border-left:6px solid var(--tomato);padding-left:14px}
-.quote .hint{font-family:var(--body);font-weight:400}
-.card ul{margin:0;padding-left:20px}
-
-/* Backstage crew */
-.crew{color:var(--page);background:var(--ink)}
-.crew h3{font-size:20px}
-.crew-body > p{margin:4px 0 12px;font-size:13px;opacity:.75}
-.crew-peek{display:flex;width:100%;align-items:center;gap:10px;min-height:54px;background:none;border:0;color:inherit;font-size:14px;text-align:left;padding:6px 0}
-.crew-peek b{color:var(--sun)}
-#crewNow{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chev{flex:none;width:10px;height:10px;border-left:2.5px solid currentColor;border-top:2.5px solid currentColor;transform:rotate(45deg);margin:4px 4px 0}
-.crew.open .chev{transform:rotate(225deg);margin-top:-4px}
-.st{flex:none;width:10px;height:10px;border-radius:50%;background:var(--leaf)}
-.crew.busy .crew-peek .st{background:var(--sun);animation:pulse 1s infinite}
-.roster{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:14px}
-.roster span{font-size:12px;font-weight:700;text-align:center;line-height:1.2;border-radius:10px;padding:6px 2px;border:1.5px solid var(--crew-line);opacity:.6}
-.roster .done{opacity:1;border-color:var(--leaf)}
-.roster .working{opacity:1;background:var(--sun);border-color:var(--sun);color:var(--ink)}
-.roster .fail{opacity:1;border-color:var(--tomato)}
-.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.log li{background:var(--crew-row);border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:flex-start}
-.log .who{font-weight:700;color:var(--sun);white-space:nowrap}
-.log .st{margin-top:6px;background:var(--grape)}
-.log li.working .st{animation:pulse 1s infinite;background:var(--sun)}
-.log li.done .st{background:var(--leaf)}
-.log li.fail .st{background:var(--tomato)}
-@media (max-width:1079.98px){
-  .crew{position:fixed;left:0;right:0;bottom:0;z-index:20;border-radius:18px 18px 0 0;padding:0 max(16px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(16px, env(safe-area-inset-left, 0px))}
-  .crew-body{display:none;max-height:55vh;overflow:auto;padding-bottom:16px}
-  .crew.open .crew-body{display:block}
-}
-@media (min-width:1080px){
-  .crew{position:sticky;top:16px;align-self:start;border-radius:var(--r);padding:18px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;}
-  .crew-peek{display:none}
-  .crew-body{overflow:auto}
-  .roster{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (prefers-reduced-motion:reduce){.blobs i,.spin,.mic.on,.crew.busy .crew-peek .st,.log li.working .st{animation:none}.btn,.opt,.libcard{transition:none}}
-
-/* Buttons and controls in the blue-and-white system */
-.btn{border-radius:999px;background:var(--blue);color:var(--page);border-color:var(--blue-dark);box-shadow:0 4px 0 var(--blue-dark)}
-.btn:active{box-shadow:0 0 0 var(--blue-dark)}
-.btn.secondary{background:var(--page);color:var(--blue-dark);border-color:var(--line);box-shadow:0 4px 0 var(--line)}
-.btn.go{background:var(--sun);color:var(--ink);border-color:var(--sun-dark);box-shadow:0 4px 0 var(--sun-dark)}
-.btn.mint{background:var(--leaf);color:var(--ink);border-color:var(--leaf-dark);box-shadow:0 4px 0 var(--leaf-dark)}
-.mic{border-color:var(--grape-dark);box-shadow:0 4px 0 var(--grape-dark)}
-.seg button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:var(--page)}
-.hero h1{color:var(--blue-dark)}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--blue)}
-.opt{border-color:transparent}
-.o0{box-shadow:0 5px 0 var(--tomato)} .o1{box-shadow:0 5px 0 var(--sky)} .o2{box-shadow:0 5px 0 var(--leaf)} .o3{box-shadow:0 5px 0 var(--grape)}
-.opt:hover{filter:brightness(1.03)}
-.opt .k{border-color:transparent}
-.dot.on{box-shadow:0 2px 0 var(--sun-dark);border-color:var(--sun-dark)}
-.dot.done{border-color:var(--leaf-dark);color:var(--page)}
-.node.chosen{border-color:var(--blue)}
-.pill{border-color:transparent}
-.pill.warn{background:var(--tomato-soft)}
-
-/* Reader: text half and picture half */
-.reader{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
-.reader-head{display:flex;flex-direction:column;gap:10px;min-width:0}
-.reader-text{display:flex;flex-direction:column;gap:16px;min-width:0}
-.reader-art{min-width:0}
-.readtext{font-size:clamp(24px,3.3vw,36px);line-height:1.45;max-width:22em}
-.readtext.cons{font-weight:700}
-.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:8px}
-.pagecount{font-size:14px;font-weight:700;color:var(--ink-soft);text-align:center}
-.art svg{animation:drift 16s ease-in-out infinite alternate}
-@keyframes drift{from{transform:scale(1)}to{transform:scale(1.07) translateY(-1.5%)}}
-@media (min-width:760px){
-  .reader{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"head head" "text art";gap:20px 28px}
-  .reader-head{grid-area:head}
-  .reader-text{grid-area:text}
-  .reader-art{grid-area:art}
-  .reader-art .art{aspect-ratio:auto;height:100%;min-height:min(58vh,540px)}
-  .reader .opts{grid-template-columns:1fr}
-}
-@media (prefers-reduced-motion:reduce){.art svg{animation:none}}
-
-/* ---- Book pass: calmer surfaces, a real open book, a bookshelf home ---- */
-:root{--read:"Literata",Georgia,"Times New Roman",serif;--paper:#FFFEFA;--gutter:rgba(19,41,75,.18);--lift:rgba(19,41,75,.3);
-  --drop:0 1px 2px rgba(19,41,75,.06), 0 10px 24px -14px var(--lift);--drop-s:none}
-.top{background:var(--page);color:var(--ink);border-bottom:1px solid var(--line)}
-.brand{color:var(--blue)} .brand span{color:var(--ink)}
-.ghost{color:var(--ink);border-color:var(--line)} .ghost:hover{border-color:var(--blue)}
-.card{border:1px solid var(--line)}
-.banner{box-shadow:none;border-width:1px}
-.btn,.btn.go,.btn.mint{box-shadow:none;border-width:0}
-.btn.secondary{box-shadow:none;border:1.5px solid var(--line)}
-.btn:active{transform:scale(.97);box-shadow:none}
-.mic{box-shadow:none;border:0}
-.opt,.o0,.o1,.o2,.o3{box-shadow:none;border:0}
-.opt:hover{transform:none;box-shadow:none;filter:brightness(.97)}
-.opt:active{transform:scale(.99);box-shadow:none}
-.hero h1{font-size:clamp(28px,4.6vw,44px);max-width:22ch;color:var(--ink);font-weight:700}
-.tier{font-size:13px;font-weight:700;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase}
-
-/* Bookshelf */
-.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 16px}
-.cover{display:flex;flex-direction:column;text-align:left;padding:0;border:0;background:var(--c,var(--sky-soft));border-radius:5px 12px 12px 5px;overflow:hidden;min-width:0;box-shadow:inset 7px 0 0 var(--gutter), var(--drop);transition:transform .12s}
-.cover:hover{transform:translateY(-4px)}
-.cover:active{transform:translateY(0)}
-.cover-art{display:block;aspect-ratio:3/2;max-width:100%}
-.cover-art svg{display:block;width:100%;height:100%}
-.cover-title{font-family:var(--read);font-weight:700;font-size:19px;line-height:1.15;padding:12px 12px 0 18px}
-.cover-meta{font-size:12.5px;line-height:1.3;color:var(--ink-soft);padding:6px 12px 14px 18px;margin-top:auto}
-.cover.make{background:var(--page);box-shadow:inset 0 0 0 2px var(--line);justify-content:center;gap:4px;min-height:220px}
-.cover.make .cover-meta{margin-top:0}
-.plus{font-family:var(--display);font-size:44px;line-height:1;color:var(--blue);padding:0 18px}
-
-/* Open book */
-.book{display:flex;flex-direction:column;gap:14px;min-width:0}
-.book-bar{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:14px;color:var(--ink-soft)}
-.book-title{font-family:var(--read);font-weight:700;color:var(--ink);font-size:17px;min-width:0}
-.spread{display:grid;grid-template-columns:minmax(0,1fr);background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--line), 0 24px 40px -24px var(--lift)}
+/* The book */
+.book{display:flex;flex-direction:column;gap:12px;min-width:0}
+.book-bar{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font-size:15px;color:var(--on-night-soft)}
+.book-title{font-family:var(--read);font-weight:700;color:var(--on-night);font-size:18px;min-width:0}
+.spread{display:grid;grid-template-columns:minmax(0,1fr);background:var(--paper);border-radius:8px;overflow:hidden;box-shadow:0 30px 60px -30px var(--lift), 0 2px 0 var(--night-line)}
 .leaf{min-width:0}
 .leaf-art{order:-1}
-.leaf-art .art{border:0;border-radius:0;aspect-ratio:16/10}
-.leaf-text{display:flex;flex-direction:column;gap:16px;padding:22px 20px 18px}
+.art{overflow:hidden;aspect-ratio:16/10;max-width:100%;background:var(--blue-tint);display:flex;align-items:center;justify-content:center}
+.art svg{width:100%;height:100%;display:block}
+.art canvas{display:block;width:100%;height:100%}
+.leaf-text{display:flex;flex-direction:column;gap:16px;padding:24px 20px 18px}
 .readtext{font-family:var(--read);font-size:clamp(23px,3vw,34px);line-height:1.5;max-width:20em}
-.readtext.first::first-letter{font-size:2.7em;font-weight:700;float:left;line-height:.82;padding:.08em .08em 0 0;color:var(--blue)}
-.next-label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
-.titlepage{margin:auto 0;display:flex;flex-direction:column;gap:12px}
-.titlepage h1{font-family:var(--read);font-weight:700;font-size:clamp(32px,4.6vw,52px);line-height:1.08}
+.readtext .lead{font-weight:700;color:var(--blue);letter-spacing:.02em}
+.titlepage{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.titlepage h1{color:var(--blue)}
+.titlepage .cover-rule{--foil:var(--blue)}
+.titlepage h1{font-size:clamp(32px,4.6vw,54px);line-height:1.06}
+.titlepage .eyebrow{font-family:var(--read);font-style:italic;font-weight:400;font-size:18px}
 .titlepage p{color:var(--ink-soft)}
-.pageno{margin-top:auto;padding-top:8px;font-family:var(--read);font-size:14px;color:var(--ink-soft);text-align:center}
-.speakbtn{align-self:flex-start;display:inline-flex;gap:6px;align-items:center;border:1.5px solid var(--line);background:transparent;border-radius:999px;min-height:40px;padding:4px 14px;font-weight:700;font-size:14px;color:var(--blue-dark)}
-.book-foot{display:flex;align-items:center;gap:14px;min-height:52px}
-.turn{flex:none;min-width:52px;min-height:52px;border-radius:999px;border:0;background:var(--blue);color:var(--page);font-family:var(--display);font-weight:600;font-size:18px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 22px}
-.turn.back{background:var(--page);color:var(--blue-dark);box-shadow:inset 0 0 0 1.5px var(--line);padding:0}
-.turn[disabled]{opacity:.35;cursor:default}
+.pageno{margin-top:auto;padding-top:8px;font-family:var(--read);font-size:15px;color:var(--ink-soft);text-align:center}
+.speakbtn{align-self:flex-start;display:inline-flex;gap:6px;align-items:center;border:0;background:transparent;min-height:44px;padding:4px 10px 4px 0;font-weight:700;font-size:15px;color:var(--blue-deep)}
+.speakbtn:hover{color:var(--blue)}
+.question{font-family:var(--read);font-weight:700;font-size:clamp(24px,3.2vw,30px);line-height:1.2}
+.opts{display:grid;grid-template-columns:1fr;gap:10px}
+.opt{display:flex;gap:14px;align-items:center;text-align:left;min-height:60px;border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--page);font-family:var(--read);font-size:20px;line-height:1.25}
+.opt:hover{border-color:var(--ink);background:var(--blue-tint)}
+.opt:active{transform:scale(.99)}
+.opt .k{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--ui);font-weight:700;font-size:17px;color:var(--page)}
+.o0 .k{background:var(--red)} .o1 .k{background:var(--blue)} .o2 .k{background:var(--green)} .o3 .k{background:var(--violet)}
+.think{border-radius:12px;padding:18px;background:var(--sun-tint);display:flex;flex-direction:column;gap:12px}
+.coach{font-family:var(--read);font-size:20px;line-height:1.4}
+.book-foot{display:flex;align-items:center;gap:14px;min-height:56px}
+.turn{flex:none;min-width:56px;min-height:56px;border-radius:999px;border:0;background:var(--sun);color:var(--ink);font-weight:700;font-size:18px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 24px}
+.turn.back{background:var(--night-fill);color:var(--on-night);padding:0}
+.turn[disabled]{opacity:.3;cursor:default}
 .turn .arr{width:10px;height:10px;border-right:3px solid currentColor;border-top:3px solid currentColor;transform:rotate(45deg);margin-right:3px}
 .turn.back .arr{transform:rotate(-135deg);margin:0 0 0 4px}
-.progress{flex:1;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.progress{flex:1;height:6px;border-radius:999px;background:var(--night-line);overflow:hidden}
 .progress i{display:block;height:100%;background:var(--sun);border-radius:999px;transition:width .3s}
 @media (min-width:760px){
-  .spread{grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:min(62vh,560px)}
+  .spread{grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:min(60vh,580px)}
   .leaf-art{order:0}
   .leaf-art .art{aspect-ratio:auto;height:100%}
-  .leaf-text{padding:36px 36px 22px;box-shadow:inset -22px 0 26px -22px var(--gutter)}
-  .book .opts{grid-template-columns:1fr}
+  .leaf-text{padding:40px 40px 22px;box-shadow:inset -24px 0 28px -24px var(--gutter)}
 }
-@media (prefers-reduced-motion:reduce){.cover,.progress i{transition:none}}
-.art canvas{display:block;width:100%;height:100%}
+
+/* Ending */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.col{min-width:0}
+.col h3{font-family:var(--ui);font-size:15px;color:var(--ink-soft);margin-bottom:8px}
+.node{border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--mute);color:var(--ink-soft);font-size:14px}
+.node b{display:block;color:var(--ink-soft);font-size:15px}
+.node.chosen{background:var(--page);box-shadow:inset 0 0 0 2px var(--blue);color:var(--ink)}
+.node.chosen b{color:var(--ink)}
+.badge{display:inline-block;font-size:13px;font-weight:700;margin-top:2px}
+.b-wise{color:var(--green)} .b-okay{color:var(--blue)} .b-tempting_bad{color:var(--sun-deep)} .b-clearly_bad{color:var(--red)}
+.report{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px 0}
+.stat{padding:0 18px;border-left:1px solid var(--line);min-width:0}
+.stat:first-child{padding-left:0;border-left:0}
+.stat .n{font-family:var(--read);font-size:30px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .l{font-size:14px;color:var(--ink-soft)}
+.quote{font-family:var(--read);font-style:italic;font-size:22px;line-height:1.35}
+.quote .hint{font-family:var(--ui);font-style:normal}
+.card ul{margin:0;padding-left:20px}
+
+/* Backstage: a small status pill in the top bar that opens the agents' log */
+.crew{position:relative;min-width:0;margin-left:6px;color:var(--on-night)}
+.crew-peek{display:flex;align-items:center;gap:10px;min-height:40px;max-width:min(420px, 46vw);background:var(--ink);border:1px solid var(--night-line);border-radius:999px;color:inherit;font-size:14px;text-align:left;padding:4px 14px 4px 12px}
+.crew-peek b{color:var(--sun)}
+#crewNow{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{flex:none;width:8px;height:8px;border-left:2px solid currentColor;border-top:2px solid currentColor;transform:rotate(45deg);margin-top:4px}
+.crew.open .chev{transform:rotate(225deg);margin-top:-4px}
+.st{flex:none;width:10px;height:10px;border-radius:50%;background:var(--green)}
+.crew.busy .crew-peek .st{background:var(--sun);animation:pulse 1s infinite}
+.crew-body{display:none;position:absolute;z-index:30;top:calc(100% + 8px);left:0;width:min(380px, calc(100vw - 32px));max-height:min(60vh,520px);overflow:auto;background:var(--ink);border:1px solid var(--night-line);border-radius:16px;padding:18px;box-shadow:0 24px 48px -20px var(--lift)}
+.crew.open .crew-body{display:block}
+.crew-body > p{margin:4px 0 12px;font-size:14px;color:var(--on-night-soft)}
+.roster{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:14px}
+.roster span{font-size:12px;font-weight:700;text-align:center;line-height:1.2;border-radius:8px;padding:6px 2px;border:1.5px solid var(--night-line);opacity:.6}
+.roster .done{opacity:1;border-color:var(--green)}
+.roster .working{opacity:1;background:var(--sun);border-color:var(--sun);color:var(--ink)}
+.roster .fail{opacity:1;border-color:var(--red)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.log li{background:var(--night-fill);border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:flex-start}
+.log .who{font-weight:700;color:var(--sun);white-space:nowrap}
+.log .st{margin-top:6px;background:var(--violet)}
+.log li.working .st{animation:pulse 1s infinite;background:var(--sun)}
+.log li.done .st{background:var(--green)}
+.log li.fail .st{background:var(--red)}
+@media (max-width:620px){#crewNow{display:none}.crew-peek{padding:4px 10px;gap:8px}.crew{margin-left:0;flex:none}.top-in{gap:8px}.brand{font-size:19px}.brand svg{display:none}.ghost{padding:4px 10px;font-size:14px}.crew-body{position:fixed;top:60px;left:16px;right:16px;width:auto}}
+@media (prefers-reduced-motion:reduce){.blobs i,.spin,.mic.on,.crew.busy .crew-peek .st,.log li.working .st{animation:none}.btn,.cover-face,.progress i{transition:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 <header class="top"><div class="top-in">
-  <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l3.6 9.200L29 12.400l-7 6.200L24 28l-8-5-8 5 2-9.400-7-6.200 9.400-1.200z" fill="#FFC83D" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/></svg><div>Story<span>Forge</span></div></div>
-  <div class="tag">Stories shaped by parents, read by kids</div>
+  <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l3.6 9.200L29 12.400l-7 6.200L24 28l-8-5-8 5 2-9.400-7-6.200 9.400-1.200z" fill="#FFC83D"/></svg><div>StoryForge</div></div>
+  <aside class="crew" id="crew" aria-label="Agents at work">
+  <button class="crew-peek" id="crewToggle" type="button" aria-expanded="false" aria-controls="crewBody"><span class="st"></span><span id="crewNow">Backstage: 8 AI agents ready</span><span class="chev"></span></button>
+  <div class="crew-body" id="crewBody">
+    <h3>Backstage</h3>
+    <p>Each step of the story is handled by a separate AI agent.</p>
+    <div class="roster" id="roster"></div>
+    <ol class="log" id="log"></ol>
+  </div>
+  </aside>
   <div class="spacer"></div>
   <button class="ghost" id="muteBtn" type="button">Voice: on</button>
   <button class="ghost" id="homeBtn" type="button">Home</button>
@@ -333,15 +247,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <div id="banner" class="banner hidden"></div>
 <main class="layout">
   <section id="stage" aria-live="polite"></section>
-  <aside class="crew" id="crew" aria-label="Agents at work">
-    <button class="crew-peek" id="crewToggle" type="button" aria-expanded="false" aria-controls="crewBody"><span class="st"></span><span id="crewNow">Backstage: 8 AI agents ready</span><span class="chev"></span></button>
-    <div class="crew-body" id="crewBody">
-      <h3>Backstage</h3>
-      <p>Each step of the story is handled by a separate AI agent.</p>
-      <div class="roster" id="roster"></div>
-      <ol class="log" id="log"></ol>
-    </div>
-  </aside>
 </main>
 
 <script>
@@ -661,8 +566,7 @@ Return ONLY JSON: {"approved": true or false, "note": "one short sentence about 
 /* Each picture is a small toy-like 3D scene on a round island, built from simple shapes and gently animated.
    The Illustrator agent only describes the scene (what, where, which colour); this code builds and renders it. */
 const Stage3D = (() => {
-  let R = null, shown = null, watcher = null;
-  let usable;
+  let R = null, shown = null, watcher = null, usable, ramp;
   const ok = () => {
     if (usable === undefined) {
       try { const c = document.createElement("canvas"); usable = !!(window.THREE && (c.getContext("webgl") || c.getContext("experimental-webgl"))); }
@@ -672,168 +576,301 @@ const Stage3D = (() => {
   };
   const num = (v, d, lo, hi) => { v = Number(v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
   const col = (v, d) => new THREE.Color(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(v || "")) ? v : d);
-  const mesh = (geo, c, glow) => {
-    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color: c, roughness: .85, metalness: 0, flatShading: true, emissive: glow ? c : 0x000000, emissiveIntensity: glow ? .7 : 0}));
-    m.castShadow = !glow; m.receiveShadow = !glow; return m;
-  };
-  const put = (g, m, x, y, z) => { m.position.set(x, y, z); g.add(m); return m; };
-  const sph = (r, d) => new THREE.SphereGeometry(r, d || 14, 10);
-  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-  const cone = (r, h, n) => new THREE.ConeGeometry(r, h, n || 8);
-  const cyl = (a, b, h, n) => new THREE.CylinderGeometry(a, b, h, n || 10);
+  const tint = (c, k) => new THREE.Color(c).lerp(new THREE.Color(k > 0 ? 0xffffff : 0x000000), Math.abs(k));
+  const seeded = seed => () => (seed = (seed * 16807 + 11) % 2147483647) / 2147483647;
 
-  /* ---- things ---- */
-  const THINGS = {
-    tree(g, c){ put(g, mesh(cyl(.12,.17,.8), 0x8A5A3B), 0,.4,0); put(g, mesh(sph(.6,8), c), 0,1.2,0); put(g, mesh(sph(.38,7), c), .3,1.55,.1); },
-    pine(g, c){ put(g, mesh(cyl(.1,.14,.5), 0x8A5A3B), 0,.25,0); [[.62,.8,.75],[.48,.7,1.2],[.32,.6,1.6]].forEach(a => put(g, mesh(cone(a[0],a[1],7), c), 0,a[2],0)); },
-    bush(g, c){ put(g, mesh(sph(.38,7), c), 0,.3,0); put(g, mesh(sph(.28,7), c), .35,.24,.05); put(g, mesh(sph(.26,7), c), -.32,.22,.1); },
-    flower(g, c){ put(g, mesh(cyl(.03,.03,.5,6), 0x2E9E5B), 0,.25,0); for (let i = 0; i < 5; i++) put(g, mesh(sph(.1,6), c), Math.cos(i*1.257)*.14, .55, Math.sin(i*1.257)*.14); put(g, mesh(sph(.09,6), 0xFFC83D), 0,.57,0); },
-    rock(g, c){ const m = put(g, mesh(new THREE.DodecahedronGeometry(.42), c), 0,.26,0); m.scale.y = .7; },
-    hill(g, c){ const m = put(g, mesh(sph(1.5,12), c), 0,0,0); m.scale.y = .5; },
-    mountain(g, c){ put(g, mesh(cone(1.5,2.6,6), c), 0,1.3,0); put(g, mesh(cone(.52,.9,6), 0xFFFFFF), 0,2.16,0); },
-    house(g, c, c2){ put(g, mesh(box(1.3,.95,1.1), c), 0,.475,0); const r = put(g, mesh(cone(1.08,.75,4), c2), 0,1.32,0); r.rotation.y = Math.PI/4; put(g, mesh(box(.3,.5,.05), 0x6B4A2F), 0,.25,.56); put(g, mesh(box(.26,.26,.05), 0xCFE8FF), .38,.6,.56); },
-    cloud(g, c){ put(g, mesh(sph(.5,8), c), 0,0,0); put(g, mesh(sph(.38,8), c), .5,-.05,0); put(g, mesh(sph(.34,8), c), -.48,-.08,.05); },
-    sun(g, c){ put(g, mesh(sph(.6,16), c, true), 0,0,0); },
-    moon(g, c){ put(g, mesh(sph(.5,16), c, true), 0,0,0); },
-    star(g, c){ put(g, mesh(new THREE.OctahedronGeometry(.28), c, true), 0,0,0); },
-    pond(g, c){ put(g, mesh(cyl(1.4,1.4,.05,24), c), 0,.03,0); },
-    ball(g, c){ put(g, mesh(sph(.34,14), c), 0,.34,0); },
-    egg(g, c){ const m = put(g, mesh(sph(.26,12), c), 0,.33,0); m.scale.y = 1.3; },
-    box(g, c){ put(g, mesh(box(.7,.7,.7), c), 0,.35,0); },
-    table(g, c){ put(g, mesh(box(1.3,.1,.8), c), 0,.7,0); [[-.55,-.3],[.55,-.3],[-.55,.3],[.55,.3]].forEach(a => put(g, mesh(cyl(.05,.05,.66,6), c), a[0],.33,a[1])); },
-    cookie(g, c){ put(g, mesh(cyl(.3,.3,.09,12), c), 0,.06,0); [[.1,.1],[-.12,.05],[.02,-.14]].forEach(a => put(g, mesh(sph(.04,5), 0x4A2E1B), a[0],.11,a[1])); },
-    jar(g, c){ put(g, mesh(cyl(.32,.3,.7,12), c), 0,.35,0); put(g, mesh(cyl(.26,.26,.1,12), 0x3F9BFF), 0,.75,0); },
-    book(g, c){ const m = put(g, mesh(box(.6,.12,.44), c), 0,.07,0); m.rotation.y = .3; },
-    boat(g, c, c2){ put(g, mesh(box(1.3,.3,.55), c), 0,.2,0); put(g, mesh(cyl(.03,.03,1.1,6), 0x8A5A3B), 0,.9,0); const sail = put(g, mesh(cone(.45,.9,3), c2), .02,1.0,0); sail.rotation.y = Math.PI/2; },
-    rocket(g, c, c2){ put(g, mesh(cyl(.3,.3,1.1,12), c), 0,.9,0); put(g, mesh(cone(.3,.5,12), c2), 0,1.7,0); [0,2.1,4.2].forEach(a => put(g, mesh(cone(.16,.45,4), c2), Math.cos(a)*.34,.42,Math.sin(a)*.34)); },
-    plane(g, c, c2){ const b = put(g, mesh(cyl(.2,.14,1.5,10), c), 0,0,0); b.rotation.z = Math.PI/2; put(g, mesh(box(.4,.06,1.8), c2), .1,0,0); put(g, mesh(box(.25,.4,.06), c2), -.65,.2,0); put(g, mesh(sph(.2,8), c), .75,0,0); },
-    car(g, c){ put(g, mesh(box(1.3,.34,.62), c), 0,.36,0); put(g, mesh(box(.7,.3,.56), c), -.05,.68,0); [[-.4,.33],[.4,.33],[-.4,-.33],[.4,-.33]].forEach(a => { const w = put(g, mesh(cyl(.17,.17,.12,10), 0x2B2B3A), a[0],.17,a[1]); w.rotation.x = Math.PI/2; }); },
-    sphere(g, c){ put(g, mesh(sph(.4,14), c), 0,.4,0); },
-    cone(g, c){ put(g, mesh(cone(.4,.9,10), c), 0,.45,0); },
-    cylinder(g, c){ put(g, mesh(cyl(.35,.35,.8,12), c), 0,.4,0); }
+  /* Cartoon shading: a few flat steps of light instead of a smooth gradient. */
+  const toon = (c, flat) => {
+    if (!ramp) { ramp = new THREE.DataTexture(new Uint8Array([105, 165, 215, 255]), 4, 1, THREE.LuminanceFormat); ramp.minFilter = ramp.magFilter = THREE.NearestFilter; ramp.needsUpdate = true; }
+    return new THREE.MeshToonMaterial({color: c, gradientMap: ramp, flatShading: !!flat});
   };
-  const THING_COLOR = {tree:"#2FAE66", pine:"#1F8F5A", bush:"#3BB877", flower:"#FF6B8E", rock:"#9AA3AF", hill:"#69C383", mountain:"#8B95A7", house:"#FFD27A", cloud:"#FFFFFF", sun:"#FFD43B", moon:"#F5F0D0", star:"#FFE066", pond:"#6EC3FF", ball:"#FF6B5E", egg:"#FFF6E0", box:"#D9A066", table:"#B9824F", cookie:"#D9A066", jar:"#DDF2FF", book:"#7B5CFF", boat:"#E0703A", rocket:"#F4F4F8", plane:"#FF6B5E", car:"#39A0FF", sphere:"#FF9F43", cone:"#7B5CFF", cylinder:"#39A0FF"};
-  const SKY_THINGS = {cloud: 3.6, sun: 4.6, moon: 4.6, star: 4.2, plane: 3.2};
-  const DEFAULT_MOVE = {cloud:"drift", star:"spin", tree:"sway", pine:"sway", flower:"sway", plane:"bob", boat:"bob", sun:"none"};
+  const sph = (r, w, h, ...rest) => new THREE.SphereGeometry(r, w || 24, h || 16, ...rest);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const cone = (r, h, n) => new THREE.ConeGeometry(r, h, n || 16);
+  const cyl = (a, b, h, n, ...rest) => new THREE.CylinderGeometry(a, b, h, n || 16, ...rest);
+  const lathe = (pts, n) => new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), n || 24);
+  /* add(parent, geometry, colour, [x,y,z], [sx,sy,sz], options) */
+  const add = (g, geo, c, pos, scl, o) => {
+    o = o || {};
+    const m = new THREE.Mesh(geo, o.glow ? new THREE.MeshBasicMaterial({color: c}) : o.glass ? new THREE.MeshToonMaterial({color: c, gradientMap: ramp, transparent: true, opacity: .45}) : toon(c, o.flat));
+    m.castShadow = !o.glow && !o.glass; m.receiveShadow = !o.glow;
+    if (pos) m.position.set(pos[0], pos[1], pos[2]);
+    if (scl) m.scale.set(scl[0], scl[1], scl[2]);
+    if (o.rot) m.rotation.set(o.rot[0], o.rot[1], o.rot[2]);
+    g.add(m); return m;
+  };
+  const sub = (g, x, y, z) => { const n = new THREE.Group(); n.position.set(x, y, z); g.add(n); return n; };
+  const INK = 0x1B1B2B, WOOD = 0x8A5A3B, WHITE = 0xFFFFFF;
+
+  /* ---- scenery ---- */
+  const THINGS = {
+    tree(g, c, c2, r){
+      add(g, cyl(.11,.19,.95,10), WOOD, [0,.47,0]); add(g, cyl(.05,.07,.4,6), WOOD, [.16,.78,0], null, {rot:[0,0,-.9]});
+      [[0,1.35,0,.62],[.38,1.2,.12,.42],[-.36,1.15,-.1,.44],[.08,1.72,-.05,.4],[-.1,1.25,.36,.36]].forEach((b, i) => add(g, sph(b[3],14,10), i % 2 ? tint(c,.14) : c, [b[0],b[1],b[2]], [1,.9,1]));
+      if (r() < .45) for (let i = 0; i < 4; i++) add(g, sph(.07,8,6), 0xE8413C, [Math.cos(i*1.9)*.5, 1.15 + (i%2)*.35, Math.sin(i*1.9)*.5]);
+    },
+    pine(g, c){ add(g, cyl(.1,.15,.5,8), WOOD, [0,.25,0]); [[.72,.8,.8],[.58,.72,1.25],[.43,.66,1.68],[.27,.56,2.06]].forEach((a, i) => add(g, cone(a[0],a[1],9), i % 2 ? tint(c,.12) : c, [0,a[2],0], null, {rot:[0,i*.5,0]})); },
+    bush(g, c, c2, r){ [[0,.32,0,.4],[.36,.25,.06,.3],[-.34,.24,.1,.28],[.05,.3,.32,.26]].forEach((b, i) => add(g, sph(b[3],12,9), i % 2 ? tint(c,.12) : c, [b[0],b[1],b[2]])); for (let i = 0; i < 5; i++) add(g, sph(.045,6,5), 0xE8413C, [(r()-.5)*.8,.3+r()*.25,.25+r()*.15]); },
+    flower(g, c){
+      add(g, cyl(.025,.03,.5,6), 0x2E9E5B, [0,.25,0]); add(g, sph(.09,8,6), 0x3BB877, [.1,.2,0], [1,.3,.6]); add(g, sph(.09,8,6), 0x3BB877, [-.1,.3,0], [1,.3,.6]);
+      for (let i = 0; i < 6; i++) add(g, sph(.1,8,6), c, [Math.cos(i*1.047)*.15,.55,Math.sin(i*1.047)*.15], [1,.45,1]);
+      add(g, sph(.085,8,6), 0xFFC83D, [0,.58,0]);
+    },
+    mushroom(g, c){ add(g, cyl(.1,.13,.34,10), 0xFFF3DC, [0,.17,0]); add(g, sph(.3,16,10), c, [0,.34,0], [1,.62,1]); [[.12,.5,.14],[-.15,.47,.05],[.02,.52,-.14],[.2,.42,-.08]].forEach(p => add(g, sph(.05,6,5), WHITE, p)); },
+    rock(g, c){ add(g, new THREE.DodecahedronGeometry(.42), c, [0,.24,0], [1,.68,.9], {flat:true}); add(g, new THREE.DodecahedronGeometry(.24), tint(c,-.12), [.38,.14,.16], [1,.7,1], {flat:true, rot:[0,.8,0]}); },
+    hill(g, c){ add(g, sph(1.5,24,14), c, [0,0,0], [1,.5,1]); add(g, sph(.9,18,12), tint(c,.1), [1.1,0,.3], [1,.45,1]); },
+    mountain(g, c){ add(g, cone(1.5,2.7,7), c, [0,1.35,0], null, {flat:true}); add(g, cone(.5,.9,7), WHITE, [0,2.25,0], null, {flat:true}); add(g, cone(.95,1.7,6), tint(c,-.1), [1.05,.85,.35], null, {flat:true}); add(g, cone(.32,.56,6), WHITE, [1.05,1.42,.35], null, {flat:true}); },
+    house(g, c, c2){
+      add(g, box(1.35,.95,1.15), c, [0,.475,0]); add(g, cone(1.16,.8,4), c2, [0,1.35,0], null, {rot:[0,Math.PI/4,0]});
+      add(g, box(.32,.52,.06), 0x7A4B2A, [0,.26,.58]); add(g, sph(.03,6,5), 0xFFC83D, [.1,.27,.62]);
+      [-.42,.42].forEach(x => { add(g, box(.3,.3,.05), WHITE, [x,.6,.58]); add(g, box(.23,.23,.06), 0x9FD8FF, [x,.6,.585]); add(g, box(.02,.24,.07), WHITE, [x,.6,.59]); });
+      add(g, box(.2,.5,.2), tint(c2,-.18), [.38,1.5,-.1]);
+      g.userData.smoke = [0,1,2].map(i => add(g, sph(.11,8,6), 0xF2F2F2, [.38,1.85,-.1]));
+    },
+    castle(g, c, c2){
+      add(g, box(1.7,1,.9), c, [0,.5,0]); add(g, box(.42,.62,.06), 0x7A4B2A, [0,.31,.46]);
+      for (let i = -2; i <= 2; i++) add(g, box(.2,.2,.9), c, [i*.36,1.1,0]);
+      [-1,1].forEach(d => { add(g, cyl(.36,.4,1.7,12), tint(c,-.06), [d*.95,.85,0]); add(g, cone(.46,.75,12), c2, [d*.95,2.07,0]); add(g, box(.12,.24,.05), 0x33405E, [d*.95,1.25,.37]); });
+      add(g, cyl(.012,.012,.4,5), INK, [.95,2.6,0]); add(g, box(.24,.14,.02), 0xFFC83D, [1.08,2.72,0]);
+    },
+    tent(g, c, c2){ add(g, cone(.8,1,4), c, [0,.5,0], null, {rot:[0,Math.PI/4,0]}); add(g, cone(.3,.62,3), INK, [0,.31,.42], [1,1,.2]); add(g, cyl(.015,.015,.3,5), WOOD, [0,1.12,0]); add(g, box(.2,.12,.02), c2, [.11,1.2,0]); },
+    fence(g, c){ [-.6,-.2,.2,.6].forEach(x => { add(g, box(.1,.6,.07), c, [x,.3,0]); add(g, cone(.07,.12,4), c, [x,.66,0], null, {rot:[0,Math.PI/4,0]}); }); add(g, box(1.5,.07,.05), c, [0,.42,0]); add(g, box(1.5,.07,.05), c, [0,.2,0]); },
+    signpost(g, c){ add(g, cyl(.04,.05,.9,8), WOOD, [0,.45,0]); add(g, box(.7,.26,.06), c, [.12,.78,0]); add(g, cone(.13,.18,3), c, [.55,.78,0], [1,1,.25], {rot:[0,0,-Math.PI/2]}); },
+    campfire(g){ for (let i = 0; i < 4; i++) add(g, cyl(.05,.05,.6,6), WOOD, [0,.07,0], null, {rot:[Math.PI/2,i*.8,0]}); for (let i = 0; i < 7; i++) add(g, sph(.07,6,5), 0x9AA3AF, [Math.cos(i*.9)*.38,.05,Math.sin(i*.9)*.38], null, {flat:true}); g.userData.flame = [add(g, cone(.2,.55,8), 0xFF7A2F, [0,.36,0], null, {glow:true}), add(g, cone(.11,.34,8), 0xFFD43B, [0,.3,0], null, {glow:true})]; },
+    cloud(g, c){ [[0,0,0,.52],[.5,-.06,0,.4],[-.5,-.08,.05,.36],[.2,.2,-.1,.36],[-.2,.12,.2,.3]].forEach(b => add(g, sph(b[3],14,10), c, [b[0],b[1],b[2]], [1,.82,1])); },
+    sun(g, c){ add(g, sph(.6,24,16), c, null, null, {glow:true}); const rays = sub(g,0,0,0); for (let i = 0; i < 10; i++) add(rays, cone(.09,.34,4), tint(c,.25), [Math.cos(i*.628)*.92,Math.sin(i*.628)*.92,0], null, {glow:true, rot:[0,0,i*.628 - Math.PI/2]}); g.userData.rays = rays; },
+    moon(g, c){ add(g, sph(.5,24,16), c, null, null, {glow:true}); [[.15,.2,.44,.1],[-.2,-.1,.43,.07],[.1,-.25,.41,.06]].forEach(p => add(g, sph(p[3],8,6), tint(c,-.14), [p[0],p[1],p[2]], [1,1,.3], {glow:true})); },
+    star(g, c){ add(g, new THREE.OctahedronGeometry(.28), c, null, [1,1,.5], {glow:true}); add(g, new THREE.OctahedronGeometry(.2), tint(c,.3), null, [1,1,.5], {glow:true, rot:[0,0,Math.PI/4]}); g.userData.twinkle = true; },
+    pond(g, c){ add(g, cyl(1.45,1.45,.05,32), tint(c,-.08), [0,.03,0]); add(g, cyl(1.2,1.2,.06,32), c, [0,.032,0]); [[.5,.3],[-.6,-.2],[.1,-.7]].forEach(p => add(g, cyl(.16,.16,.02,10), 0x3BB877, [p[0],.07,p[1]])); add(g, sph(.06,8,6), 0xFF8FB4, [.5,.11,.3]); g.userData.ripple = add(g, new THREE.TorusGeometry(.3,.02,6,24), WHITE, [-.2,.07,.3], null, {rot:[Math.PI/2,0,0], glow:true}); },
+    ball(g, c, c2){ add(g, sph(.34), c, [0,.34,0]); add(g, new THREE.TorusGeometry(.34,.035,8,24), c2, [0,.34,0], null, {rot:[Math.PI/2.6,0,0]}); },
+    balloon(g, c){ add(g, sph(.36,20,14), c, [0,1.6,0], [1,1.18,1]); add(g, cone(.06,.09,8), c, [0,1.16,0]); add(g, cyl(.006,.006,1.1,4), INK, [0,.58,0]); g.userData.float = true; },
+    egg(g, c, c2, r){ add(g, lathe([[0,0],[.2,.06],[.27,.22],[.24,.42],[.13,.6],[0,.66]], 18), c); for (let i = 0; i < 4; i++) add(g, sph(.035,6,5), tint(c,-.2), [Math.cos(i*1.7)*.23,.2+r()*.25,Math.sin(i*1.7)*.23], [1,1,.4]); },
+    apple(g, c){ add(g, sph(.2,14,10), c, [0,.2,0], [1,.92,1]); add(g, cyl(.012,.012,.1,4), WOOD, [0,.42,0]); add(g, sph(.06,6,5), 0x3BB877, [.06,.44,0], [1,.3,.6]); },
+    box(g, c){ add(g, box(.7,.7,.7), c, [0,.35,0]); [[0,.7],[0,0]].forEach(p => add(g, box(.76,.07,.76), tint(c,-.2), [0,p[1]+.02,0])); [-1,1].forEach(d => add(g, box(.07,.7,.76), tint(c,-.2), [d*.345,.35,0])); },
+    chest(g, c){ add(g, box(.8,.42,.5), c, [0,.21,0]); add(g, cyl(.25,.25,.8,12,1,false,0,Math.PI), tint(c,-.1), [0,.42,0], null, {rot:[0,0,Math.PI/2]}); [-.28,.28].forEach(x => add(g, box(.07,.46,.53), 0xFFC83D, [x,.22,0])); add(g, box(.1,.14,.04), 0xFFC83D, [0,.36,.26]); for (let i = 0; i < 4; i++) add(g, sph(.05,6,5), 0xFFD43B, [-.2+i*.13,.48,.1], null, {glow:true}); },
+    table(g, c){ add(g, box(1.3,.09,.8), c, [0,.7,0]); [[-.55,-.3],[.55,-.3],[-.55,.3],[.55,.3]].forEach(a => add(g, cyl(.05,.04,.66,8), tint(c,-.15), [a[0],.33,a[1]])); },
+    cake(g, c){ add(g, cyl(.36,.36,.24,20), 0xFFF3DC, [0,.12,0]); add(g, cyl(.37,.37,.07,20), c, [0,.26,0]); add(g, cyl(.24,.24,.2,20), 0xFFF3DC, [0,.4,0]); add(g, cyl(.25,.25,.06,20), c, [0,.52,0]); add(g, cyl(.015,.015,.14,5), 0x39A0FF, [0,.62,0]); g.userData.flame = [add(g, sph(.035,6,5), 0xFFD43B, [0,.72,0], [1,1.5,1], {glow:true})]; },
+    cookie(g, c, c2, r){ add(g, cyl(.3,.3,.08,16), c, [0,.05,0]); for (let i = 0; i < 6; i++) add(g, sph(.04,6,5), 0x4A2E1B, [(r()-.5)*.4,.09,(r()-.5)*.4]); },
+    jar(g, c){ add(g, cyl(.2,.26,.5,14), 0xD9A066, [0,.26,0]); add(g, lathe([[0,0],[.3,0],[.34,.15],[.34,.55],[.26,.7],[.26,.74]], 20), c, null, null, {glass:true}); add(g, cyl(.28,.28,.09,16), 0x3F9BFF, [0,.79,0]); add(g, sph(.07,8,6), 0x3F9BFF, [0,.87,0]); },
+    book(g, c){ add(g, box(.62,.1,.46), WHITE, [0,.07,0], null, {rot:[0,.3,0]}); add(g, box(.66,.03,.5), c, [0,.13,0], null, {rot:[0,.3,0]}); add(g, box(.66,.03,.5), c, [0,.015,0], null, {rot:[0,.3,0]}); },
+    boat(g, c, c2){ add(g, sph(.7,16,10,0,Math.PI*2,Math.PI/2,Math.PI/2), c, [0,.3,0], [1,.5,.5]); add(g, cyl(.03,.03,1.2,6), WOOD, [0,.9,0]); add(g, cone(.5,.95,3), c2, [.02,1,0], [1,1,.08], {rot:[0,Math.PI/2,0]}); add(g, box(.2,.12,.02), 0xFF6B5E, [.1,1.56,0]); },
+    rocket(g, c, c2){ add(g, lathe([[0,0],[.26,0],[.32,.3],[.3,.9],[.16,1.3],[0,1.5]], 20), c, [0,.4,0]); add(g, cyl(.31,.31,.1,20), c2, [0,.98,0]); add(g, sph(.12,12,8), 0x9FD8FF, [0,1.25,.27], [1,1,.4]); [0,2.094,4.188].forEach(a => add(g, box(.05,.5,.34), c2, [Math.cos(a)*.36,.5,Math.sin(a)*.36], null, {rot:[0,-a,0]})); g.userData.flame = [add(g, cone(.2,.55,10), 0xFF7A2F, [0,.14,0], null, {glow:true, rot:[Math.PI,0,0]})]; },
+    plane(g, c, c2){ add(g, sph(.3,18,12), c, null, [2.6,.8,.8]); add(g, box(.5,.06,2), c2, [.15,.02,0]); add(g, box(.3,.05,.8), c2, [-.66,.05,0]); add(g, box(.3,.4,.05), c2, [-.66,.24,0]); add(g, sph(.16,12,8), 0x9FD8FF, [.28,.2,0], [1.4,.8,.9]); const p = sub(g,.8,0,0); add(p, box(.03,.72,.09), INK); add(p, box(.03,.09,.72), INK); g.userData.prop = p; },
+    car(g, c){ add(g, box(1.3,.3,.64), c, [0,.36,0]); add(g, sph(.42,16,10,0,Math.PI*2,0,Math.PI/2), c, [-.05,.5,0], [1.25,.9,.72]); add(g, box(.5,.2,.66), 0x9FD8FF, [-.05,.62,0]); [[-.42,.33],[.42,.33],[-.42,-.33],[.42,-.33]].forEach(a => { add(g, cyl(.18,.18,.13,14), 0x2B2B3A, [a[0],.18,a[1]], null, {rot:[Math.PI/2,0,0]}); add(g, cyl(.08,.08,.14,10), 0xD8DEE9, [a[0],.18,a[1]], null, {rot:[Math.PI/2,0,0]}); }); [-.2,.2].forEach(z => add(g, sph(.06,8,6), 0xFFF3A0, [.66,.38,z], null, {glow:true})); },
+    snowman(g){ add(g, sph(.42), WHITE, [0,.4,0]); add(g, sph(.3), WHITE, [0,.98,0]); add(g, sph(.22), WHITE, [0,1.42,0]); add(g, cone(.04,.2,6), 0xFF7A2F, [0,1.42,.26], null, {rot:[Math.PI/2,0,0]}); [-.08,.08].forEach(x => add(g, sph(.028,6,5), INK, [x,1.48,.19])); add(g, cyl(.17,.17,.2,12), INK, [0,1.68,0]); add(g, cyl(.26,.26,.03,12), INK, [0,1.59,0]); add(g, new THREE.TorusGeometry(.2,.05,6,16), 0xFF6B5E, [0,1.24,0], null, {rot:[Math.PI/2,0,0]}); },
+    butterfly(g, c){ add(g, sph(.04,6,5), INK, [0,1.2,0], [1,1,3]); g.userData.wings = [-1,1].map(d => { const w = sub(g,0,1.2,0); add(w, sph(.16,10,6), c, [d*.16,0,.05], [1,.08,.8]); add(w, sph(.11,10,6), tint(c,.3), [d*.12,0,-.1], [1,.08,.8]); return w; }); g.userData.flutter = true; },
+    sphere(g, c){ add(g, sph(.4), c, [0,.4,0]); },
+    cone(g, c){ add(g, cone(.4,.9), c, [0,.45,0]); },
+    cylinder(g, c){ add(g, cyl(.35,.35,.8), c, [0,.4,0]); }
+  };
+  const THING_COLOR = {tree:"#2FAE66", pine:"#1F8F5A", bush:"#3BB877", flower:"#FF6B8E", mushroom:"#E8413C", rock:"#9AA3AF", hill:"#69C383", mountain:"#8B95A7", house:"#FFD27A", castle:"#C9CEDA", tent:"#FF9F43", fence:"#F4E7D0", signpost:"#D9A066", cloud:"#FFFFFF", sun:"#FFD43B", moon:"#F5F0D0", star:"#FFE066", pond:"#6EC3FF", ball:"#FF6B5E", balloon:"#FF6B5E", egg:"#FFF6E0", apple:"#E8413C", box:"#D9A066", chest:"#B9824F", table:"#B9824F", cake:"#FF8FB4", cookie:"#D9A066", jar:"#CFEFFF", book:"#7B5CFF", boat:"#E0703A", rocket:"#F4F4F8", plane:"#FF6B5E", car:"#39A0FF", butterfly:"#FF9F43", sphere:"#FF9F43", cone:"#7B5CFF", cylinder:"#39A0FF"};
+  const SKY_THINGS = {cloud: 3.9, sun: 4.9, moon: 4.9, star: 4.5, plane: 3.3};
+  const DEFAULT_MOVE = {cloud:"drift", tree:"sway", pine:"sway", flower:"sway", plane:"bob", boat:"bob", balloon:"bob", butterfly:"fly"};
 
   /* ---- characters ---- */
-  const eyes = (g, y, z, gap, r) => { [-gap, gap].forEach(x => put(g, mesh(sph(r || .035,6), 0x1B1B2B), x, y, z)); };
+  function face(g, y, z, gap, r, skinTone){
+    const eyes = [-1,1].map(d => { const e = sub(g, d*gap, y, z); add(e, sph(r,12,10), WHITE, null, [1,1.15,.55]); add(e, sph(r*.62,10,8), INK, [0,0,r*.34], [1,1.1,.55]); add(e, sph(r*.2,6,5), WHITE, [r*.2,r*.28,r*.62], null, {glow:true}); return e; });
+    if (skinTone) [-1,1].forEach(d => add(g, sph(r*.75,8,6), 0xFF9BA8, [d*gap*1.75, y - r*1.5, z - r*.5], [1,.7,.3]));
+    return eyes;
+  }
   function person(g, o, kid){
-    const shirt = col(o.color, "#39A0FF"), skin = col(o.skin, "#F2C29B"), hair = col(o.hair, "#5A3A22");
-    [-.11,.11].forEach(x => put(g, mesh(cyl(.07,.07,.45,8), 0x34405A), x,.225,0));
-    put(g, mesh(cyl(.2,.26,.55,10), shirt), 0,.72,0);
-    const arms = [-1,1].map(d => { const a = new THREE.Group(); a.position.set(d*.27,.95,0); put(a, mesh(cyl(.055,.055,.42,6), shirt), 0,-.21,0); put(a, mesh(sph(.065,6), skin), 0,-.44,0); a.rotation.z = d*.18; g.add(a); return a; });
-    put(g, mesh(sph(.27,14), skin), 0,1.24,0);
-    const h = put(g, mesh(sph(.285,12), hair), 0,1.31,-.05); h.scale.set(1,.82,1);
-    eyes(g, 1.24, .25, .09);
-    g.userData.arm = arms[1];
-    g.scale.multiplyScalar(kid ? .85 : 1.08);
+    const shirt = col(o.color, "#39A0FF"), skin = col(o.skin, "#F2C29B"), hair = col(o.hair, "#5A3A22"), pants = tint(shirt, -.45);
+    const legs = [-1,1].map(d => { const l = sub(g, d*.11, .42, 0); add(l, cyl(.075,.07,.34,10), pants, [0,-.17,0]); add(l, sph(.1,12,8), 0xFFFFFF, [0,-.36,.04], [.9,.6,1.35]); return l; });
+    add(g, lathe([[0,0],[.26,0],[.28,.1],[.21,.4],[.13,.5],[0,.52]], 20), shirt, [0,.38,0]);
+    add(g, cyl(.275,.275,.06,20), tint(shirt,-.2), [0,.42,0]);
+    const arms = [-1,1].map(d => { const a = sub(g, d*.2, .84, 0); add(a, cyl(.055,.05,.34,8), shirt, [0,-.17,0]); add(a, sph(.065,10,8), skin, [0,-.38,0]); a.rotation.z = d*.3; return a; });
+    const head = sub(g, 0, 1.2, 0);
+    add(head, sph(.33), skin); [-1,1].forEach(d => add(head, sph(.07,8,6), skin, [d*.32,-.02,0]));
+    add(head, sph(.345,24,16,0,Math.PI*2,0,Math.PI*.56), hair, [0,.02,-.02], null, {rot:[-.32,0,0]});
+    add(head, sph(.12,10,8), hair, [-.14,.24,.2], [1.5,.6,1]); add(head, sph(.11,10,8), hair, [.12,.25,.2], [1.3,.6,1]);
+    const style = String(o.hairstyle || "").toLowerCase() || ["short","pigtails","bun","long"][(String(o.hair || "").length + String(o.color || "").charCodeAt(1) || 0) % 4];
+    if (style === "pigtails") [-1,1].forEach(d => { add(head, sph(.13,12,8), hair, [d*.37,-.05,-.05], [1,1.3,1]); add(head, sph(.045,6,5), 0xFF6B8E, [d*.33,.08,-.02]); });
+    else if (style === "bun") add(head, sph(.15,12,8), hair, [0,.36,-.08]);
+    else if (style === "long") add(head, sph(.33,16,12), hair, [0,-.16,-.14], [1.02,1.15,.7]);
+    const eyes = face(head, .02, .27, .125, .07, true);
+    add(head, new THREE.TorusGeometry(.07,.014,6,14,Math.PI), 0xB5473C, [0,-.1,.31], null, {rot:[0,0,Math.PI]});
+    Object.assign(g.userData, {arm: arms[1], armL: arms[0], legs, eyes, head});
+    g.scale.multiplyScalar(kid ? .92 : 1.2);
   }
   function animal(g, o, kind){
-    const fur = col(o.color, {dog:"#C98B4F", cat:"#F0A94B", bunny:"#F4F1EA", bear:"#8A5A3B"}[kind] || "#C98B4F"), light = fur.clone().lerp(new THREE.Color(0xffffff), .45);
-    const b = put(g, mesh(sph(.34,12), fur), 0,.46,0); b.scale.set(1,.85,1.35);
-    [[-.17,.26],[.17,.26],[-.17,-.26],[.17,-.26]].forEach(a => put(g, mesh(cyl(.07,.07,.3,7), fur), a[0],.15,a[1]));
-    put(g, mesh(sph(.25,12), fur), 0,.82,.4);
-    put(g, mesh(sph(.11,8), light), 0,.76,.62); put(g, mesh(sph(.04,6), 0x1B1B2B), 0,.8,.72);
-    eyes(g, .88, .61, .1);
+    const base = {dog:"#C98B4F", cat:"#F0A94B", bunny:"#F4F1EA", bear:"#8A5A3B", fox:"#F2893B", pig:"#FFB3C1"}[kind] || "#C98B4F";
+    const fur = col(o.color, base), light = tint(fur, .5), dark = tint(fur, -.25);
+    add(g, sph(.34), fur, [0,.46,0], [1,.9,1.3]); add(g, sph(.26), light, [0,.38,.12], [.85,.7,1.1]);
+    [[-.17,.27],[.17,.27],[-.17,-.27],[.17,-.27]].forEach(a => { add(g, cyl(.075,.07,.3,10), fur, [a[0],.16,a[1]]); add(g, sph(.085,10,8), kind === "fox" ? INK : light, [a[0],.045,a[1]+.02], [1,.55,1.2]); });
+    const head = sub(g, 0, .86, .4);
+    add(head, sph(.27), fur);
+    if (kind === "pig") { add(head, cyl(.1,.1,.08,14), tint(fur,-.12), [0,-.04,.26], null, {rot:[Math.PI/2,0,0]}); [-.035,.035].forEach(x => add(head, sph(.018,6,5), INK, [x,-.04,.305])); }
+    else { add(head, sph(.13,12,10), kind === "bear" ? light : (kind === "fox" || kind === "cat" ? WHITE : light), [0,-.07,.2], [1.1,.8,1]); add(head, sph(.045,8,6), INK, [0,-.03,.32]); }
+    const eyes = face(head, .06, .21, .11, .055, false);
     [-1,1].forEach(d => {
-      if (kind === "cat") put(g, mesh(cone(.09,.18,4), fur), d*.15,1.08,.38);
-      else if (kind === "bunny") put(g, mesh(cyl(.05,.06,.42,7), fur), d*.1,1.22,.36);
-      else if (kind === "bear") put(g, mesh(sph(.09,7), fur), d*.19,1.04,.36);
-      else { const e = put(g, mesh(box(.1,.26,.06), fur.clone().multiplyScalar(.75)), d*.25,.84,.4); e.rotation.z = d*.25; }
+      if (kind === "cat" || kind === "fox") { add(head, cone(.1,.2,4), fur, [d*.16,.27,0], null, {rot:[0,Math.PI/4,d*-.25]}); add(head, cone(.055,.12,4), kind === "fox" ? INK : 0xFF9BA8, [d*.16,.27,.03], null, {rot:[0,Math.PI/4,d*-.25]}); }
+      else if (kind === "bunny") { add(head, sph(.07,10,8), fur, [d*.1,.48,-.02], [1,3.4,.7], {rot:[0,0,d*-.14]}); add(head, sph(.04,8,6), 0xFF9BA8, [d*.1,.48,.02], [1,3,.4], {rot:[0,0,d*-.14]}); }
+      else if (kind === "bear") { add(head, sph(.1,10,8), fur, [d*.2,.22,0]); add(head, sph(.055,8,6), light, [d*.2,.22,.06]); }
+      else if (kind === "pig") add(head, cone(.09,.16,4), tint(fur,-.1), [d*.17,.22,.05], null, {rot:[.6,0,d*-.5]});
+      else add(head, sph(.1,10,8), dark, [d*.25,.02,0], [.55,1.5,.9], {rot:[0,0,d*.3]});
     });
-    const t = put(g, mesh(kind === "bunny" || kind === "bear" ? sph(.1,7) : cyl(.04,.05,.36,6), fur), 0, kind === "bunny" || kind === "bear" ? .5 : .68, -.5); if (kind !== "bunny" && kind !== "bear") t.rotation.x = -.7;
+    const tail = sub(g, 0, .56, -.42);
+    if (kind === "bunny" || kind === "bear") add(tail, sph(.1,10,8), kind === "bunny" ? WHITE : fur, [0,0,-.04]);
+    else if (kind === "pig") add(tail, new THREE.TorusGeometry(.06,.02,6,12), fur, [0,.04,-.04], null, {rot:[0,Math.PI/2,0]});
+    else if (kind === "fox") { add(tail, sph(.13,12,8), fur, [0,.06,-.2], [1,1,2.2], {rot:[-.5,0,0]}); add(tail, sph(.09,10,8), WHITE, [0,.18,-.42]); }
+    else add(tail, cyl(.035,.05,.4,8), fur, [0,.14,-.1], null, {rot:[-.7,0,0]});
+    Object.assign(g.userData, {tail, eyes, head});
   }
   function dino(g, o){
-    const c = col(o.color, "#4DBB6D"), belly = c.clone().lerp(new THREE.Color(0xffffff), .5);
-    const b = put(g, mesh(sph(.5,12), c), 0,.72,0); b.scale.set(1,.9,1.25);
-    put(g, mesh(sph(.34,10), belly), 0,.62,.3);
-    const n = put(g, mesh(cyl(.17,.24,.8,8), c), 0,1.3,.38); n.rotation.x = .35;
-    put(g, mesh(sph(.27,12), c), 0,1.72,.6); eyes(g, 1.8, .82, .11);
-    const tl = put(g, mesh(cone(.24,1,7), c), 0,.62,-.85); tl.rotation.x = -1.35;
-    [-.25,.25].forEach(x => put(g, mesh(cyl(.13,.15,.42,8), c), x,.21,.05));
-    for (let i = 0; i < 4; i++) put(g, mesh(cone(.08,.2,4), 0xFFC83D), 0, 1.22 - i*.03, -.1 - i*.24);
+    const c = col(o.color, "#4DBB6D"), belly = tint(c, .5), dark = tint(c, -.22);
+    add(g, sph(.5), c, [0,.72,0], [1,.92,1.25]); add(g, sph(.4), belly, [0,.62,.2], [.82,.78,1]);
+    [[-.2,.95,-.2],[.25,.9,.1],[.1,1.02,-.4],[-.3,.75,.3]].forEach(p => add(g, sph(.07,8,6), dark, p, [1,1,.5]));
+    [[0,1.1,.3,.24],[0,1.36,.42,.21],[0,1.6,.52,.19]].forEach(n => add(g, sph(n[3]), c, [n[0],n[1],n[2]]));
+    const head = sub(g, 0, 1.86, .62);
+    add(head, sph(.26), c, null, [1,.92,1.1]); add(head, sph(.19), c, [0,-.06,.2], [1,.75,1.1]);
+    [-.06,.06].forEach(x => add(head, sph(.018,6,5), INK, [x,-.02,.39]));
+    add(head, new THREE.TorusGeometry(.1,.014,6,14,Math.PI), INK, [0,-.1,.3], null, {rot:[.3,0,Math.PI]});
+    const eyes = face(head, .1, .17, .12, .06, false);
+    const tail = sub(g, 0, .66, -.55); let seg = tail;
+    [.3,.24,.18,.13,.08].forEach((r, i) => { seg = sub(seg, 0, i ? -.02 : 0, i ? -.24 : 0); add(seg, sph(r,14,10), c); if (i < 4) add(seg, cone(.06,.16,4), 0xFFC83D, [0,r,0]); });
+    for (let i = 0; i < 5; i++) add(g, cone(.08,.2,4), 0xFFC83D, [0,1.75 - i*.2,.36 - i*.2], null, {rot:[-.6,0,0]});
+    [-1,1].forEach(d => { add(g, cyl(.14,.16,.44,12), c, [d*.26,.22,.05]); add(g, sph(.17,12,8), c, [d*.26,.06,.12], [1,.5,1.3]); for (let i = -1; i <= 1; i++) add(g, sph(.035,6,5), WHITE, [d*.26+i*.08,.05,.33]); add(g, cyl(.05,.045,.24,8), c, [d*.36,.86,.36], null, {rot:[1,0,d*-.3]}); });
+    Object.assign(g.userData, {tail, tailChain: true, eyes, head});
   }
   function bird(g, o){
-    const c = col(o.color, "#39A0FF"); const y = 2.6;
-    put(g, mesh(sph(.24,10), c), 0,y,0); put(g, mesh(sph(.15,8), c), 0,y+.2,.2); eyes(g, y+.23, .33, .06, .025);
-    const bk = put(g, mesh(cone(.05,.16,5), 0xFFA53D), 0,y+.17,.38); bk.rotation.x = Math.PI/2;
-    g.userData.wings = [-1,1].map(d => { const w = new THREE.Group(); w.position.set(d*.2,y,0); put(w, mesh(box(.42,.04,.26), c), d*.2,0,0); g.add(w); return w; });
+    const c = col(o.color, "#39A0FF"), y = 2.6;
+    add(g, sph(.25,16,12), c, [0,y,0], [1,.9,1.25]); add(g, sph(.18,12,10), tint(c,.55), [0,y-.06,.1], [.8,.7,1]);
+    const head = sub(g, 0, y+.22, .22); add(head, sph(.17,16,12), c);
+    add(head, cone(.055,.17,6), 0xFFA53D, [0,-.02,.2], null, {rot:[Math.PI/2,0,0]});
+    const eyes = face(head, .04, .12, .075, .04, false);
+    add(g, box(.16,.03,.26), tint(c,-.2), [0,y,-.38], null, {rot:[.3,0,0]});
+    g.userData.wings = [-1,1].map(d => { const w = sub(g, d*.2, y+.04, 0); add(w, sph(.24,12,8), tint(c,-.12), [d*.2,0,0], [1,.12,.6]); return w; });
+    g.userData.eyes = eyes;
   }
   function robot(g, o){
-    const c = col(o.color, "#B8C4D6");
-    put(g, mesh(box(.55,.6,.4), c), 0,.72,0); put(g, mesh(box(.44,.36,.36), c), 0,1.24,0);
-    [-.1,.1].forEach(x => put(g, mesh(sph(.05,8), 0x39E0FF, true), x,1.27,.19));
-    put(g, mesh(cyl(.015,.015,.22,5), 0x55627A), 0,1.52,0); put(g, mesh(sph(.05,6), 0xFF6B5E, true), 0,1.65,0);
-    [-.14,.14].forEach(x => put(g, mesh(box(.14,.42,.16), 0x55627A), x,.21,0));
-    const arms = [-1,1].map(d => { const a = new THREE.Group(); a.position.set(d*.36,.95,0); put(a, mesh(box(.1,.44,.1), 0x55627A), 0,-.2,0); g.add(a); return a; });
-    g.userData.arm = arms[1];
+    const c = col(o.color, "#B8C4D6"), dark = 0x55627A;
+    add(g, box(.56,.56,.42), c, [0,.72,0]); add(g, box(.3,.2,.02), 0x33405E, [0,.76,.22]); [-.08,0,.08].forEach((x, i) => add(g, sph(.025,6,5), [0xFF6B5E,0xFFD43B,0x22B573][i], [x,.76,.235], null, {glow:true}));
+    const head = sub(g, 0, 1.26, 0); add(head, box(.48,.38,.4), c); add(head, box(.38,.2,.02), 0x1E2A44, [0,.02,.205]);
+    g.userData.eyes = [-1,1].map(d => add(head, sph(.05,10,8), 0x39E0FF, [d*.1,.03,.21], [1,1,.4], {glow:true}));
+    add(head, cyl(.015,.015,.2,5), dark, [0,.29,0]); add(head, sph(.05,8,6), 0xFF6B5E, [0,.42,0], null, {glow:true});
+    [-1,1].forEach(d => add(head, cyl(.05,.05,.06,10), dark, [d*.27,0,0], null, {rot:[0,0,Math.PI/2]}));
+    [-.14,.14].forEach(x => { add(g, box(.14,.36,.16), dark, [x,.26,0]); add(g, box(.18,.1,.26), dark, [x,.05,.04]); });
+    const arms = [-1,1].map(d => { const a = sub(g, d*.36, .95, 0); add(a, cyl(.05,.05,.4,8), dark, [0,-.2,0]); add(a, sph(.08,10,8), c, [0,-.44,0]); return a; });
+    Object.assign(g.userData, {arm: arms[1], armL: arms[0], head});
   }
   function character(o){
     const g = new THREE.Group(), kind = String(o.kind || "kid").toLowerCase();
-    if (kind === "kid" || kind === "child") person(g, o, true);
-    else if (kind === "adult" || kind === "person" || kind === "parent") person(g, o, false);
+    if (kind === "kid" || kind === "child" || kind === "girl" || kind === "boy") person(g, o, true);
+    else if (kind === "adult" || kind === "person" || kind === "parent" || kind === "mom" || kind === "dad") person(g, o, false);
     else if (kind === "dino" || kind === "dinosaur" || kind === "dragon") dino(g, o);
     else if (kind === "bird") bird(g, o);
     else if (kind === "robot") robot(g, o);
-    else animal(g, o, kind);
+    else animal(g, o, kind === "rabbit" ? "bunny" : kind === "kitten" ? "cat" : kind === "puppy" ? "dog" : kind);
     return g;
   }
 
+  /* ---- the world ---- */
+  function skyTexture(top, bottom){
+    const c = document.createElement("canvas"); c.width = 4; c.height = 256;
+    const x = c.getContext("2d"), gr = x.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, "#" + top.getHexString()); gr.addColorStop(.75, "#" + bottom.getHexString()); gr.addColorStop(1, "#" + bottom.getHexString());
+    x.fillStyle = gr; x.fillRect(0, 0, 4, 256);
+    const t = new THREE.CanvasTexture(c); if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; return t;
+  }
   function build(spec){
     const scene = new THREE.Scene(), anims = [];
     const night = spec.time === "night", sunset = spec.time === "sunset";
-    const sky = col(spec.sky, night ? "#1D2A55" : sunset ? "#FFC9A3" : "#BFE3FF"), ground = col(spec.ground, "#8FD694");
-    scene.background = sky; scene.fog = new THREE.Fog(sky, 16, 34);
-    scene.add(new THREE.HemisphereLight(sky.clone().lerp(new THREE.Color(0xffffff), .6), ground, night ? .35 : .55));
-    const sun = new THREE.DirectionalLight(sunset ? 0xFFD2A6 : 0xffffff, night ? .4 : .75);
+    const sky = col(spec.sky, night ? "#1D2A55" : sunset ? "#FFB98A" : "#8CCBFF"), ground = col(spec.ground, "#7FCF86");
+    const horizon = tint(sky, night ? .12 : .55);
+    scene.background = skyTexture(sky, horizon); scene.fog = new THREE.Fog(horizon, 18, 40);
+    scene.add(new THREE.HemisphereLight(tint(sky,.7), tint(ground,-.2), night ? .5 : .75));
+    const sun = new THREE.DirectionalLight(sunset ? 0xFFD2A6 : night ? 0xB9C8FF : 0xffffff, night ? .5 : .85);
     sun.position.set(5, 9, 6); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
-    Object.assign(sun.shadow.camera, {left:-9, right:9, top:9, bottom:-9, near:1, far:30}); sun.shadow.bias = -.0005;
+    Object.assign(sun.shadow.camera, {left:-9, right:9, top:9, bottom:-9, near:1, far:30}); sun.shadow.bias = -.0008; sun.shadow.radius = 3;
     scene.add(sun);
-    const island = mesh(cyl(7.2, 6.3, 1.2, 40), ground); island.position.y = -.6; island.castShadow = false; scene.add(island);
+    const r = seeded(JSON.stringify(spec).length * 7919 + 13);
+    // a floating island: grass on top, earth and rock underneath
+    const island = new THREE.Group(); scene.add(island);
+    add(island, cyl(7.2,7,.4,48), ground, [0,-.2,0]).castShadow = false;
+    add(island, cyl(7,5.4,1.1,48), 0x9B6B43, [0,-.95,0]); add(island, cone(5.4,3,12), 0x7A5536, [0,-3,0], null, {rot:[Math.PI,0,0], flat:true});
+    for (let i = 0; i < 46; i++) { const a = r()*6.283, d = Math.sqrt(r())*6.6; add(island, cone(.05,.2+r()*.14,4), tint(ground, r() < .5 ? -.16 : .14), [Math.cos(a)*d,.1,Math.sin(a)*d]).castShadow = false; }
+    for (let i = 0; i < 9; i++) { const a = r()*6.283, d = 2+r()*4.6; add(island, new THREE.DodecahedronGeometry(.07+r()*.07), 0xB8BFC9, [Math.cos(a)*d,.04,Math.sin(a)*d], [1,.6,1], {flat:true}); }
+    for (let i = 0; i < 12; i++) { const a = r()*6.283, d = 1.5+r()*5; const f = sub(island, Math.cos(a)*d, 0, Math.sin(a)*d); add(f, cyl(.012,.012,.16,4), 0x2E9E5B, [0,.08,0]); add(f, sph(.05,6,5), [0xFFFFFF,0xFFD43B,0xFF8FB4,0xB79CFF][i % 4], [0,.18,0]); }
+    for (let i = 0; i < 4; i++) { const a = r()*6.283; add(scene, new THREE.DodecahedronGeometry(.3+r()*.3), 0x8A6A4C, [Math.cos(a)*8.6,-1.5-r()*1.5,Math.sin(a)*8.6-1], [1,.7,1], {flat:true}); }
+    // floating specks: pollen by day, fireflies and stars by night
+    const pts = new Float32Array(150); for (let i = 0; i < 150; i += 3) { pts[i] = (r()-.5)*13; pts[i+1] = .3 + r()*4; pts[i+2] = (r()-.5)*8; }
+    const pg = new THREE.BufferGeometry(); pg.setAttribute("position", new THREE.BufferAttribute(pts, 3));
+    const motes = new THREE.Points(pg, new THREE.PointsMaterial({color: night ? 0xFFE98A : 0xffffff, size: night ? .11 : .07, transparent: true, opacity: night ? .95 : .7}));
+    scene.add(motes);
+    if (night) { const sp = new Float32Array(360); for (let i = 0; i < 360; i += 3) { sp[i] = (r()-.5)*60; sp[i+1] = 4 + r()*18; sp[i+2] = -12 - r()*14; } const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3)); scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color: 0xffffff, size: .12, fog: false}))); }
     const place = (g, o, isChar, i) => {
-      const type = String(o.type || "").toLowerCase(), s = num(o.size, 1, .3, 3);
+      const type = String(o.type || o.kind || "").toLowerCase(), s = num(o.size, 1, .3, 3);
       const y = isChar ? 0 : (SKY_THINGS[type] || 0);
-      g.position.set(num(o.x, 0, -5.5, 5.5), y, num(o.z, 0, -3.5, 3.5) - (SKY_THINGS[type] ? 2 : 0));
-      g.scale.multiplyScalar(s);
-      const move = String(o.move || (isChar ? "idle" : DEFAULT_MOVE[type] || "none")).toLowerCase();
-      anims.push({g, move, x: g.position.x, y: g.position.y, ph: i * 1.7});
-      scene.add(g);
+      g.position.set(num(o.x, 0, -5.5, 5.5), y, num(o.z, 0, -3.5, 3.5) - (SKY_THINGS[type] ? 2.5 : 0));
+      if (!isChar && !SKY_THINGS[type]) g.rotation.y = (r() - .5) * .5;
+      const move = String(o.move || (isChar ? (type === "bird" ? "fly" : "idle") : DEFAULT_MOVE[type] || "none")).toLowerCase();
+      anims.push({g, move, s, x: g.position.x, y, z: g.position.z, ph: i * 1.7, born: .25 + anims.length * .07, isChar});
+      g.scale.setScalar(.001); scene.add(g);
     };
-    (Array.isArray(spec.objects) ? spec.objects : []).slice(0, 18).forEach((o, i) => {
+    (Array.isArray(spec.objects) ? spec.objects : []).slice(0, 20).forEach((o, i) => {
       if (!o || typeof o !== "object") return;
-      const type = String(o.type || "").toLowerCase(), make = THINGS[type] || THINGS.sphere, g = new THREE.Group();
-      make(g, col(o.color, THING_COLOR[type] || "#FF9F43"), col(o.color2, "#FF6B5E"));
+      const type = String(o.type || "").toLowerCase(), g = new THREE.Group();
+      try { (THINGS[type] || THINGS.sphere)(g, col(o.color, THING_COLOR[type] || "#FF9F43"), col(o.color2, "#FF6B5E"), r); } catch(e) { THINGS.sphere(g, col(o.color, "#FF9F43")); }
       place(g, o, false, i);
     });
-    (Array.isArray(spec.characters) ? spec.characters : []).slice(0, 5).forEach((o, i) => { if (o && typeof o === "object") place(character(o), o, true, i + 20); });
-    return {scene, anims};
+    (Array.isArray(spec.characters) ? spec.characters : []).slice(0, 5).forEach((o, i) => {
+      if (!o || typeof o !== "object") return;
+      let g; try { g = character(o); } catch(e) { g = new THREE.Group(); THINGS.sphere(g, col(o.color, "#FF9F43")); }
+      g.userData.base = g.scale.x; place(g, o, true, i + 20);
+    });
+    return {scene, anims, motes, island, t0: null};
   }
+  const backOut = k => { const c = 1.7; k -= 1; return 1 + (c + 1) * k * k * k + c * k * k; };
   function tick(){
     if (!R || !R.canvas.isConnected) { if (R) R.raf = 0; return; }
     R.raf = requestAnimationFrame(tick);
-    const t = R.clock.getElapsedTime();
-    const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!still) R.built.anims.forEach(a => {
-      const g = a.g, u = g.userData;
-      if (a.move === "bob" || a.move === "idle") g.position.y = a.y + Math.sin(t*2 + a.ph) * (a.move === "idle" ? .03 : .1);
-      else if (a.move === "hop") g.position.y = a.y + Math.abs(Math.sin(t*3 + a.ph)) * .32;
-      else if (a.move === "spin") g.rotation.y = t + a.ph;
-      else if (a.move === "sway") g.rotation.z = Math.sin(t*1.2 + a.ph) * .05;
-      else if (a.move === "drift") g.position.x = a.x + Math.sin(t*.25 + a.ph) * .9;
-      if (u.arm) u.arm.rotation.z = a.move === "wave" ? 2.3 + Math.sin(t*6) * .35 : .18;
-      if (u.wings) u.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * Math.sin(t*9) * .6; });
+    const B = R.built, now = R.clock.getElapsedTime();
+    if (B.t0 === null) B.t0 = now;
+    const t = now - B.t0, still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    B.anims.forEach(a => {
+      const g = a.g, u = g.userData, base = (u.base || 1) * a.s;
+      const k = still ? 1 : Math.min(1, Math.max(0, (t - a.born) / .5));
+      g.scale.setScalar(Math.max(.001, base * (k < 1 ? backOut(k) : 1))); // things pop in one after another
+      if (still) return;
+      const m = a.move, w = t + a.ph;
+      if (m === "bob") g.position.y = a.y + Math.sin(w*2) * .1;
+      else if (m === "hop") g.position.y = a.y + Math.abs(Math.sin(w*3)) * .34;
+      else if (m === "spin") g.rotation.y = w;
+      else if (m === "sway") g.rotation.z = Math.sin(w*1.2) * .05;
+      else if (m === "drift") g.position.x = a.x + Math.sin(w*.25) * .9;
+      else if (m === "fly") { g.position.x = a.x + Math.cos(w*.7) * 1.1; g.position.z = a.z + Math.sin(w*.7) * .7; g.position.y = a.y + Math.sin(w*1.9) * .15; g.rotation.y = -w*.7; }
+      else if (m === "walk") { g.position.x = a.x + Math.sin(w*.6) * .7; g.rotation.y = Math.cos(w*.6) > 0 ? 1.1 : -1.1; }
+      if (a.isChar) {
+        const moving = m === "walk" || m === "hop";
+        if (m !== "hop" && m !== "fly") g.position.y = a.y + Math.abs(Math.sin(w*2)) * .02;
+        if (u.head) { u.head.rotation.z = Math.sin(w*.9) * .06; u.head.rotation.y = Math.sin(w*.5) * .18; }
+        if (u.arm) u.arm.rotation.z = m === "wave" ? 2.5 + Math.sin(t*7) * .4 : .3;
+        if (u.arm && m !== "wave") u.arm.rotation.x = Math.sin(w*(moving ? 6 : 1.6)) * (moving ? .6 : .12);
+        if (u.armL) u.armL.rotation.x = -Math.sin(w*(moving ? 6 : 1.6)) * (moving ? .6 : .12);
+        if (u.legs) u.legs.forEach((l, i) => { l.rotation.x = m === "walk" ? Math.sin(w*6 + i*Math.PI) * .5 : 0; });
+        if (u.eyes) { const blink = ((w * .37) % 1) > .96 ? .12 : 1; u.eyes.forEach(e => { e.scale.y = blink; }); }
+        if (u.tail) { if (u.tailChain) { let n = u.tail, i = 0; while (n && i < 6) { n.rotation.y = Math.sin(w*1.6 - i*.5) * .16; n = n.children.find(c => c.type === "Group"); i++; } } else u.tail.rotation.y = Math.sin(w*9) * .5; }
+      }
+      if (u.wings) u.wings.forEach((wg, i) => { wg.rotation.z = (i ? -1 : 1) * Math.sin(t*(u.flutter ? 14 : 10)) * .7; });
+      if (u.smoke) u.smoke.forEach((p, i) => { const q = ((t*.35 + i/3) % 1); p.position.y = 1.85 + q*1.1; p.position.x = .38 + Math.sin(q*5+i)*.1; p.scale.setScalar(.5 + q*1.2); p.visible = q < .95; });
+      if (u.ripple) { const q = (t*.4) % 1; u.ripple.scale.setScalar(.4 + q*2.4); u.ripple.visible = q < .9; }
+      if (u.flame) u.flame.forEach((f, i) => { f.scale.set(1 + Math.sin(t*13+i)*.12, 1 + Math.sin(t*17+i*2)*.2, 1 + Math.cos(t*11+i)*.12); });
+      if (u.rays) u.rays.rotation.z = t * .3;
+      if (u.prop) u.prop.rotation.x = t * 22;
+      if (u.twinkle) g.scale.multiplyScalar(1 + Math.sin(w*4) * .18);
+      if (u.float) g.rotation.z = Math.sin(w*.9) * .08;
     });
-    const ang = still ? 0 : Math.sin(t * .22) * .16;
-    R.camera.position.set(Math.sin(ang) * 11, 3.3, Math.cos(ang) * 11); R.camera.lookAt(0, 1, 0);
-    R.renderer.render(R.built.scene, R.camera);
+    if (!still) { B.motes.position.y = (t * .12) % 1; B.motes.rotation.y = t * .02; B.island.position.y = Math.sin(t*.5) * .04; }
+    const ang = still ? 0 : Math.sin(t * .22) * .2, zoom = still ? 0 : Math.max(0, 1 - t / 1.8), dist = 11.5 + zoom * zoom * 6;
+    R.camera.position.set(Math.sin(ang) * dist, 3.2 + zoom * 2, Math.cos(ang) * dist); R.camera.lookAt(0, .8, 0);
+    R.renderer.render(B.scene, R.camera);
   }
   function fit(el){
     const w = el.clientWidth || 640, h = el.clientHeight || 360;
     R.renderer.setSize(w, h, false);
     R.camera.aspect = w / h;
-    // keep the whole island (about 6 units either side) in view whatever the picture's shape
-    R.camera.fov = Math.min(78, Math.max(30, 2 * Math.atan(.58 / (w / h)) * 180 / Math.PI)); R.camera.updateProjectionMatrix();
+    // keep most of the island in view whatever the picture's shape
+    R.camera.fov = Math.min(74, Math.max(30, 2 * Math.atan(.54 / (w / h)) * 180 / Math.PI)); R.camera.updateProjectionMatrix();
   }
   function show(el, spec){
     try {
@@ -842,17 +879,17 @@ const Stage3D = (() => {
         renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
         renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         if (THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
-        R = {renderer, canvas: renderer.domElement, camera: new THREE.PerspectiveCamera(36, 16/9, .1, 80), clock: new THREE.Clock(), raf: 0};
+        R = {renderer, canvas: renderer.domElement, camera: new THREE.PerspectiveCamera(36, 16/9, .1, 120), clock: new THREE.Clock(), raf: 0};
         R.canvas.setAttribute("role", "img"); R.canvas.setAttribute("aria-label", "Moving picture of the scene");
       }
-      if (shown !== spec) { R.built = build(spec); shown = spec; }
+      if (shown !== spec) { toon(0xffffff); R.built = build(spec); shown = spec; }
       if (R.canvas.parentNode !== el) { el.textContent = ""; el.appendChild(R.canvas); }
       fit(el);
       if (watcher) watcher.disconnect();
       if (window.ResizeObserver) { watcher = new ResizeObserver(() => { if (R.canvas.isConnected) fit(el); }); watcher.observe(el); }
       if (!R.raf) tick();
       return true;
-    } catch(e) { usable = false; return false; }
+    } catch(e) { console.error("3D picture failed", e); usable = false; return false; }
   }
   return {ok, show};
 })();
@@ -865,12 +902,12 @@ function mountArt(){
 function scene3dPrompt(scene){
   return `You are the Illustrator agent for a children's picture book. Design ONE small 3D scene, like a toy diorama, for this page. You only describe it as JSON; the app builds it.
 The stage is a round island. x goes from -5 (left) to 5 (right). z goes from -3 (back) to 3 (front). size 1 is normal, 0.5 small, 2 big.
-"objects": 7 to 14 things, each {"type","x","z","size","color","move"}.
-  type is one of: tree, pine, bush, flower, rock, hill, mountain, house, cloud, sun, moon, star, pond, ball, egg, box, table, cookie, jar, book, boat, rocket, plane, car, sphere, cone, cylinder.
+"objects": 9 to 16 things, each {"type","x","z","size","color","move"}.
+  type is one of: tree, pine, bush, flower, mushroom, rock, hill, mountain, house, castle, tent, fence, signpost, campfire, cloud, sun, moon, star, pond, ball, balloon, egg, apple, box, chest, table, cake, cookie, jar, book, boat, rocket, plane, car, snowman, butterfly, sphere, cone, cylinder. house, castle, tent, ball, boat, rocket and plane also take "color2" for the roof, sail or trim.
   For anything else, use the closest type. Things the story counts (for example 8 eggs) must appear exactly that many times.
   move is one of: none, bob, hop, spin, sway, drift.
-"characters": 1 to 4, each {"kind","x","z","size","color","skin","hair","move"}.
-  kind is one of: kid, adult, dog, cat, bunny, bear, dino, bird, robot, animal. color is the shirt or fur colour. skin and hair only for kid and adult. move is one of: idle, hop, wave.
+"characters": 1 to 4, each {"kind","x","z","size","color","skin","hair","hairstyle","move"}.
+  kind is one of: kid, adult, dog, cat, bunny, bear, fox, pig, dino, bird, robot, animal. color is the shirt or fur colour. skin, hair and hairstyle (short, pigtails, bun or long) only for kid and adult. move is one of: idle, hop, wave, walk.
 Colours are hex codes like "#FFC83D". Use a bright, friendly palette. Spread things out so nothing overlaps, keep characters near the front (z from 0 to 2.5) and scenery behind them.
 The hero is ${S.settings.child_name}: ${S.heroLook}. ${S.hero3d ? `Use exactly this for the hero, changing only x, z and move: ${JSON.stringify(S.hero3d)}` : "Put the hero first in characters, as a kid."}
 The page to illustrate: ${scene.image_description || scene.scene_text}
@@ -1090,6 +1127,7 @@ Judge each warm-up answer kindly (close enough counts). Return ONLY JSON:
 /* ============ RENDER ============ */
 function render(){
   const st = $("stage");
+  document.body.dataset.screen = screen;
   if (screen === "home") st.innerHTML = homeView();
   else if (screen === "setup") st.innerHTML = setupView();
   else if (screen === "warmup") st.innerHTML = warmupView();
@@ -1105,32 +1143,32 @@ const COVERS = [
 ];
 const NO_ART = `<div class="wait"><small>No picture for this scene</small></div>`;
 function homeView(){
-  const tints = ["var(--leaf-soft)", "var(--sky-soft)", "var(--tomato-soft)"];
+  const cloth = ["var(--blue)", "#2F6B4F", "#8A2F3D"];
   return `<div class="hero">
-    <h1>A reading adventure built around your child.</h1>
-    <p>Pick a book, or make one about your child. Our AI agents write it at their reading level, with a moving picture beside the words and choices that change what happens next.</p>
+    <h1>What shall we read today?</h1>
+    <p>Every book here is written while you read it, and you choose what happens next.</p>
   </div>
-  <div class="section-h"><h2>Library</h2><span class="tier">Free</span></div>
-  <div class="shelf">${LIBRARY.map((l,i) => `<button type="button" class="cover" data-lib="${i}" style="--c:${tints[i % 3]}">
-      <span class="cover-art" aria-hidden="true">${COVERS[i] || ""}</span>
-      <span class="cover-title">${esc(l.title)}</span>
-      <span class="cover-meta">${esc(l.lessonLabel)} · Ages ${l.settings.child_age - 1}–${l.settings.child_age + 2}</span>
-    </button>`).join("")}
-    <button type="button" class="cover make" id="goCustom">
-      <span class="plus" aria-hidden="true">+</span>
-      <span class="cover-title">Make a book for your child</span>
-      <span class="cover-meta">Premium · their name, their interests, your lesson</span>
-    </button>
+  <div class="shelf">${LIBRARY.map((l,i) => `<button type="button" class="cover" data-lib="${i}" style="--c:${cloth[i % 3]}">
+      <span class="cover-face"><span class="cover-frame">
+        <span class="cover-title">${esc(l.title)}</span>
+        <span class="cover-rule" aria-hidden="true"></span>
+        <span class="cover-by">A StoryForge original</span>
+      </span></span>
+      <span class="cover-meta"><b>${esc(l.lessonLabel.replace(" · ", ": "))}</b>Ages ${l.settings.child_age - 1} to ${l.settings.child_age + 2}</span>
+    </button>`).join("")}</div>
+  <div class="makeband">
+    <div><h2>Make a book about your child</h2><p>Their name, the things they love, the lesson you pick and the limits you set.</p></div>
+    <button type="button" class="btn go" id="goCustom">Make a book</button>
   </div>
-  <div class="card quick">
-    <h2 style="font-size:24px">Quick book</h2>
-    <p class="sub">No time to set up? Pick a subject and an age. The AI picks the lesson and writes the book.</p>
+  <div class="quick">
+    <h2>In a hurry?</h2>
+    <p class="sub">Pick a subject and an age. We choose the lesson and start writing.</p>
     <div class="seg" role="group" aria-label="Subject">${SUBJECTS.map(s => `<button type="button" data-quick="${s[0]}" aria-pressed="${quick.subject === s[0]}">${s[1]}</button>`).join("")}</div>
     <div class="quick-row">
       <label for="q_age">Age</label>
       <select id="q_age">${[4,5,6,7,8,9,10,11,12].map(a => `<option ${quick.age === a ? "selected" : ""}>${a}</option>`).join("")}</select>
       <input id="q_name" placeholder="Child's name (optional)" value="${esc(quick.name)}">
-      <button type="button" class="btn go ico-play" id="quickGo">Start reading</button>
+      <button type="button" class="btn ico-play" id="quickGo">Start reading</button>
     </div>
   </div>`;
 }
@@ -1151,7 +1189,7 @@ function setupView(){
       <div class="field full"><label for="f_theme">Story idea (optional)</label><input id="f_theme" value="${esc(d.theme)}" placeholder="Leave empty and we'll build one from the interests"></div>
       <div class="field full"><label for="f_lim">Limits: what should the story avoid?</label><input id="f_lim" value="${esc(d.limits)}" placeholder="e.g. no scary monsters, no fighting"></div>
       <div class="field full"><label>How strong should consequences be?</label><span class="hint">Weaker choices lead to setbacks in the story, so kids learn from them.</span>${seg("consequence_level", [["gentle","Gentle"],["medium","Medium"],["real","Real"]])}</div>
-      <div class="field full row"><button type="submit" class="btn">Start the story</button><button type="button" class="btn secondary" id="backHome">Back</button></div>
+      <div class="field full row"><button type="submit" class="btn go">Write the book</button><button type="button" class="btn secondary" id="backHome">Back</button></div>
     </form>
   </div>`;
 }
@@ -1176,6 +1214,10 @@ function pagesOf(sc){
     sc._pages = front.concat(pages);
   }
   return sc._pages;
+}
+function leadIn(text){ // the opening word of a chapter, set like the first word in a classic edition
+  const m = String(text).match(/^(\S+)(\s[\s\S]*)?$/);
+  return m ? `<span class="lead">${esc(m[1].toUpperCase())}</span>${esc(m[2] || "")}` : esc(text);
 }
 function speakPage(){
   const sc = currentScene(); if (!sc || screen !== "story") return;
@@ -1207,12 +1249,12 @@ function storyView(){
   else if (!atChoice) {
     const pg = pages[S.page];
     side = pg.cover
-      ? `<div class="titlepage"><span class="eyebrow">A book for ${esc(S.settings.child_name)}</span><h1>${esc(S.title)}</h1>${S.settings.lesson ? `<p>${esc(S.settings.lesson)}</p>` : ""}</div>${speakBtn}`
-      : `${pg.cons ? `<span class="next-label">What happened next</span>` : ""}<p class="readtext ${pg.first ? "first" : ""}">${esc(pg.text)}</p>${speakBtn}<div class="pageno">${before + S.page + 1}</div>`;
+      ? `<div class="titlepage"><h1>${esc(S.title)}</h1><span class="cover-rule" aria-hidden="true"></span><span class="eyebrow">A book for ${esc(S.settings.child_name)}</span></div>${speakBtn}`
+      : `${pg.cons ? `<span class="next-label">What happened next</span>` : ""}<p class="readtext">${pg.first ? leadIn(pg.text) : esc(pg.text)}</p>${speakBtn}<div class="pageno">${before + S.page + 1}</div>`;
   }
   else side = `<p class="question">${esc(sc.question || "What do you do?")}</p>
     <div class="opts">${sc.options.map((o,i) => `<button type="button" class="opt o${i}" data-opt="${i}"><span class="k" aria-hidden="true">${"ABCD"[i]}</span><span>${esc(o.label)}</span></button>`).join("")}</div>
-    <div class="own"><input id="ownIn" placeholder="Or say or type your own idea…">${micButton("ownIn")}<button type="button" class="btn secondary" id="ownGo">Try my idea</button></div>
+    <div class="own"><input id="ownIn" placeholder="Or tell your own idea">${micButton("ownIn")}<button type="button" class="btn secondary" id="ownGo">Try my idea</button></div>
     <div class="tools">${speakBtn}${!S.rewindUsed && S.choices.length ? `<button type="button" class="btn secondary ico-rewind" id="rewind">Rewind one choice</button>` : ""}</div>`;
   const canTurn = idle && !atChoice;
   const last = S.page === pages.length - 1;
@@ -1247,7 +1289,7 @@ function endingView(){
   else if (S.report) {
     const r = S.report;
     const mark = v => v === true ? "✔ Right" : v === false ? "Not yet" : "Skipped";
-    rep = `<div class="card stack"><span class="pill premium">For the parent</span><h2 style="font-size:28px">${esc(S.settings.child_name)}'s learning report</h2>
+    rep = `<div class="card stack"><h2 style="font-size:28px">${esc(S.settings.child_name)}'s learning report</h2>
       <p style="max-width:66ch">${esc(r.summary || "")}</p>
       <div class="report">
         <div class="stat"><div class="n">${mark(r.after_correct)}</div><div class="l">Question after the story</div></div>
@@ -1257,9 +1299,9 @@ function endingView(){
       ${r.child_quote ? `<p class="quote">“${esc(r.child_quote)}”<br><span class="hint">${esc(S.settings.child_name)}, in a think-back moment</span></p>` : ""}
       ${Array.isArray(r.highlights) && r.highlights.length ? `<ul>${r.highlights.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}
       ${r.conversation_starter ? `<div class="think"><h3>Ask tonight</h3><p style="margin:0">${esc(r.conversation_starter)}</p></div>` : ""}
-      <div class="tools"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn secondary" id="backHome">Home</button></div></div>`;
+      <div class="tools"><button type="button" class="btn" id="again">Read it again</button><button type="button" class="btn secondary" id="backHome">Home</button></div></div>`;
   }
-  return `<div class="card stack"><h2 style="font-size:30px">The roads not taken</h2><p class="sub">Your path is outlined. The faded cards show where the other choices would have led.</p><div class="map">${cols}</div></div>${warm}${rep}`;
+  return `<div class="card stack"><h2 style="font-size:30px">The roads not taken</h2><p class="sub">Your path is outlined in blue. The grey cards show where the other choices would have led.</p><div class="map">${cols}</div></div>${warm}${rep}`;
 }
 
 /* ============ EVENTS ============ */

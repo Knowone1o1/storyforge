@@ -1,6 +1,6 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:15 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:21 PM. Deck locks at 4:00 PM.
 
 ## Rule until the demo: do not use up the Gemini quota
 
@@ -20,7 +20,16 @@ The live site runs on a free Gemini key with a small daily limit (roughly 20 req
 
 Every `git push` to `main` updates the live website by itself within about a minute. The Claude version only changes when Lorenzo republishes it.
 
-## Newest change: 3D pictures
+## Newest change: one designed look (UI pass)
+
+- One stylesheet replaces the three layered ones. Two typefaces: Literata (a book face) for titles and story text, Atkinson Hyperlegible for controls.
+- Reading happens in a deep-blue room with the paper book as the only bright thing. Sun yellow is used only for "go on" (Next, Start reading).
+- Covers are cloth-bound classic editions, type only, in the style of the PDFs in `docs/` (steel-blue serif titles, no pictures). The first word of each chapter is set bold and blue, like those PDFs.
+- Home leads with the shelf. No pills, no caps labels, no pastel cards.
+- The Backstage agent log is a small pill in the top bar that opens a panel.
+- Tested with the fake AI at tablet and phone width: full story, think-back, rewind, own idea, ending, report. No sideways scrolling.
+
+## Earlier change: 3D pictures
 
 - Each page's picture is now a small animated 3D scene (a toy-like island with characters, trees, houses and so on), drawn live in the page with Three.js. Characters wave and hop, clouds drift, the camera sways gently.
 - How it works: the Illustrator agent only describes the scene as a short list (what, where, which colour). Code in `index.html` (the `3D PICTURES` section) builds it from ready-made pieces. To add a new kind of object or animal, add it to `THINGS` or the character functions there.
