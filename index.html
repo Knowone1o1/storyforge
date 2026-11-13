@@ -1181,6 +1181,11 @@ function pagePaint(sc){ // a painted picture for the page being read, if the boo
 document.addEventListener("error", e => { // a painting that will not load gives way to the 3D picture
   const t = e.target; if (!t || !t.classList || !t.classList.contains("paint") || !S) return;
   S.scenes.forEach(sc => (sc._pages || []).forEach(pg => { if (pg.src && pg.src.img && t.getAttribute("src") === pg.src.img) pg.src.imgFailed = true; }));
+  const book = S.demo, here = currentScene() && currentScene().chapterId;
+  if (book && book.live && here && book.graph[here]) { // the painter is not answering: build this chapter's pictures in 3D instead
+    book._3d = book._3d || {};
+    if (!book._3d[here]) { book._3d[here] = true; const id = log("Illustrator", "the painter is busy, building pictures instead"); logDone(id, null, "fail"); drawChapters(book, [here], "this chapter"); }
+  }
   if (screen === "story") render();
 }, true);
 function pageSpec(sc){ // the picture for the page being read
