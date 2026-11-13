@@ -395,12 +395,20 @@ function webEleven(){
   const heard = new Map();
   let audio = null, ctl = null;
   const stop = () => { if (ctl) ctl.abort(); ctl = null; if (audio) { const a = audio; audio = null; a.pause(); } };
+  const pending = new Map();
+  const prefetch = text => { // get a page's audio ready before it is needed
+    text = String(text || "").slice(0, 1200);
+    if (!text || heard.has(text) || pending.has(text)) return;
+    pending.set(text, fetch("/api/tts", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({text})})
+      .then(r => r.ok ? r.blob() : null).then(b => { if (b) heard.set(text, URL.createObjectURL(b)); }).catch(() => {}).finally(() => pending.delete(text)));
+  };
   return {
-    stop,
+    stop, prefetch,
     audio: () => audio,
     async speak(text){
       stop();
       const mine = ctl = new AbortController();
+      if (pending.has(text)) await pending.get(text); // it is already on its way
       let url = heard.get(text);
       if (!url) {
         let r;
@@ -2225,7 +2233,14 @@ function tapWord(el){
   const b = getBrowserVoice(); // the browser voice answers at once, which is what a tapped word needs
   if (b) b.speak(word, {rate: 0.85}); else speak(word, null, true);
 }
-function speakPage(force){ if (!currentScene() || screen !== "story") return; RA.idx = 0; readFrom(0, force); }
+function speakPage(force){
+  if (!currentScene() || screen !== "story") return;
+  RA.idx = 0; readFrom(0, force);
+  try { // the site's ElevenLabs voice: fetch the next page's audio while this one is read
+    const sc = currentScene(), pages = pagesOf(sc), nx = pages[S.page + 1];
+    if (cap.tts && cap.tts.prefetch && nx && !muted) cap.tts.prefetch(nx.text);
+  } catch(e){}
+}
 function goEnding(){ stopSpeak(); awardStar(); screen = "ending"; render(); confetti(); if (S.warmup) speak("You finished the book! You earned a star."); }
 function storyView(){
   const sc = currentScene();

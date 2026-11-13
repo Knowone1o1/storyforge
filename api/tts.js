@@ -1,7 +1,8 @@
 // Narrator for the live site: turns a page of text into speech with ElevenLabs
 // and sends the audio back to the page. The key lives only in the host's settings.
 const KEY = () => process.env.ELEVENLABS_API_KEY || process.env.ELEVENLABS || process.env.ELEVEN_LABS_API_KEY;
-const VOICE = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // a clear, warm premade voice
+const VOICE = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // a clear, warm premade voice; set ELEVENLABS_VOICE_ID to change it
+const MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2"; // the most natural reading voice; eleven_flash_v2_5 is faster and half the credits
 const MAX_CHARS = 1200;
 
 export default async function handler(req, res) {
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}?output_format=mp3_44100_64`, {
       method: "POST",
       headers: { "xi-api-key": KEY(), "Content-Type": "application/json", Accept: "audio/mpeg" },
-      body: JSON.stringify({ text, model_id: "eleven_flash_v2_5" }), // the fast model, for short waits
+      body: JSON.stringify({ text, model_id: MODEL, voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } }),
       signal: AbortSignal.timeout(20000),
     });
     if (!r.ok) {
