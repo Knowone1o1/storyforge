@@ -1,6 +1,16 @@
 # StoryForge progress
 
-Last updated: Friday Nov 13, 12:35 PM. Deck locks at 4:00 PM.
+Last updated: Friday Nov 13, 12:40 PM. Deck locks at 4:00 PM.
+
+## Use this for the demo: the ready-made book
+
+"Dino Rescue at Fraction Falls" (first book on the shelf) is now fully ready-made: hand-written text, fixed choices and a hand-built 3D picture for every page. It opens instantly, needs no AI and uses no quota, so it cannot fail on stage.
+
+- 3 chapters with 3 pages each, 3 choice points with 4 options each, a result page for every option, and two endings (2 or more wise choices gives the better one).
+- The picture changes with the text on every page: 8 eggs, then 7 with one rolling away, the nest filling up, 4 babies hatching, 8 berries shared out, the boat crossing.
+- The Coach's replies and the parent report are part of the book.
+- All four option types were played through to the end locally: 0 AI calls, no errors.
+- The book lives in `DEMO_BOOKS` in `index.html`. A second book can be added the same way. The other two shelf books and "Make a book" still use the live AI.
 
 ## Rule until the demo: do not use up the Gemini quota
 

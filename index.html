@@ -253,7 +253,7 @@ textarea{min-height:84px;resize:vertical}
 /* ============ CONFIG ============ */
 const TOTAL = 4; // scenes 1-3 have a decision, scene 4 is the ending
 const LIBRARY = [
-  {emoji:"🦕", color:"linear-gradient(135deg,#C9F2E3,#FFE6A8)", title:"Dino Rescue at Fraction Falls", lessonLabel:"Math · fractions",
+  {emoji:"🦕", color:"linear-gradient(135deg,#C9F2E3,#FFE6A8)", title:"Dino Rescue at Fraction Falls", lessonLabel:"Math · fractions", demo:"dino",
    settings:{child_name:"Mia", child_age:7, reading_level:"early reader", interests:"dinosaurs, soccer, her dog Bobo, the color purple", theme:"", lesson_type:"math", lesson:"understanding simple fractions (halves, thirds, quarters) of a group of things", limits:"no scary monsters, no fighting", consequence_level:"medium"}},
   {emoji:"✈️", color:"linear-gradient(135deg,#CFE2FF,#FFD9D9)", title:"Around the World with Captain Kiwi", lessonLabel:"Geography · continents",
    settings:{child_name:"Leo", child_age:8, reading_level:"confident reader", interests:"airplanes, birds, pancakes, building with LEGO", theme:"", lesson_type:"geography", lesson:"the seven continents and one famous place on each", limits:"no dangerous animals attacking", consequence_level:"medium"}},
@@ -738,11 +738,13 @@ const Stage3D = (() => {
     car(g, c){ add(g, box(1.3,.3,.64), c, [0,.36,0]); add(g, sph(.42,16,10,0,Math.PI*2,0,Math.PI/2), c, [-.05,.5,0], [1.25,.9,.72]); add(g, box(.5,.2,.66), 0x9FD8FF, [-.05,.62,0]); [[-.42,.33],[.42,.33],[-.42,-.33],[.42,-.33]].forEach(a => { add(g, cyl(.18,.18,.13,14), 0x2B2B3A, [a[0],.18,a[1]], null, {rot:[Math.PI/2,0,0]}); add(g, cyl(.08,.08,.14,10), 0xD8DEE9, [a[0],.18,a[1]], null, {rot:[Math.PI/2,0,0]}); }); [-.2,.2].forEach(z => add(g, sph(.06,8,6), 0xFFF3A0, [.66,.38,z], null, {glow:true})); },
     snowman(g){ add(g, sph(.42), WHITE, [0,.4,0]); add(g, sph(.3), WHITE, [0,.98,0]); add(g, sph(.22), WHITE, [0,1.42,0]); add(g, cone(.04,.2,6), 0xFF7A2F, [0,1.42,.26], null, {rot:[Math.PI/2,0,0]}); [-.08,.08].forEach(x => add(g, sph(.028,6,5), INK, [x,1.48,.19])); add(g, cyl(.17,.17,.2,12), INK, [0,1.68,0]); add(g, cyl(.26,.26,.03,12), INK, [0,1.59,0]); add(g, new THREE.TorusGeometry(.2,.05,6,16), 0xFF6B5E, [0,1.24,0], null, {rot:[Math.PI/2,0,0]}); },
     butterfly(g, c){ add(g, sph(.04,6,5), INK, [0,1.2,0], [1,1,3]); g.userData.wings = [-1,1].map(d => { const w = sub(g,0,1.2,0); add(w, sph(.16,10,6), c, [d*.16,0,.05], [1,.08,.8]); add(w, sph(.11,10,6), tint(c,.3), [d*.12,0,-.1], [1,.08,.8]); return w; }); g.userData.flutter = true; },
+    nest(g, c){ add(g, new THREE.TorusGeometry(.62,.17,8,20), c, [0,.15,0], null, {rot:[Math.PI/2,0,0]}); add(g, cyl(.6,.6,.06,20), tint(c,-.25), [0,.04,0]); for (let i = 0; i < 9; i++) add(g, cyl(.015,.015,.5,4), tint(c,.3), [Math.cos(i*.7)*.62,.26,Math.sin(i*.7)*.62], null, {rot:[1.2,i*.7,0]}); },
+    river(g, c){ add(g, box(15,.05,1.7), c, [0,.03,0]); [[-3,.3],[1,-.4],[4,.2],[-5.5,-.3]].forEach(q => add(g, box(1.1,.02,.08), 0xFFFFFF, [q[0],.065,q[1]], null, {glow:true})); },
     sphere(g, c){ add(g, sph(.4), c, [0,.4,0]); },
     cone(g, c){ add(g, cone(.4,.9), c, [0,.45,0]); },
     cylinder(g, c){ add(g, cyl(.35,.35,.8), c, [0,.4,0]); }
   };
-  const THING_COLOR = {tree:"#2FAE66", pine:"#1F8F5A", bush:"#3BB877", flower:"#FF6B8E", mushroom:"#E8413C", rock:"#9AA3AF", hill:"#69C383", mountain:"#8B95A7", house:"#FFD27A", castle:"#C9CEDA", tent:"#FF9F43", fence:"#F4E7D0", signpost:"#D9A066", cloud:"#FFFFFF", sun:"#FFD43B", moon:"#F5F0D0", star:"#FFE066", pond:"#6EC3FF", ball:"#FF6B5E", balloon:"#FF6B5E", egg:"#FFF6E0", apple:"#E8413C", box:"#D9A066", chest:"#B9824F", table:"#B9824F", cake:"#FF8FB4", cookie:"#D9A066", jar:"#CFEFFF", book:"#7B5CFF", boat:"#E0703A", rocket:"#F4F4F8", plane:"#FF6B5E", car:"#39A0FF", butterfly:"#FF9F43", sphere:"#FF9F43", cone:"#7B5CFF", cylinder:"#39A0FF"};
+  const THING_COLOR = {tree:"#2FAE66", pine:"#1F8F5A", bush:"#3BB877", flower:"#FF6B8E", mushroom:"#E8413C", rock:"#9AA3AF", hill:"#69C383", mountain:"#8B95A7", house:"#FFD27A", castle:"#C9CEDA", tent:"#FF9F43", fence:"#F4E7D0", signpost:"#D9A066", cloud:"#FFFFFF", sun:"#FFD43B", moon:"#F5F0D0", star:"#FFE066", pond:"#6EC3FF", ball:"#FF6B5E", balloon:"#FF6B5E", egg:"#FFF6E0", apple:"#E8413C", box:"#D9A066", chest:"#B9824F", table:"#B9824F", cake:"#FF8FB4", cookie:"#D9A066", jar:"#CFEFFF", book:"#7B5CFF", boat:"#E0703A", rocket:"#F4F4F8", plane:"#FF6B5E", car:"#39A0FF", butterfly:"#FF9F43", nest:"#B9824F", river:"#6EC3FF", sphere:"#FF9F43", cone:"#7B5CFF", cylinder:"#39A0FF"};
   const SKY_THINGS = {cloud: 3.9, sun: 4.9, moon: 4.9, star: 4.5, plane: 3.3};
   const DEFAULT_MOVE = {cloud:"drift", tree:"sway", pine:"sway", flower:"sway", plane:"bob", boat:"bob", balloon:"bob", butterfly:"fly"};
 
@@ -848,7 +850,7 @@ const Stage3D = (() => {
      Props (what the text is about) line up in the middle front where they can be counted, the cast stands
      beside them and turns toward them, big creatures stand just behind, and scenery is pushed to the back
      and sides. Then everything is nudged apart until nothing overlaps. */
-  const FOOT = {tree:.7, pine:.65, bush:.5, flower:.22, mushroom:.32, rock:.5, hill:1.6, mountain:1.7, house:1, castle:1.45, tent:.8, fence:.8, signpost:.4, campfire:.5, pond:1.5, ball:.38, balloon:.4, egg:.3, apple:.25, box:.5, chest:.55, table:.8, cake:.4, cookie:.33, jar:.38, book:.42, boat:.8, rocket:.5, car:.8, snowman:.45, butterfly:0};
+  const FOOT = {tree:.7, pine:.65, bush:.5, flower:.22, mushroom:.32, rock:.5, hill:1.6, mountain:1.7, house:1, castle:1.45, tent:.8, fence:.8, signpost:.4, campfire:.5, pond:1.5, ball:.38, balloon:.4, egg:.3, apple:.25, box:.5, chest:.55, table:.8, cake:.4, cookie:.33, jar:.38, book:.42, boat:.8, rocket:.5, car:.8, snowman:.45, butterfly:0, nest:.8, river:0};
   const CHAR_FOOT = {kid:.42, child:.42, girl:.42, boy:.42, adult:.5, person:.5, parent:.5, mom:.5, dad:.5, dino:.95, dinosaur:.95, dragon:.95, robot:.45, bird:0};
   function arrange(spec, r){
     const list = v => (Array.isArray(v) ? v : []).filter(o => o && typeof o === "object");
@@ -856,7 +858,7 @@ const Stage3D = (() => {
     const old = list(spec.objects);
     const propsIn = list(spec.props).concat(old.filter(o => o.role === "prop")).filter(o => !SKY_THINGS[kindOf(o)]).slice(0, 4);
     const sceneryIn = list(spec.scenery).concat(old.filter(o => o.role !== "prop")).slice(0, 14);
-    const cast = list(spec.characters).slice(0, 5).map(o => Object.assign({}, o));
+    const cast = list(spec.characters).slice(0, 8).map(o => Object.assign({}, o));
     const fixed = [], loose = [];
 
     // 1. props: tidy rows in the middle front
@@ -879,10 +881,12 @@ const Stage3D = (() => {
       x0 += (g.w + gap) * squeeze;
     });
     const half = Math.max(.2, total * squeeze / 2);
+    // pieces a pre-made book places by hand
+    list(spec.fixed).slice(0, 24).forEach(o => { const size = num(o.size, 1, .3, 3); fixed.push(Object.assign({}, o, {x: num(o.x, 0, -7, 7), z: num(o.z, 0, -3.9, 3.3), size, _rad: (FOOT[kindOf(o)] !== undefined ? FOOT[kindOf(o)] : .45) * size, _ry: num(o.turn, 0, -4, 4), _prop: true})); });
 
     // 2. the cast: beside the props, turned toward them; big creatures just behind; birds overhead
     const small = [], big = [];
-    cast.forEach(o => { const k = kindOf(o), rad = (CHAR_FOOT[k] !== undefined ? CHAR_FOOT[k] : .5) * num(o.size, 1, .5, 2); o._rad = rad; if (k === "bird") { o.x = (r() - .5) * 3; o.z = .5; } else (rad >= .9 ? big : small).push(o); });
+    cast.forEach(o => { if (o.pin) { o._rad = .4 * num(o.size, 1, .3, 2); o.x = num(o.x, 0, -6, 6); o.z = num(o.z, 0, -3.8, 3.2); o._ry = num(o.turn, 0, -4, 4); fixed.push(o); return; } const k = kindOf(o), rad = (CHAR_FOOT[k] !== undefined ? CHAR_FOOT[k] : .5) * num(o.size, 1, .5, 2); o._rad = rad; if (k === "bird") { o.x = (r() - .5) * 3; o.z = .5; } else (rad >= .9 ? big : small).push(o); });
     small.forEach((o, i) => {
       const side = i % 2 ? 1 : -1, rank = Math.floor(i / 2);
       o.x = side * (half + .25 + o._rad + rank * 1.05); o.z = 1.75 - rank * .25 + (groups.length ? 0 : .1);
@@ -891,6 +895,7 @@ const Stage3D = (() => {
     });
     big.forEach((o, i) => { const side = i % 2 ? -1 : 1; o.x = side * (1.6 + Math.floor(i / 2) * 2.4) * (big.length === 1 ? 0 : 1) + (big.length === 1 ? 1.2 : 0); o.z = -.35; o._ry = o.x > 0 ? -.4 : .4; });
     small.concat(big).forEach(o => fixed.push(o));
+    const isCast = o => cast.indexOf(o) >= 0;
 
     // 3. scenery: back and sides, never in the middle of the action
     sceneryIn.forEach(o => {
@@ -917,7 +922,7 @@ const Stage3D = (() => {
     ground.forEach(a => { const clash = kept.concat(fixed).some(b => b._rad && Math.hypot(a.x - b.x, a.z - b.z) < (a._rad + b._rad) * .78); if (!clash) kept.push(a); });
     const sky = loose.filter(o => o._sky).sort((a, b) => a.x - b.x);
     sky.forEach((o, i) => { if (i && o.x - sky[i-1].x < 1.7) o.x = sky[i-1].x + 1.7; });
-    return {objects: sky.concat(kept, fixed.filter(o => o._prop)), characters: cast};
+    return {objects: sky.concat(kept, fixed.filter(o => o._prop && !isCast(o))), characters: cast};
   }
 
   function skyTexture(top, bottom){
@@ -995,6 +1000,8 @@ const Stage3D = (() => {
       else if (m === "sway") g.rotation.z = Math.sin(w*1.2) * .05;
       else if (m === "drift") g.position.x = a.x + Math.sin(w*.25) * .9;
       else if (m === "fly") { g.position.x = a.x + Math.cos(w*.7) * 1.1; g.position.z = a.z + Math.sin(w*.7) * .7; g.position.y = a.y + Math.sin(w*1.9) * .15; g.rotation.y = -w*.7; }
+      else if (m === "rollaway") { const k = Math.min(1, Math.max(0, (t - 1.5) / 2.6)), e = k * k * (3 - 2 * k); g.position.x = a.x + e * 2.9; g.position.z = a.z + e * .6; g.rotation.z = -e * 9; }
+      else if (m === "shiver") g.position.x = a.x + Math.sin(t * 38 + a.ph) * .025;
       else if (m === "walk") { g.position.x = a.x + Math.sin(w*.6) * .7; g.rotation.y = Math.cos(w*.6) > 0 ? 1.1 : -1.1; }
       if (a.isChar) {
         const moving = m === "walk" || m === "hop";
@@ -1026,7 +1033,8 @@ const Stage3D = (() => {
     R.renderer.setSize(w, h, false);
     R.camera.aspect = w / h;
     // keep most of the island in view whatever the picture's shape
-    R.camera.fov = Math.min(74, Math.max(30, 2 * Math.atan(.54 / (w / h)) * 180 / Math.PI)); R.camera.updateProjectionMatrix();
+    // a tall picture frames the action in the middle more tightly, so the characters stay big
+    R.camera.fov = Math.min(74, Math.max(30, 2 * Math.atan((w / h < 1.25 ? .4 : .54) / (w / h)) * 180 / Math.PI)); R.camera.updateProjectionMatrix();
   }
   function show(el, spec){
     try {
@@ -1052,8 +1060,10 @@ const Stage3D = (() => {
 function mountArt(){
   if (screen !== "story" || !S) return;
   const el = document.querySelector(".art[data-art]"); if (!el) return;
-  const sc = S.scenes[+el.dataset.art];
-  if (sc && sc.scene3d && !Stage3D.show(el, sc.scene3d)) { sc.scene3d = null; illustrate(sc); } // 3D failed here: fall back to a drawing
+  const sc = S.scenes[+el.dataset.art]; if (!sc) return;
+  const pages = sc._pages || [], pg = pages[Math.min(S.page, pages.length - 1)];
+  const spec = (pg && pg.scene3d) || sc.scene3d; // a page may bring its own picture
+  if (spec && !Stage3D.show(el, spec) && !S.demo) { sc.scene3d = null; illustrate(sc); } // 3D failed here: fall back to a drawing
 }
 function scene3dPrompt(scene){
   const TYPES = "tree, pine, bush, flower, mushroom, rock, hill, mountain, house, castle, tent, fence, signpost, campfire, cloud, sun, moon, star, pond, ball, balloon, egg, apple, box, chest, table, cake, cookie, jar, book, boat, rocket, plane, car, snowman, butterfly, sphere, cone, cylinder";
@@ -1075,6 +1085,108 @@ Colours are hex codes like "#FFC83D". Use a bright, friendly palette.
 The hero is ${S.settings.child_name}: ${S.heroLook}. ${S.hero3d ? `Use exactly this for the hero, changing only move: ${JSON.stringify(S.hero3d)}` : "Put the hero first in characters, as a kid."}
 
 Return ONLY this JSON: {"sky":"#hex","ground":"#hex","time":"day or sunset or night","characters":[...],"props":[...],"scenery":[...]}`;
+}
+
+/* ============ READY-MADE BOOKS ============ */
+/* A ready-made book is written and illustrated by hand: fixed text, fixed choices, and a 3D picture for every page.
+   It plays instantly and needs no AI. The live AI books use the same reader and the same 3D stage. */
+const DEMO_BOOKS = (() => {
+  const MIA = {kind:"kid", color:"#7B5CFF", skin:"#F2C29B", hair:"#5A3A22", hairstyle:"pigtails"};
+  const BOBO = {kind:"dog", color:"#C98B4F"}, DOT = {kind:"dino", color:"#4DBB6D", size:1.3};
+  const as = (c, extra) => Object.assign({}, c, extra);
+  const at = (c, x, z, extra) => Object.assign({}, c, {pin:true, x, z}, extra);
+  const baby = (x, z, move) => ({kind:"dino", color:"#9BDD7C", size:.45, pin:true, x, z, move: move || "hop"});
+  const eggs = (n, extra) => Object.assign({type:"egg", count:n}, extra);
+  const eggAt = (x, z, move) => ({type:"egg", x, z, move: move || "none"});
+  const berry = (x, z) => ({type:"apple", x, z, size:.55, color:"#C2185B"});
+  const FALLS = [{type:"mountain",x:-4,z:-3,size:1.4},{type:"hill",x:3.6,z:-3.3,color:"#69C383"},{type:"tree",x:-5.2,z:-.8,size:1.2},{type:"pine",x:5,z:-1.6,size:1.3},{type:"pine",x:3.6,z:-2.6},{type:"bush",x:-2.8,z:-2.4},{type:"cloud",x:-2.6,z:-1},{type:"cloud",x:1.6,z:-2,size:1.3},{type:"sun",x:4.6,z:-2},{type:"flower",x:-4.9,z:2,color:"#FF8FB4"},{type:"flower",x:5.2,z:1.9,color:"#FFD43B"},{type:"rock",x:5.4,z:.3}];
+  const DUSK = [{type:"mountain",x:-4.4,z:-3.4,size:1.3},{type:"pine",x:5.2,z:-3,size:1.3},{type:"pine",x:-5.4,z:-2.8},{type:"cloud",x:-2,z:-1,color:"#FFE3D0"},{type:"cloud",x:2.6,z:-2,size:1.2,color:"#FFE3D0"},{type:"sun",x:-4.4,z:-2,color:"#FF9F43"},{type:"bush",x:-5.2,z:2.2},{type:"rock",x:5.3,z:2.4},{type:"flower",x:4.4,z:2.7,color:"#FF8FB4"}];
+  const day = o => Object.assign({sky:"#8CCBFF", ground:"#7FCF86", time:"day", scenery:FALLS, props:[], fixed:[], characters:[]}, o);
+  const dusk = o => Object.assign({sky:"#FF9E7A", ground:"#79C27F", time:"sunset", scenery:DUSK, props:[], fixed:[{type:"river", x:0, z:-.9}], characters:[]}, o);
+  const NEST = {type:"nest", x:2.9, z:1.2}, nestEggs = n => [[2.65,1.05],[3.15,1.05],[2.65,1.4],[3.15,1.4]].slice(0, n).map(q => eggAt(q[0], q[1]));
+  const BX = [-1.2,-.4,.4,1.2], babies = (z, move) => BX.map(x => baby(x, z, move));
+  const BOAT = {type:"boat", x:0, z:-.75, color:"#B9824F", color2:"#FFF3DC", move:"bob"};
+  const farDot = at(DOT, 2.6, -2.7, {turn:-.3});
+
+  return { dino: {
+    key: "dino", title: "Dino Rescue at Fraction Falls",
+    settings: {child_name:"Mia", child_age:7, lesson:"Halves and sharing equally", lesson_type:"math"},
+    check: {question: "What is half of 8?", answer: "4", accept: ["4", "four"]},
+    report: {summary: "Mia's story practised halves and equal sharing with 8 eggs, 8 berries and 4 baby dinos.", highlights: ["Half of 8 is 4", "8 shared by 4 is 2 each", "Half of 4 is 2"], ask: "If we cut your sandwich in half, how many pieces do we get, and are they the same size?"},
+    chapters: [
+      { pages: [
+          {text: "Mia and Bobo walk to Fraction Falls. They find 8 dino eggs in the grass.", scene: day({characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"})], props:[eggs(8)]})},
+          {text: "The eggs are warm and wobbly. Oh no! One egg rolls away.", scene: day({characters:[MIA, as(BOBO,{move:"hop"})], props:[eggs(7)], fixed:[eggAt(.4, 3, "rollaway")]})},
+          {text: "Bobo runs and brings it back. A big green dino walks up. She looks worried.", scene: day({characters:[MIA, as(BOBO,{move:"hop"}), DOT], props:[eggs(8)]})}],
+        question: "Dot needs half of the 8 eggs in her nest. How many should Mia carry?",
+        options: [
+          {label: "Carry 4 eggs to the nest", hidden_type: "wise", leads_to: "Half of 8 is 4. The nest is just right.",
+            result: {text: "Mia counts 4 eggs into the nest. Half are safe! Dot smiles a big dino smile.", scene: day({characters:[at(MIA,-2.2,1.7,{turn:.5, move:"wave"}), at(BOBO,-3.4,2.2,{turn:.5}), DOT], props:[eggs(4)], fixed:[NEST].concat(nestEggs(4))})}},
+          {label: "Carry 3 eggs, then come back", hidden_type: "okay", leads_to: "It works, but it takes two trips.",
+            result: {text: "Mia carries 3 eggs. That is not half yet. She goes back for 1 more, and now the nest has 4.", scene: day({characters:[at(MIA,-2.2,1.7,{turn:.5}), at(BOBO,-3.4,2.2,{turn:.5}), DOT], props:[eggs(5)], fixed:[NEST].concat(nestEggs(3))})}},
+          {label: "Roll all 8 down the hill. Wheee!", hidden_type: "tempting_bad", leads_to: "Fun for a second, then eggs everywhere.", coach: "Rolling looked fun! Eggs are safer when we carry them, and half of 8 is 4.",
+            result: {text: "Wheee! The eggs roll everywhere. Mia and Bobo chase them for a long time.", scene: day({characters:[at(MIA,-2.6,1.6,{move:"hop"}), at(BOBO,-1.2,2.4,{move:"walk"}), DOT], fixed:[eggAt(-4,2.6),eggAt(-.2,1.2,"rollaway"),eggAt(1.6,2.8),eggAt(3.6,1.8),eggAt(.6,2.2,"rollaway"),eggAt(4.6,2.9),eggAt(-3.2,.6),eggAt(2.4,.6)]})}},
+          {label: "Leave them. Eggs are boring.", hidden_type: "clearly_bad", leads_to: "The eggs get cold.", coach: "The eggs needed a helper. Next time we can count out half and carry them.",
+            result: {text: "The wind blows. The eggs get cold and shiver. Dot looks sad, so Mia hurries back to help.", scene: day({sky:"#B9C7D8", characters:[at(MIA,-3.2,1.8,{turn:.5}), at(BOBO,-4.2,2.4,{turn:.5}), DOT], props:[eggs(8,{move:"shiver"})]})}}] },
+      { pages: [
+          {text: "Four eggs sit in the nest. Four eggs are still in the grass.", scene: day({characters:[at(MIA,-2.4,1.7,{turn:.5}), at(BOBO,-3.5,2.2,{turn:.5})], props:[eggs(4)], fixed:[NEST].concat(nestEggs(4))})},
+          {text: "Crack! Crack! The 4 eggs in the grass hatch. Four baby dinos pop out.", scene: day({characters:[at(MIA,-2.8,1.7,{turn:.5, move:"wave"}), at(BOBO,-3.9,2.3,{turn:.5, move:"hop"})].concat(babies(1.5)), fixed:[NEST].concat(nestEggs(4))})},
+          {text: "The babies are hungry. Mia has 8 red berries in her bag.", scene: day({characters:[at(MIA,-2.8,1.3,{turn:.5})].concat(babies(.7, "idle")), props:[{type:"apple", count:8, size:.55, color:"#C2185B"}], fixed:[NEST].concat(nestEggs(4))})}],
+        question: "There are 4 babies and 8 berries. How should Mia share them?",
+        options: [
+          {label: "Give each baby 2 berries", hidden_type: "wise", leads_to: "8 shared by 4 is 2 each.",
+            result: {text: "Each baby gets 2 berries. Eight shared by four is two each. Nobody is left out.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5, move:"wave"})].concat(babies(1.2)), fixed:[NEST].concat(nestEggs(4), BX.reduce((a, x) => a.concat([berry(x-.16, 2.1), berry(x+.16, 2.1)]), []))})}},
+          {label: "Give each baby 1 berry for now", hidden_type: "okay", leads_to: "Fair, but they are still hungry.",
+            result: {text: "Each baby gets 1 berry. They are still hungry, so Mia hands out the other 4 too.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat(babies(1.2, "idle")), fixed:[NEST].concat(nestEggs(4), BX.map(x => berry(x, 2.1)), [berry(-2.6,2.6),berry(-2.9,2.75),berry(-2.3,2.75),berry(-2.6,2.95)])})}},
+          {label: "Give all 8 to the cutest baby", hidden_type: "tempting_bad", leads_to: "One tummy ache and three sad babies.", coach: "It is hard when one is extra cute! Sharing equally means every baby gets the same: 2 each.",
+            result: {text: "One baby gets all 8 berries and a tummy ache. Three babies cry. Mia shares again, 2 each.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat([baby(-1.2,1.2,"hop"), baby(-.4,1.2,"idle"), baby(.4,1.2,"idle"), baby(1.2,1.2,"idle")]), fixed:[NEST].concat(nestEggs(4), [0,1,2,3,4,5,6,7].map(i => berry(-1.2 + Math.cos(i*.785)*.5, 2.3 + Math.sin(i*.785)*.35)))})}},
+          {label: "Eat the berries herself", hidden_type: "clearly_bad", leads_to: "Hungry babies.", coach: "Mia was hungry too. The berries were for the babies, and 8 shared by 4 is 2 each.",
+            result: {text: "Mia eats the berries. Four little tummies rumble. Mia feels bad and picks 8 more.", scene: day({characters:[at(MIA,-2.8,1.5,{turn:.5})].concat(babies(1.2, "idle")), fixed:[NEST].concat(nestEggs(4))})}}] },
+      { pages: [
+          {text: "The sun is going down. The babies must cross the river to get home.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-3.7,2.2,{turn:.4})].concat(babies(1.5, "idle")), fixed:[{type:"river", x:0, z:-.9}, BOAT]})},
+          {text: "There is one little boat. It can carry half of the 4 babies each trip.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"wave"}), at(BOBO,-3.7,2.2,{turn:.4})].concat(babies(1.5)), fixed:[{type:"river", x:0, z:-.9}, BOAT]})},
+          {text: "Dot waits on the other side. Mia thinks hard.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), at(BOBO,-3.7,2.2,{turn:.4}), farDot].concat(babies(1.5, "idle")), fixed:[{type:"river", x:0, z:-.9}, BOAT]})}],
+        question: "Half of the 4 babies go first. How many is that?",
+        options: [
+          {label: "2 babies first, then 2 more", hidden_type: "wise", leads_to: "Half of 4 is 2. Two safe trips.",
+            result: {text: "Two babies ride across, then two more. Half and half. Everyone is dry and safe.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"wave"}), farDot, baby(-.25,-.7,"idle"), baby(.3,-.7,"idle"), baby(1.6,-2.5,"hop"), baby(3.6,-2.3,"hop")], fixed:[{type:"river", x:0, z:-.9}, BOAT]})}},
+          {label: "1 baby at a time", hidden_type: "okay", leads_to: "Safe, but slow.",
+            result: {text: "One by one they cross. It is slow and the sun is almost gone, but they all make it.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4}), farDot, baby(0,-.7,"idle"), baby(-.4,1.5,"idle"), baby(.4,1.5,"idle"), baby(1.2,1.5,"idle")], fixed:[{type:"river", x:0, z:-.9}, BOAT]})}},
+          {label: "All 4 jump on. Splash party!", hidden_type: "tempting_bad", leads_to: "The boat tips over.", coach: "A splash party sounds fun! The boat only holds half. Half of 4 is 2.",
+            result: {text: "The boat tips. Splash! Four wet babies paddle back. They try again, two at a time.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"hop"}), farDot, baby(-1.3,-.2,"hop"), baby(-.5,.2,"hop"), baby(.6,.1,"hop"), baby(1.4,-.2,"hop")], fixed:[{type:"river", x:0, z:-.9}, Object.assign({}, BOAT, {move:"spin"})]})}},
+          {label: "Let them swim alone", hidden_type: "clearly_bad", leads_to: "The water is too fast.", coach: "The river was too fast for little dinos. The boat can take half at a time: 2 and 2.",
+            result: {text: "The water is too fast. Mia calls the babies back just in time. They use the boat.", scene: dusk({characters:[at(MIA,-2.6,1.7,{turn:.4, move:"wave"}), farDot].concat(BX.map(x => baby(x, .5, "idle"))), fixed:[{type:"river", x:0, z:-.9}, BOAT]})}}] }],
+    endings: {
+      good: { pages: [
+        {text: "All the dinos are home. Dot gives Mia a shiny golden egg shell.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], props:[{type:"egg", count:1, color:"#FFD43B", move:"spin"}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"idle"), baby(3.2,1.1,"idle"), baby(2.6,1.5,"idle"), baby(3.2,1.5,"idle")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})},
+        {text: "Mia learned that half means two equal parts. Bobo wags his tail. The end.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"hop"), baby(3.2,1.1,"hop"), baby(2.6,1.5,"hop"), baby(3.2,1.5,"hop")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})}] },
+      mixed: { pages: [
+        {text: "It took a few tries, but all the dinos are home at last.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[MIA, BOBO, DOT, baby(2.6,1.1,"idle"), baby(3.2,1.1,"idle"), baby(2.6,1.5,"idle"), baby(3.2,1.5,"idle")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})},
+        {text: "Mia learned that half means two equal parts. Next time she will count first. The end.", scene: dusk({time:"night", sky:"#22315F", fixed:[NEST, {type:"campfire", x:0, z:2.6}], characters:[as(MIA,{move:"wave"}), as(BOBO,{move:"hop"}), DOT, baby(2.6,1.1,"hop"), baby(3.2,1.1,"hop"), baby(2.6,1.5,"hop"), baby(3.2,1.5,"hop")], scenery:DUSK.filter(o => o.type !== "sun").concat([{type:"moon",x:-4,z:-2},{type:"star",x:0,z:-2},{type:"star",x:3.6,z:-1}])})}] } }
+  } };
+})();
+function startDemo(key, settings){
+  const book = DEMO_BOOKS[key];
+  newStory(Object.assign({}, settings, book.settings));
+  S.demo = book; S.title = book.title; S.warmup = {question: book.check.question, answer: book.check.answer};
+  const id = log("Director", "opened a ready-made book: no waiting, no AI needed"); logDone(id);
+  makeDemoScene();
+  screen = "story"; S.page = 0; render(); speakPage();
+}
+function makeDemoScene(){
+  const book = S.demo, n = S.scenes.length + 1, last = S.choices[S.choices.length - 1];
+  const picked = last && last.options.find(o => o.label === last.label);
+  const wise = S.choices.filter(c => c.hidden_type === "wise").length;
+  const ch = n <= book.chapters.length ? book.chapters[n - 1] : (wise >= 2 ? book.endings.good : book.endings.mixed);
+  const pages = [];
+  if (n === 1) pages.push({text: `${book.title}. A book for ${S.settings.child_name}.`, cover: true, scene3d: ch.pages[0].scene});
+  if (picked && picked.result) pages.push({text: picked.result.text, cons: true, scene3d: picked.result.scene});
+  ch.pages.forEach((pg, i) => pages.push({text: pg.text, scene3d: pg.scene, first: i === 0}));
+  const options = (ch.options || []).map(o => Object.assign({}, o));
+  for (let i = options.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [options[i], options[j]] = [options[j], options[i]]; }
+  const scene = {consequence_text: picked && picked.result ? picked.result.text : "", scene_text: ch.pages.map(pg => pg.text).join(" "), question: ch.question || "", options, is_ending: !ch.options, _pages: pages, scene3d: pages[0].scene3d};
+  S.scenes.push(scene); S.page = 0; S.busy = false; S.error = null;
+  return scene;
 }
 
 /* ============ STORY ENGINE ============ */
@@ -1106,6 +1218,7 @@ async function startStory(settings){
   speakPage();
 }
 async function makeScene(){
+  if (S.demo) return makeDemoScene();
   const n = S.scenes.length + 1;
   S.busy = true; S.error = null; render();
   let scene;
@@ -1222,6 +1335,7 @@ async function interpret(text){
   const sc = currentScene();
   const idx = localMatch(text, sc.options);
   if (idx >= 0) { const id = log("Interpreter", `heard "${text}" → choice ${idx+1}`); logDone(id); return choose(sc.options[idx]); }
+  if (S.demo) { showBanner("For this book, pick A, B, C or D.", true); return; }
   const id = log("Interpreter", `understanding "${text}"…`);
   try {
     const r = await ai(`You are the Interpreter agent in a children's story game. The child was offered these options: ${JSON.stringify(sc.options.map((o,i) => ({index:i, label:o.label, hidden_type:o.hidden_type})))}.
@@ -1247,6 +1361,13 @@ function localMatch(text, options){
   return score >= 0.6 ? best : -1;
 }
 async function coach(answer){
+  if (S.demo) { // ready-made book: the Coach's reply is part of the book
+    const t = S.think, c = S.choices[S.choices.length - 1], o = c.options.find(x => x.label === c.label) || {};
+    t.answer = answer; t.reply = o.coach || "Good thinking! Let's keep reading.";
+    currentScene().thinkback = answer; c.thinkback = answer;
+    const id = log("Coach", "gave feedback"); logDone(id);
+    render(); speak(t.reply); return;
+  }
   const t = S.think; t.busy = true; t.answer = answer; render();
   const id = log("Coach", "listening to the think-back answer…");
   try {
@@ -1271,6 +1392,14 @@ function rewind(){
   S.page = pagesOf(currentScene()).length; render(); speak("Let's rewind! " + (currentScene().question || "What do you do?"));
 }
 async function makeReport(){
+  if (S.demo) { // ready-made book: the report is worked out right here
+    const b = S.demo, a = (S.warmAfter || "").toLowerCase(), quote = S.choices.map(c => c.thinkback).filter(Boolean).pop() || "";
+    S.report = {before_correct: null, after_correct: a ? b.check.accept.some(w => a.includes(w)) : null,
+      wise_choices: S.choices.filter(c => c.hidden_type === "wise").length, total_choices: S.choices.length,
+      summary: b.report.summary, highlights: b.report.highlights, child_quote: quote, conversation_starter: b.report.ask};
+    const id = log("Reflector", "report ready"); logDone(id);
+    render(); return;
+  }
   S.reportBusy = true; render();
   const id = log("Reflector", "writing the parent report…");
   const hist = S.choices.map((c,i) => ({scene:i+1, chose:c.label, type:c.hidden_type, own_idea:c.custom, thinkback_answer:c.thinkback || null}));
@@ -1500,7 +1629,7 @@ function endingView(){
 document.addEventListener("click", e => {
   const w = e.target.closest(".w"); if (w) { tapWord(w); return; }
   const t = e.target.closest("button"); if (!t) { $("crew").classList.remove("open"); return; }
-  if (t.dataset.lib !== undefined) { const l = LIBRARY[+t.dataset.lib]; startStory({...l.settings, _lib: +t.dataset.lib}); return; }
+  if (t.dataset.lib !== undefined) { const l = LIBRARY[+t.dataset.lib]; if (l.demo) startDemo(l.demo, {...l.settings, _lib: +t.dataset.lib}); else startStory({...l.settings, _lib: +t.dataset.lib}); return; }
   if (t.dataset.seg) { readForm(); draft[t.dataset.seg] = t.dataset.val; render(); return; }
   if (t.dataset.quick) { readQuick(); quick.subject = t.dataset.quick; render(); return; }
   if (t.dataset.opt !== undefined) { choose(currentScene().options[+t.dataset.opt]); return; }
@@ -1536,7 +1665,7 @@ document.addEventListener("click", e => {
     case "crewToggle": { const open = $("crew").classList.toggle("open"); t.setAttribute("aria-expanded", open); break; }
     case "toEnding": goEnding(); break;
     case "afterGo": { const el = $("afterIn"); if (el) S.warmAfter = (el.value || "").trim(); makeReport(); break; }
-    case "again": startStory({...S.settings}); break;
+    case "again": if (S.demo) startDemo(S.demo.key, {...S.settings}); else startStory({...S.settings}); break;
     case "retry":
       if (!S.scenes.length) { const st = S.settings; startStory(st); }
       else { S.error = null; const last = S.choices[S.choices.length - 1]; if (S.scenes.length === S.choices.length) { S.choices.pop(); S.snapshots.pop(); render(); choose(last); } else render(); }
