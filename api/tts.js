@@ -7,6 +7,30 @@ const KEY = elevenKey;
 const VOICE = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // a clear, warm premade voice; set ELEVENLABS_VOICE_ID to change it
 const MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2"; // the most natural reading voice; eleven_flash_v2_5 is faster and half the credits
 const MAX_CHARS = 1200;
+// Warm storyteller-style voices, best first, used when they are among this account's own voices.
+const PREFERRED = ["Rachel", "Sarah", "Matilda", "Alice", "Lily", "Charlotte", "Jessica", "Laura", "Aria", "Grace", "Dorothy"];
+let chosenVoice = null;
+
+function speakWith(voice, text){
+  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_64`, {
+    method: "POST",
+    headers: { "xi-api-key": KEY(), "Content-Type": "application/json", Accept: "audio/mpeg" },
+    body: JSON.stringify({ text, model_id: MODEL, voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } }),
+    signal: AbortSignal.timeout(20000),
+  });
+}
+async function ownVoice(){ // a voice this account may use: the built-in ones, a warm female storyteller first
+  try {
+    const r = await fetch("https://api.elevenlabs.io/v1/voices", { headers: { "xi-api-key": KEY() }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) { console.error("ElevenLabs voices", r.status); return null; }
+    const list = ((await r.json()).voices || []).filter(v => v && v.voice_id && v.category !== "library");
+    const name = v => String(v.name || "").split(/\s|-/)[0];
+    const pick = PREFERRED.map(n => list.find(v => name(v) === n)).find(Boolean)
+      || list.find(v => v.category === "premade" && /female/i.test(JSON.stringify(v.labels || {})))
+      || list.find(v => v.category === "premade") || list[0];
+    return pick ? pick.voice_id : null;
+  } catch (e) { console.error("ElevenLabs voices failed", e && e.message); return null; }
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ code: "bad_request" });
@@ -24,20 +48,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}?output_format=mp3_44100_64`, {
-      method: "POST",
-      headers: { "xi-api-key": KEY(), "Content-Type": "application/json", Accept: "audio/mpeg" },
-      body: JSON.stringify({ text, model_id: MODEL, voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } }),
-      signal: AbortSignal.timeout(20000),
-    });
+    let voice = chosenVoice || VOICE;
+    let r = await speakWith(voice, text);
+    if (r.status === 402 || r.status === 404) {
+      // The free plan cannot use library voices through the API: switch to a voice that belongs to this account.
+      const own = await ownVoice();
+      if (own && own !== voice) { voice = own; r = await speakWith(voice, text); }
+    }
     if (!r.ok) {
       const detail = (await r.text().catch(() => "")).slice(0, 300);
       console.error("ElevenLabs error", r.status, detail);
       return res.status(502).json({ code: "voice_error", status: r.status, detail });
     }
+    chosenVoice = voice;
     const audio = Buffer.from(await r.arrayBuffer());
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-Voice", voice);
     return res.status(200).send(audio);
   } catch (err) {
     console.error("ElevenLabs call failed", err && err.message);
