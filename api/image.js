@@ -4,6 +4,8 @@
 const KEY = () => process.env.GEMINI_API_KEY || process.env.GEMINI;
 const GEMINI_MODELS = ["gemini-3.1-flash-lite-image", "gemini-3.1-flash-image", "gemini-nano-banana-2.1"];
 const STYLE = "Soft gouache painting for young children, cute friendly cartoon characters with round faces, warm bright colours, gentle storybook lighting, detailed background. No text, no letters.";
+// The same style words used for the Figma paintings in the ready-made books and library covers, so Gemini matches them.
+const BOOK_STYLE = "Children's picture-book illustration, hand-painted gouache with visible textured brush strokes, warm dark-brown outlines, rich saturated colours, soft golden light, cheerful and gentle, expressive cartoon faces with big eyes and rosy cheeks, detailed lush background. Square format. No text, no letters, no numbers, no borders, no watermark.";
 let deadModels = new Set(); // models that refused this key, skipped until the server restarts
 
 function findImage(data){ // the image can sit in a few places depending on the API revision
@@ -31,8 +33,8 @@ async function viaGemini(prompt, notes){
       const data = await r.json().catch(() => ({}));
       const img = r.ok ? findImage(data) : null;
       if (img) return {buf: Buffer.from(img.b64, "base64"), type: img.type || "image/png", by: model};
-      notes.push(`${model}: ${r.status} ${String((data.error && data.error.message) || "no image").slice(0, 160)}`);
-      if (r.status === 400 || r.status === 403 || r.status === 404 || r.status === 429) deadModels.add(model);
+      notes.push(`${model}: ${r.status} ${String((data.error && (data.error.message || data.error.status)) || data.message || JSON.stringify(data).slice(0, 220)).slice(0, 220)}`);
+      if (r.status === 400 || r.status === 404) deadModels.add(model); // 402 and 429 can clear once billing or quota catches up, so those are retried
     } catch (e) { notes.push(`${model}: ${e && e.message}`); }
   }
   return null;
@@ -53,7 +55,7 @@ export default async function handler(req, res) {
   if (!scene) return res.status(400).json({code: "bad_request"});
   const prompt = `${scene} ${STYLE}`; // the scene first, so the painter draws what happens
   const notes = [];
-  const img = (q.via !== "free" && await viaGemini(prompt, notes)) || await viaPollinations(prompt, seed, notes);
+  const img = (q.via !== "free" && await viaGemini(`${BOOK_STYLE}\nScene: ${scene}`, notes)) || await viaPollinations(prompt, seed, notes);
   if (!img) { console.error("image failed", notes.join(" | ")); return res.status(502).json({code: "image_error", notes}); }
   res.setHeader("Content-Type", img.type);
   res.setHeader("Cache-Control", "public, max-age=31536000, s-maxage=31536000, immutable"); // same page, same picture
