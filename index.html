@@ -318,6 +318,19 @@ textarea{min-height:84px;resize:vertical}
 .mk-go{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .mk-go .btn{min-height:56px;font-size:19px}
 .mk-sum{margin:0;color:var(--ink-soft);font-weight:600}
+
+/* ---- Bookshelf: edit mode for removing books ---- */
+.shelfbar{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin:-4px 0 4px}
+.shelfbar .btn{min-height:44px}
+.cover.editing{animation:wiggle .9s ease-in-out infinite}
+.cover.editing:nth-child(2n){animation-delay:-.45s}
+@keyframes wiggle{25%{transform:rotate(-1.2deg)}75%{transform:rotate(1.2deg)}}
+.cover .rm{position:absolute;inset:auto 8px 8px 8px;z-index:3;display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;border:3px solid var(--ink);border-radius:999px;background:var(--paper);font-weight:700;font-size:15px;box-shadow:0 3px 0 var(--ink)}
+.cover .rm.armed{background:var(--tomato);color:var(--on-ink)}
+.cover .rm .x{width:14px;height:14px;position:relative}
+.cover .rm .x::before,.cover .rm .x::after{content:"";position:absolute;left:6px;top:0;width:2.5px;height:14px;background:currentColor;border-radius:2px}
+.cover .rm .x::before{transform:rotate(45deg)} .cover .rm .x::after{transform:rotate(-45deg)}
+@media (prefers-reduced-motion:reduce){.cover.editing{animation:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -1955,7 +1968,7 @@ function renderTabs(){
 }
 /* Bookshelf and Library are the child's. Make a book, Child and Settings are for grown-ups and sit behind one question. */
 function goTab(tab){
-  stopSpeak(); $("crew").classList.remove("open"); confirmKey = "";
+  stopSpeak(); $("crew").classList.remove("open"); confirmKey = ""; shelfEdit = false; removeArm = "";
   if (tab === "home" || tab === "library") { unlocked = false; screen = tab; render(); return; }
   if (LOCK_ON && !unlocked) { gate = null; gateTarget = tab; screen = "gate"; render(); const f = $("gateIn") || $("gateNew"); if (f) f.focus(); return; }
   openGrown(tab);
@@ -2019,6 +2032,14 @@ function parentsView(){
   ${reports.length ? reports.map(reportCard).join("") : `<div class="card"><p class="sub">No reports yet. One appears here each time your child finishes a book.</p></div>`}
   </div>`;
 }
+/* Bookshelf editing: grown-ups can take books off the shelf. Books made for the child are deleted;
+   library books are only hidden from the shelf and stay in the Library. */
+let shelfEdit = false, removeArm = "";
+let hiddenLib = [];
+try { const h = JSON.parse(localStorage.getItem("storyforge_hidden") || "[]"); if (Array.isArray(h)) hiddenLib = h.filter(n => Number.isInteger(n)); } catch(e) {}
+function storeHidden(){ try { localStorage.setItem("storyforge_hidden", JSON.stringify(hiddenLib)); } catch(e) {} }
+function removeBadge(key){ return shelfEdit ? `<span class="rm ${removeArm === key ? "armed" : ""}"><i class="x" aria-hidden="true"></i>${removeArm === key ? "Tap again to remove" : "Remove"}</span>` : ""; }
+function shelfKeyAttrs(normal, key){ return shelfEdit ? `data-remove="${key}"` : normal; }
 function libCover(l, i){
   return `<button type="button" class="cover" data-lib="${i}" aria-label="${esc(l.title)}">
       <img src="${COVER_IMG[i] || ""}" alt="">
@@ -2152,19 +2173,25 @@ function quickCard(){
 
 function homeView(){
   const tints = ["var(--sky)", "var(--leaf)", "var(--tomato)", "var(--grape)", "var(--sun)"];
-  const made = books.map((b, i) => `<button type="button" class="cover made" data-book="${esc(b.id)}" aria-label="${esc(b.book.title)}" style="--c:${tints[i % tints.length]}">
+  const made = books.map((b, i) => `<button type="button" class="cover made ${shelfEdit ? "editing" : ""}" ${shelfKeyAttrs(`data-book="${esc(b.id)}"`, "made:" + esc(b.id))} aria-label="${shelfEdit ? "Remove " : ""}${esc(b.book.title)}" style="--c:${tints[i % tints.length]}">
       ${b.book.coverImg && onSite ? `<img src="${esc(b.book.coverImg)}" alt="" loading="lazy">` : `<span class="face"><b aria-hidden="true">${esc(String(b.settings.child_name || "?").charAt(0).toUpperCase())}</b></span>`}
       <span class="cover-title">${esc(b.book.title)}<small>Made for ${esc(b.settings.child_name)}, ${esc(b.when)}</small></span>
       ${stars.books["s" + b.id] ? `<span class="sticker" role="img" aria-label="Finished"><i class="star"></i></span>` : ""}
+      ${removeBadge("made:" + b.id)}
     </button>`).join("");
-  const read = LIBRARY.map((l, i) => libCover(l, i)).join(""); // the ready books are always on the shelf, so it is never empty
+  const read = LIBRARY.map((l, i) => hiddenLib.includes(i) ? "" : shelfEdit
+    ? libCover(l, i).replace('class="cover"', 'class="cover editing"').replace(`data-lib="${i}"`, `data-remove="lib:${i}"`).replace("</button>", removeBadge("lib:" + i) + "</button>")
+    : libCover(l, i)).join(""); // the ready books start on the shelf; grown-ups can take them off
+  const bar2 = (made || read || hiddenLib.length) ? `<div class="shelfbar">
+      ${shelfEdit && hiddenLib.length ? `<button type="button" class="btn secondary" id="shelfRestore">Put library books back</button>` : ""}
+      <button type="button" class="btn ${shelfEdit ? "go" : "secondary"}" id="shelfEdit" aria-pressed="${shelfEdit}">${shelfEdit ? "Done" : "Edit shelf"}</button></div>` : "";
   const title = child ? child.child_name + "'s bookshelf" : "My bookshelf";
-  if (!made && !read) return `<div class="view">${bar(title)}
+  if (!made && !read) return `<div class="view">${bar(title)}${bar2}
     <div class="card stack"><h2>This shelf is waiting for its first book</h2>
       <p class="sub">Books made for ${child ? esc(child.child_name) : "your child"} and books they finish land here.</p>
       <div class="tools"><button type="button" class="btn" data-tab="library">Pick one from the library</button><button type="button" class="btn secondary" data-tab="setup">Make a book</button></div></div>
     <div class="plank" style="margin-top:0"></div></div>`;
-  return `<div class="view">${bar(title)}
+  return `<div class="view">${bar(title)}${bar2}
   <div class="shelf">${made}${read}</div>
   <div class="plank"></div>
   </div>`;
@@ -2357,6 +2384,17 @@ document.addEventListener("click", e => {
   const w = e.target.closest(".w"); if (w) { tapWord(w); return; }
   const t = e.target.closest("button"); if (!t) { $("crew").classList.remove("open"); return; }
   if (t.dataset.tab) { goTab(t.dataset.tab); return; }
+  if (t.id === "shelfEdit") { shelfEdit = !shelfEdit; removeArm = ""; render(); return; }
+  if (t.id === "shelfRestore") { hiddenLib = []; storeHidden(); removeArm = ""; render(); return; }
+  if (t.dataset.remove) {
+    const key = t.dataset.remove;
+    if (removeArm !== key) { removeArm = key; render(); return; } // first tap asks, second tap removes
+    removeArm = "";
+    if (key.startsWith("made:")) { const id = key.slice(5); books = books.filter(b => b.id !== id); storeBooks(); }
+    else { const n = +key.slice(4); if (!hiddenLib.includes(n)) hiddenLib.push(n); storeHidden(); }
+    if (!books.length && hiddenLib.length >= LIBRARY.length) shelfEdit = true; // keep the way back visible
+    render(); return;
+  }
   if (t.dataset.book) { openSaved(t.dataset.book); return; }
   if (t.dataset.sound) { muted = t.dataset.sound === "off"; prefs.muted = muted; savePrefs(); if (muted) pauseRead(); render(); return; }
   if (t.dataset.size) { prefs.size = t.dataset.size; savePrefs(); applyPrefs(); render(); return; }
