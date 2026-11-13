@@ -18,7 +18,7 @@ async function callGemini(model, prompt, withConfig) {
   if (withConfig) body.generation_config = { thinking_level: "low" }; // keeps answers fast
   const r = await fetch(ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": (process.env.GEMINI_API_KEY || process.env.GEMINI) },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(50000),
   });
@@ -37,7 +37,7 @@ function textOf(data) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ code: "bad_request" });
-  if (!process.env.GEMINI_API_KEY) return res.status(500).json({ code: "no_key" });
+  if (!(process.env.GEMINI_API_KEY || process.env.GEMINI)) return res.status(500).json({ code: "no_key" });
 
   // Only our own page may call this (stops other sites from using the key).
   const origin = req.headers.origin;
