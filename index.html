@@ -333,6 +333,11 @@ textarea{min-height:84px;resize:vertical}
 @media (prefers-reduced-motion:reduce){.cover.editing{animation:none}}
 .shelf.rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 18px;align-items:end;overflow:visible;padding:8px 6px 0}
 .shelf.rows .cover{width:auto}
+/* every book on the shelf has the same shape: a 3:4 picture and room for a 3-line title */
+.shelf.rows{align-items:stretch}
+.shelf.rows .cover,.shelf.rows .cover.made{aspect-ratio:auto;justify-content:flex-start}
+.shelf.rows .cover img,.shelf.rows .cover .art-ph,.shelf.rows .cover.made .face{flex:none;width:100%;height:auto;aspect-ratio:3/4;object-fit:cover}
+.shelf.rows .cover-title{flex:1;font-size:17px;line-height:1.15;min-height:calc(3.45em + 36px)}
 .readsl input[type=range]{width:100%;height:40px;accent-color:var(--tomato);cursor:pointer}
 .readsl-ticks{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 .readsl-ticks button{border:0;background:none;font:inherit;font-size:14px;line-height:1.2;color:var(--ink);opacity:.55;padding:6px 2px;min-height:44px;text-align:center;cursor:pointer}
